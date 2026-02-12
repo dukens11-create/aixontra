@@ -1,33 +1,182 @@
-# AIXENTRA (MVP)
+# AIXONTRA
 
-A curated AI-music publishing & streaming platform (AI Music Gallery).
+**A curated AI-music publishing & streaming platform** - Discover, share, and explore AI-generated music from creators around the world.
 
-## Quick start
+![Next.js](https://img.shields.io/badge/Next.js-14.2.35-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue)
+![Supabase](https://img.shields.io/badge/Supabase-2.49.1-green)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.1-38bdf8)
 
-1) Install deps
+## Features
+
+### 🎵 Core Features
+- **Track Management** - Upload, edit, and manage AI-generated music tracks
+- **Smart Discovery** - Browse tracks by genre, mood, and AI tool
+- **Audio Player** - Advanced player with waveform visualization
+- **Social Features** - Follow creators, like tracks, and comment on music
+- **Playlists** - Create and share custom playlists
+
+### 🔐 Authentication & Security
+- Secure authentication via Supabase Auth
+- Role-based access control (User, Admin, Moderator)
+- Rate limiting on all API endpoints
+- XSS protection and input sanitization
+- Row-level security (RLS) on all database tables
+
+### 👤 User Features
+- User profiles with customizable avatars
+- Following system to stay updated with favorite creators
+- Listening history tracking
+- Personal music library
+- Real-time notifications
+
+### 🎨 UI/UX
+- Modern, responsive design with dark theme
+- Accessible components built with Radix UI
+- Smooth animations and transitions
+- Mobile-first approach
+- Keyboard navigation support
+
+### 🛠️ Admin Features
+- Track approval/rejection workflow
+- Content moderation dashboard
+- User and content reporting system
+- Platform analytics
+- Tag management
+
+## Tech Stack
+
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Components**: [Radix UI](https://www.radix-ui.com/)
+- **Backend**: [Supabase](https://supabase.com/) (PostgreSQL + Auth + Storage)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
+- **Forms**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+- **Audio**: [WaveSurfer.js](https://wavesurfer-js.org/)
+- **Data Fetching**: [SWR](https://swr.vercel.app/)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- A Supabase account and project
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/dukens11-create/aixontra.git
+   cd aixontra
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   ```
+
+4. **Set up the database**
+   
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Run the SQL script from `supabase/schema.sql`
+   - Then run the migration from `supabase/migrations/001_enhanced_schema.sql`
+
+5. **Create storage buckets**
+   
+   In your Supabase dashboard, create these public buckets:
+   - `tracks` - For audio files
+   - `covers` - For track cover images
+   - `avatars` - For user avatars
+
+6. **Set your first admin user**
+   
+   After signing up, update your user role in the Supabase database:
+   ```sql
+   UPDATE profiles 
+   SET role = 'admin' 
+   WHERE id = 'your_user_id';
+   ```
+
+7. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+aixontra/
+├── src/
+│   ├── app/                    # Next.js app router pages
+│   │   ├── api/               # API routes
+│   │   ├── admin/             # Admin pages
+│   │   ├── track/             # Track detail pages
+│   │   ├── upload/            # Upload page
+│   │   └── ...
+│   ├── components/            # React components
+│   │   ├── ui/               # UI component library
+│   │   ├── AudioPlayer.tsx
+│   │   ├── Nav.tsx
+│   │   └── ...
+│   ├── lib/                   # Utilities and helpers
+│   │   ├── supabase/         # Supabase clients
+│   │   ├── validators.ts     # Zod schemas
+│   │   ├── utils.ts          # Helper functions
+│   │   └── ...
+│   ├── stores/                # Zustand state stores
+│   ├── hooks/                 # Custom React hooks
+│   └── types/                 # TypeScript type definitions
+├── supabase/
+│   ├── schema.sql            # Base database schema
+│   └── migrations/           # Database migrations
+├── public/                    # Static assets
+└── ...config files
+```
+
+## Available Scripts
+
 ```bash
-npm install
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+npm run test     # Run tests (when configured)
 ```
 
-2) Create `.env.local` in the project root:
-```env
-NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
-```
+## Contributing
 
-3) In Supabase:
-- Create buckets: `tracks` (public), `covers` (public)
-- Run the SQL in `supabase/schema.sql`
-- Set your user as admin in `profiles.role = 'admin'`
+We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
 
-4) Run:
-```bash
-npm run dev
-```
+## License
 
-Open http://localhost:3000
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Notes
-- Uploads are **pending** until approved in Admin Review.
-- This is an MVP; add CDN, waveform, search, and moderation later.
+## Support
+
+For support, please open an issue on GitHub or contact the maintainers.
+
+## Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- Powered by [Supabase](https://supabase.com/)
+- UI components inspired by [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+
+---
+
+Made with ❤️ by the AIXONTRA team
+
