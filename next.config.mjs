@@ -59,16 +59,8 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 
-  // Webpack configuration
-  webpack: (config, { isServer }) => {
-    // Audio file handling
-    config.module.rules.push({
-      test: /\.(mp3|wav|ogg|flac)$/,
-      type: 'asset/resource',
-    });
-
-    return config;
-  },
+  // Turbopack configuration (empty to satisfy Next.js 16 requirement)
+  turbopack: {},
 };
 
 export default nextConfig;
