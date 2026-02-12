@@ -53,6 +53,9 @@ export interface Track {
   explicit_content: boolean;
   download_count: number;
   deleted_at: string | null;
+  // Create Song feature fields
+  lyrics: string | null;
+  generation_metadata: any | null;
   // Joined data
   creator?: Profile;
   is_liked?: boolean;

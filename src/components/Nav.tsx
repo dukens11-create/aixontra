@@ -31,6 +31,7 @@ export default function Nav() {
         <div className="row">
           <Link href="/about" className="badge">About</Link>
           <Link href="/faq" className="badge">FAQ</Link>
+          <Link href="/create" className="badge">Create</Link>
           <Link href="/upload" className="badge">Upload</Link>
           <Link href="/admin/review" className="badge">Admin</Link>
           {!email ? (
