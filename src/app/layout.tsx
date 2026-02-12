@@ -2,7 +2,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "AIXENTRA",
+  title: "AIXONTRA",
   description: "Curated AI Music Gallery",
 };
 

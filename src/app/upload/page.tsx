@@ -89,7 +89,7 @@ function UploadForm() {
 
   return (
     <div className="card">
-      <h1>Upload to AIXENTRA</h1>
+      <h1>Upload to AIXONTRA</h1>
       <p className="muted">All uploads are reviewed before going public.</p>
 
       <div className="row">

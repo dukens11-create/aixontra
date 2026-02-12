@@ -1,4 +1,4 @@
--- AIXENTRA schema + RLS (paste into Supabase SQL editor)
+-- AIXONTRA schema + RLS (paste into Supabase SQL editor)
 create extension if not exists "pgcrypto";
 
 create table if not exists public.profiles (

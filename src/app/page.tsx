@@ -36,7 +36,7 @@ export default async function HomePage() {
   return (
     <div>
       <h1>Featured Approved Tracks</h1>
-      <p className="muted">Clean, curated AI music — approved by AIXENTRA.</p>
+      <p className="muted">Clean, curated AI music — approved by AIXONTRA.</p>
 
       <div className="grid">
         {tracks.map((t) => {

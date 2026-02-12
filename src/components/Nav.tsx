@@ -25,7 +25,7 @@ export default function Nav() {
     <div style={{ borderBottom: "1px solid #242436" }}>
       <div className="container row" style={{ justifyContent: "space-between" }}>
         <div className="row">
-          <Link href="/" style={{ fontWeight: 900, letterSpacing: 1 }}>AIXENTRA</Link>
+          <Link href="/" style={{ fontWeight: 900, letterSpacing: 1 }}>AIXONTRA</Link>
           <span className="badge">AI Music Gallery</span>
         </div>
         <div className="row">
