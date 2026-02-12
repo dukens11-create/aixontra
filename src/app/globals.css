@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 15% 4%;
+    --foreground: 220 9% 96%;
+
+    --card: 224 15% 7%;
+    --card-foreground: 220 9% 96%;
+
+    --popover: 224 15% 7%;
+    --popover-foreground: 220 9% 96%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 224 15% 17%;
+    --secondary-foreground: 220 9% 96%;
+
+    --muted: 224 15% 17%;
+    --muted-foreground: 220 9% 70%;
+
+    --accent: 224 15% 17%;
+    --accent-foreground: 220 9% 96%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 9% 96%;
+
+    --border: 224 15% 20%;
+    --input: 224 15% 20%;
+    --ring: 220 9% 96%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 15% 4%;
+    --foreground: 220 9% 96%;
+
+    --card: 224 15% 7%;
+    --card-foreground: 220 9% 96%;
+
+    --popover: 224 15% 7%;
+    --popover-foreground: 220 9% 96%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 224 15% 17%;
+    --secondary-foreground: 220 9% 96%;
+
+    --muted: 224 15% 17%;
+    --muted-foreground: 220 9% 70%;
+
+    --accent: 224 15% 17%;
+    --accent-foreground: 220 9% 96%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 9% 96%;
+
+    --border: 224 15% 20%;
+    --input: 224 15% 20%;
+    --ring: 220 9% 96%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    color-scheme: dark;
+  }
+
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  a {
+    @apply text-foreground no-underline;
+  }
+}
+
+@layer components {
+  /* Legacy class support for existing components */
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground border border-border rounded-2xl p-4;
+  }
+
+  /* Custom grid layout - avoid @apply to prevent circular dependency */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .btn {
+    @apply bg-primary text-primary-foreground font-bold rounded-xl px-4 py-2.5 cursor-pointer border-0 hover:opacity-90 transition-opacity;
+  }
+
+  .btn.secondary {
+    @apply bg-transparent border border-border text-foreground hover:bg-secondary;
+  }
+
+  .input, 
+  .select, 
+  .textarea {
+    @apply w-full px-3 py-2.5 rounded-xl border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow;
+  }
+
+  .row {
+    @apply flex gap-3 items-center flex-wrap;
+  }
+
+  .muted {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .badge {
+    @apply inline-block px-2.5 py-1 rounded-full border border-border text-xs text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
