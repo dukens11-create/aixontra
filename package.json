@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest",
     "test:e2e": "playwright test",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "setup-storage": "node scripts/setup-storage.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

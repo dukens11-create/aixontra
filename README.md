@@ -93,12 +93,24 @@
    - Run the SQL script from `supabase/schema.sql`
    - Then run the migration from `supabase/migrations/001_enhanced_schema.sql`
 
-5. **Create storage buckets**
+5. **Set up storage buckets**
    
-   In your Supabase dashboard, create these public buckets:
-   - `tracks` - For audio files
-   - `covers` - For track cover images
-   - `avatars` - For user avatars
+   **Option 1: Automated Setup (Recommended)**
+   ```bash
+   npm run setup-storage
+   ```
+   
+   This will automatically create the required buckets:
+   - `tracks` - For audio files (50 MB limit)
+   - `covers` - For track cover images (5 MB limit)
+   - `avatars` - For user avatars (2 MB limit)
+   
+   **Option 2: Manual Setup**
+   
+   In your Supabase dashboard → Storage:
+   1. Create bucket `tracks` (public, 50 MB limit, audio MIME types)
+   2. Create bucket `covers` (public, 5 MB limit, image MIME types)
+   3. Create bucket `avatars` (public, 2 MB limit, image MIME types)
 
 6. **Run the development server**
    ```bash
@@ -180,12 +192,13 @@ aixontra/
 ## Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run test         # Run tests (when configured)
-npm run create-admin # Create admin account (requires .env.local)
+npm run dev           # Start development server
+npm run build         # Build for production
+npm run start         # Start production server
+npm run lint          # Run ESLint
+npm run test          # Run tests (when configured)
+npm run create-admin  # Create admin account (requires .env.local)
+npm run setup-storage # Set up Supabase storage buckets (requires .env.local)
 ```
 
 ## Contributing
