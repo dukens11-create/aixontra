@@ -40,7 +40,7 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
-          <div className="logo-container">
+          <div className="logo-container" role="banner">
             <Image 
               src="/logo.svg" 
               alt="AIXONTRA Logo" 
