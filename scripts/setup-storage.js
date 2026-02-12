@@ -31,7 +31,7 @@ async function setupStorage() {
       description: 'Audio files for music tracks',
       public: true,
       fileSizeLimit: 52428800, // 50 MB
-      allowedMimeTypes: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3']
+      allowedMimeTypes: ['audio/mpeg', 'audio/wav', 'audio/ogg']
     },
     {
       name: 'covers',
