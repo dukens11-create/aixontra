@@ -113,7 +113,7 @@ After deploying AIXONTRA, you need to create the first admin account.
 
 ### Method 1: Web Interface (Easiest)
 
-1. Visit: `https://your-app.onrender.com/setup` (or `http://localhost:3000/setup` in development)
+1. Visit: `https://your-domain.com/setup` (or `http://localhost:3000/setup` in development)
 2. Enter admin email and password
 3. Click "Create Admin Account"
 4. Done! Log in with those credentials
