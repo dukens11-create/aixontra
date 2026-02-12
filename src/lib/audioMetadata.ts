@@ -20,7 +20,7 @@ export async function extractAudioMetadata(
   buffer: Buffer
 ): Promise<AudioMetadata> {
   try {
-    const metadata = await parseBuffer(buffer, { skipCovers: true });
+    const metadata = await parseBuffer(buffer);
 
     return {
       duration: metadata.format.duration || 0,

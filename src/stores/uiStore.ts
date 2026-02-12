@@ -70,8 +70,8 @@ export const useUIStore = create<UIStore>((set) => ({
   ...initialState,
 
   // Modal actions
-  openModal: (modal, data = null) => {
-    set({ activeModal: modal, modalData: data });
+  openModal: (modal, data) => {
+    set({ activeModal: modal, modalData: data || null });
   },
 
   closeModal: () => {
