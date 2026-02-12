@@ -100,21 +100,51 @@
    - `covers` - For track cover images
    - `avatars` - For user avatars
 
-6. **Set your first admin user**
-   
-   After signing up, update your user role in the Supabase database:
-   ```sql
-   UPDATE profiles 
-   SET role = 'admin' 
-   WHERE id = 'your_user_id';
-   ```
-
-7. **Run the development server**
+6. **Run the development server**
    ```bash
    npm run dev
    ```
 
    Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Admin Account Setup
+
+After deploying AIXONTRA, you need to create the first admin account.
+
+### Method 1: Web Interface (Easiest)
+
+1. Visit: `https://your-app.onrender.com/setup` (or `http://localhost:3000/setup` in development)
+2. Enter admin email and password
+3. Click "Create Admin Account"
+4. Done! Log in with those credentials
+
+**Note:** This page only works once (when no admin exists). After the first admin is created, the page will be disabled for security.
+
+### Method 2: Command Line
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set environment variables in `.env.local`
+4. Run: `npm run create-admin`
+5. Follow the prompts
+
+### Method 3: Manual SQL (Advanced)
+
+1. Sign up on the website
+2. Go to Supabase Dashboard → SQL Editor
+3. Run:
+```sql
+UPDATE public.profiles
+SET role = 'admin'
+WHERE id = (
+  SELECT id FROM auth.users 
+  WHERE email = 'your-email@example.com'
+);
+```
+
+### Default Admin Credentials
+
+For security, there are NO default credentials. You must create your own admin account using one of the methods above.
 
 ## Project Structure
 
@@ -150,11 +180,12 @@ aixontra/
 ## Available Scripts
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
-npm run test     # Run tests (when configured)
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run test         # Run tests (when configured)
+npm run create-admin # Create admin account (requires .env.local)
 ```
 
 ## Contributing
