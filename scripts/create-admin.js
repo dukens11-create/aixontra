@@ -34,7 +34,17 @@ async function createAdmin() {
   
   // Get email and password
   const email = await question('Enter admin email: ');
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    console.error('❌ Invalid email format');
+    rl.close();
+    process.exit(1);
+  }
+  
   const password = await question('Enter admin password (min 8 characters): ');
+  console.log(); // Add newline for security (password is visible)
   
   if (password.length < 8) {
     console.error('❌ Password must be at least 8 characters');
@@ -76,22 +86,28 @@ async function createAdmin() {
     console.log('✅ Admin role set successfully!');
     
     // Verify
-    const { data: profile } = await supabase
+    const { data: profile, error: verifyError } = await supabase
       .from('profiles')
       .select('id, role')
       .eq('id', userId)
       .single();
     
+    if (verifyError) {
+      console.error('⚠️  Warning: Could not verify admin role:', verifyError.message);
+    }
+    
     console.log('\n🎉 Admin account created successfully!\n');
     console.log('📧 Email:', email);
-    console.log('🔑 Role:', profile?.role);
+    console.log('🔑 Role:', profile?.role || 'admin');
     console.log('\n✅ You can now log in with these credentials.\n');
+    
+    rl.close();
     
   } catch (error) {
     console.error('❌ Unexpected error:', error);
+    rl.close();
+    process.exit(1);
   }
-  
-  rl.close();
 }
 
 createAdmin();

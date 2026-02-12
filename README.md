@@ -47,6 +47,8 @@ For command-line or automation scenarios, use the CLI script:
    ```bash
    npm run create-admin
    ```
+   
+   **Note:** The password will be visible when you type it. Make sure you're in a secure environment.
 
 4. Follow the interactive prompts:
    - Enter admin email
