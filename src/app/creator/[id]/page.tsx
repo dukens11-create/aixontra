@@ -21,23 +21,54 @@ export default async function CreatorPage({ params }: { params: { id: string } }
 
   return (
     <div>
-      <div className="card">
-        <h1>{creator.display_name || creator.username || "Creator"}</h1>
-        {creator.bio && <p className="muted">{creator.bio}</p>}
-        <span className="badge">Creator</span>
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <div className="row" style={{ gap: '1.5rem', alignItems: 'flex-start' }}>
+          {creator.avatar_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={creator.avatar_url} 
+              alt={creator.display_name || creator.username || "Creator"}
+              style={{ 
+                width: 80, 
+                height: 80, 
+                borderRadius: '50%', 
+                objectFit: 'cover',
+                border: '2px solid hsl(var(--border))'
+              }}
+            />
+          )}
+          <div style={{ flex: 1 }}>
+            <h1 style={{ marginBottom: '0.5rem' }}>{creator.display_name || creator.username || "Creator"}</h1>
+            {creator.username && creator.display_name && (
+              <p className="muted" style={{ marginBottom: '0.5rem' }}>@{creator.username}</p>
+            )}
+            {creator.bio && <p style={{ lineHeight: '1.6', marginTop: '0.75rem' }}>{creator.bio}</p>}
+            <div className="row" style={{ marginTop: '1rem' }}>
+              <span className="badge">Creator</span>
+              <span className="badge">{(tracks ?? []).length} tracks</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <h2 style={{ marginTop: 14 }}>Approved Tracks</h2>
-      <div className="grid">
-        {(tracks ?? []).map((t: any) => (
-          <TrackCard
-            key={t.id}
-            track={t}
-            coverUrl={coverUrl(t.cover_path)}
-            creatorName={creator.display_name || creator.username || "Creator"}
-          />
-        ))}
-      </div>
+      <h2 style={{ marginBottom: '1rem' }}>Approved Tracks</h2>
+      {(tracks ?? []).length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p className="muted">No approved tracks yet</p>
+        </div>
+      ) : (
+        <div className="grid">
+          {(tracks ?? []).map((t: any) => (
+            <TrackCard
+              key={t.id}
+              track={t}
+              coverUrl={coverUrl(t.cover_path)}
+              creatorName={creator.display_name || creator.username || "Creator"}
+              creatorAvatar={creator.avatar_url}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

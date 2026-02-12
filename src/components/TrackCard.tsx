@@ -5,10 +5,12 @@ export default function TrackCard({
   track,
   coverUrl,
   creatorName,
+  creatorAvatar,
 }: {
   track: Track;
   coverUrl: string | null;
   creatorName: string;
+  creatorAvatar?: string | null;
 }) {
   return (
     <div className="card">
@@ -23,8 +25,18 @@ export default function TrackCard({
         </div>
         <div style={{ marginTop: 10 }}>
           <div style={{ fontWeight: 800 }}>{track.title}</div>
-          <div className="muted">
-            by <span style={{ color: "#fff" }}>{creatorName}</span>
+          <div className="row muted" style={{ gap: 6, marginTop: 4 }}>
+            {creatorAvatar && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img 
+                src={creatorAvatar} 
+                alt={creatorName}
+                style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }}
+              />
+            )}
+            <span>
+              by <span style={{ color: "#fff" }}>{creatorName}</span>
+            </span>
           </div>
           <div className="row" style={{ marginTop: 8 }}>
             {track.genre && <span className="badge">{track.genre}</span>}
