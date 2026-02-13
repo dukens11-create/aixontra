@@ -144,7 +144,7 @@ function ProfileContent() {
                   textOverflow: 'ellipsis',
                   marginBottom: '0.75rem'
                 }}>
-                  {track.lyrics.substring(0, 100)}...
+                  {track.lyrics.length > 100 ? track.lyrics.substring(0, 100) + '...' : track.lyrics}
                 </p>
               )}
 

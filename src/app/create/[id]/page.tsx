@@ -110,7 +110,14 @@ function EditDraftForm() {
         setAudioUrl(`${base}/storage/v1/object/public/tracks/${draft.audio_path}`);
       }
 
-      setActiveTab("publish"); // Go directly to publish tab for editing
+      // Set appropriate starting tab based on content
+      if (!draft.lyrics) {
+        setActiveTab("lyrics"); // Start with lyrics if none exist
+      } else if (!draft.audio_path || draft.audio_path.includes('placeholder')) {
+        setActiveTab("music"); // Start with music if no audio
+      } else {
+        setActiveTab("publish"); // Go to publish if everything is ready
+      }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -332,7 +339,6 @@ function EditDraftForm() {
             isDemoMode,
             ...generationMetadata,
           },
-          updated_at: new Date().toISOString(),
         })
         .eq("id", draftId)
         .eq("creator_id", user.id);
