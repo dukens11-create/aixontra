@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const supportedLanguages = LANGUAGES.map(l => l.name);
     const isLanguageSupported = supportedLanguages.includes(language) || language === 'English';
     
-    if (!isLanguageSupported && language !== 'English') {
+    if (!isLanguageSupported) {
       console.warn(`Unsupported language requested: ${language}, using English as fallback`);
     }
 
@@ -407,6 +407,11 @@ OpenAIキーを追加すれば`,
   // Use language-specific demo or fallback to English
   if (language !== 'English' && demoLyricsByLanguage[language]) {
     return demoLyricsByLanguage[language];
+  }
+  
+  // Log warning if non-English language requested but not available in demo mode
+  if (language !== 'English' && !demoLyricsByLanguage[language]) {
+    console.warn(`Demo lyrics not available for ${language}, falling back to English demo lyrics`);
   }
   
   // Default English demo lyrics
