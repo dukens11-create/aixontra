@@ -80,8 +80,12 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [voiceAudioElement, setVoiceAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+  const [voiceAudioLoading, setVoiceAudioLoading] = useState(false);
+  const [voiceAudioError, setVoiceAudioError] = useState<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
 
   // Load available voices on mount
@@ -230,22 +234,57 @@ function CreateSongForm() {
     }
   };
 
-  const toggleVoicePlayback = () => {
+  const toggleVoicePlayback = async () => {
     if (!voiceAudioUrl) return;
 
     if (!voiceAudioElement) {
-      const audio = new Audio(voiceAudioUrl);
-      audio.onended = () => setIsVoicePlaying(false);
-      setVoiceAudioElement(audio);
-      audio.play();
-      setIsVoicePlaying(true);
+      setVoiceAudioLoading(true);
+      setVoiceAudioError(null);
+      
+      try {
+        const audio = new Audio(voiceAudioUrl);
+        
+        // Add error handler
+        audio.onerror = () => {
+          setVoiceAudioError('Failed to load voice audio file. Please check if the file exists and is accessible.');
+          setVoiceAudioLoading(false);
+          setIsVoicePlaying(false);
+          setVoiceAudioElement(null);
+        };
+        
+        // Add canplay handler - clears loading state when audio is ready
+        audio.oncanplay = () => {
+          setVoiceAudioLoading(false);
+        };
+        
+        audio.onended = () => setIsVoicePlaying(false);
+        setVoiceAudioElement(audio);
+        
+        await audio.play();
+        setIsVoicePlaying(true);
+      } catch (error: any) {
+        setVoiceAudioError(error.message || 'Failed to play voice audio');
+        setVoiceAudioLoading(false);
+        setIsVoicePlaying(false);
+        setVoiceAudioElement(null);
+      }
     } else {
       if (isVoicePlaying) {
         voiceAudioElement.pause();
         setIsVoicePlaying(false);
       } else {
-        voiceAudioElement.play();
-        setIsVoicePlaying(true);
+        // Resume playback - audio is already loaded, so we can manage loading state directly
+        try {
+          setVoiceAudioLoading(true);
+          setVoiceAudioError(null);
+          await voiceAudioElement.play();
+          setIsVoicePlaying(true);
+          setVoiceAudioLoading(false);
+        } catch (error: any) {
+          setVoiceAudioError(error.message || 'Failed to play voice audio');
+          setVoiceAudioLoading(false);
+          setIsVoicePlaying(false);
+        }
       }
     }
   };
@@ -307,22 +346,57 @@ function CreateSongForm() {
     }
   };
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioUrl) return;
 
     if (!audioElement) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setIsPlaying(false);
-      setAudioElement(audio);
-      audio.play();
-      setIsPlaying(true);
+      setAudioLoading(true);
+      setAudioError(null);
+      
+      try {
+        const audio = new Audio(audioUrl);
+        
+        // Add error handler
+        audio.onerror = () => {
+          setAudioError('Failed to load audio file. Please check if the file exists and is accessible.');
+          setAudioLoading(false);
+          setIsPlaying(false);
+          setAudioElement(null);
+        };
+        
+        // Add canplay handler - clears loading state when audio is ready
+        audio.oncanplay = () => {
+          setAudioLoading(false);
+        };
+        
+        audio.onended = () => setIsPlaying(false);
+        setAudioElement(audio);
+        
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error: any) {
+        setAudioError(error.message || 'Failed to play audio');
+        setAudioLoading(false);
+        setIsPlaying(false);
+        setAudioElement(null);
+      }
     } else {
       if (isPlaying) {
         audioElement.pause();
         setIsPlaying(false);
       } else {
-        audioElement.play();
-        setIsPlaying(true);
+        // Resume playback - audio is already loaded, so we can manage loading state directly
+        try {
+          setAudioLoading(true);
+          setAudioError(null);
+          await audioElement.play();
+          setIsPlaying(true);
+          setAudioLoading(false);
+        } catch (error: any) {
+          setAudioError(error.message || 'Failed to play audio');
+          setAudioLoading(false);
+          setIsPlaying(false);
+        }
       }
     }
   };
@@ -924,13 +998,31 @@ function CreateSongForm() {
               {voiceAudioUrl && (
                 <div className="card" style={{ padding: '1rem' }}>
                   <Label>Voice Preview</Label>
+                  
+                  {voiceAudioError && (
+                    <div className="card" style={{ 
+                      padding: '0.75rem', 
+                      marginTop: '0.5rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1rem' }}>⚠️</span>
+                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                          {voiceAudioError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={toggleVoicePlayback}
+                      disabled={voiceAudioLoading}
                     >
-                      {isVoicePlaying ? <Pause size={16} /> : <Play size={16} />}
+                      {voiceAudioLoading ? <Spinner /> : (isVoicePlaying ? <Pause size={16} /> : <Play size={16} />)}
                     </Button>
                     <span className="muted">
                       {selectedVoice?.name} - {selectedVoice?.languageName}
@@ -1016,14 +1108,36 @@ function CreateSongForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
+                  {audioError && (
+                    <div className="card" style={{ 
+                      padding: '1rem', 
+                      marginBottom: '1rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                          {audioError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? (
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause
@@ -1115,14 +1229,36 @@ function CreateSongForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
+                  {audioError && (
+                    <div className="card" style={{ 
+                      padding: '1rem', 
+                      marginBottom: '1rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                          {audioError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? (
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause
