@@ -252,7 +252,7 @@ function CreateSongForm() {
           setVoiceAudioElement(null);
         };
         
-        // Add canplay handler
+        // Add canplay handler - clears loading state when audio is ready
         audio.oncanplay = () => {
           setVoiceAudioLoading(false);
         };
@@ -262,7 +262,6 @@ function CreateSongForm() {
         
         await audio.play();
         setIsVoicePlaying(true);
-        setVoiceAudioLoading(false);
       } catch (error: any) {
         setVoiceAudioError(error.message || 'Failed to play voice audio');
         setVoiceAudioLoading(false);
@@ -274,6 +273,7 @@ function CreateSongForm() {
         voiceAudioElement.pause();
         setIsVoicePlaying(false);
       } else {
+        // Resume playback - audio is already loaded, so we can manage loading state directly
         try {
           setVoiceAudioLoading(true);
           setVoiceAudioError(null);
@@ -364,7 +364,7 @@ function CreateSongForm() {
           setAudioElement(null);
         };
         
-        // Add canplay handler
+        // Add canplay handler - clears loading state when audio is ready
         audio.oncanplay = () => {
           setAudioLoading(false);
         };
@@ -374,7 +374,6 @@ function CreateSongForm() {
         
         await audio.play();
         setIsPlaying(true);
-        setAudioLoading(false);
       } catch (error: any) {
         setAudioError(error.message || 'Failed to play audio');
         setAudioLoading(false);
@@ -386,6 +385,7 @@ function CreateSongForm() {
         audioElement.pause();
         setIsPlaying(false);
       } else {
+        // Resume playback - audio is already loaded, so we can manage loading state directly
         try {
           setAudioLoading(true);
           setAudioError(null);

@@ -247,7 +247,7 @@ function EditDraftForm() {
           setAudioElement(null);
         };
         
-        // Add canplay handler
+        // Add canplay handler - clears loading state when audio is ready
         audio.oncanplay = () => {
           setAudioLoading(false);
         };
@@ -257,7 +257,6 @@ function EditDraftForm() {
         
         await audio.play();
         setIsPlaying(true);
-        setAudioLoading(false);
       } catch (error: any) {
         setAudioError(error.message || 'Failed to play audio');
         setAudioLoading(false);
@@ -269,6 +268,7 @@ function EditDraftForm() {
         audioElement.pause();
         setIsPlaying(false);
       } else {
+        // Resume playback - audio is already loaded, so we can manage loading state directly
         try {
           setAudioLoading(true);
           setAudioError(null);
