@@ -4,9 +4,9 @@ import AuthGuard from "@/components/AuthGuard";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { GENRES, INSTRUMENTS, MOODS, VoiceOption, getAvailableVoices } from "@/lib/aiConfig";
+import { GENRES, INSTRUMENTS, MOODS, VoiceOption, getAvailableVoices, VIDEO_STYLES, VIDEO_RESOLUTIONS, VIDEO_ASPECT_RATIOS, VIDEO_MOODS } from "@/lib/aiConfig";
 import { LANGUAGES } from "@/lib/constants";
-import { GenerationMetadata, VoiceMetadata } from "@/types";
+import { GenerationMetadata, VoiceMetadata, VideoMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Music, Sparkles, Save, Play, Pause, Mic2 } from "lucide-react";
+import { Music, Sparkles, Save, Play, Pause, Mic2, Video } from "lucide-react";
 import { LyricQualityScore } from "@/components/LyricQualityScore";
 import { HitPotentialMeter } from "@/components/HitPotentialMeter";
 import { FlowAnalysisDisplay } from "@/components/FlowAnalysisDisplay";
@@ -72,6 +72,7 @@ function CreateSongForm() {
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [musicLoading, setMusicLoading] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info', text: string } | null>(null);
@@ -80,13 +81,18 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const [audioLoading, setAudioLoading] = useState(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
   const [voiceAudioElement, setVoiceAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
-  const [voiceAudioLoading, setVoiceAudioLoading] = useState(false);
-  const [voiceAudioError, setVoiceAudioError] = useState<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  
+  // Video generation state
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoStyle, setVideoStyle] = useState('abstract');
+  const [videoResolution, setVideoResolution] = useState('1080p');
+  const [videoAspectRatio, setVideoAspectRatio] = useState('16:9');
+  const [videoMood, setVideoMood] = useState('vibrant');
 
   // Load available voices on mount
   useEffect(() => {
@@ -234,57 +240,22 @@ function CreateSongForm() {
     }
   };
 
-  const toggleVoicePlayback = async () => {
+  const toggleVoicePlayback = () => {
     if (!voiceAudioUrl) return;
 
     if (!voiceAudioElement) {
-      setVoiceAudioLoading(true);
-      setVoiceAudioError(null);
-      
-      try {
-        const audio = new Audio(voiceAudioUrl);
-        
-        // Add error handler
-        audio.onerror = () => {
-          setVoiceAudioError('Failed to load voice audio file. Please check if the file exists and is accessible.');
-          setVoiceAudioLoading(false);
-          setIsVoicePlaying(false);
-          setVoiceAudioElement(null);
-        };
-        
-        // Add canplay handler - clears loading state when audio is ready
-        audio.oncanplay = () => {
-          setVoiceAudioLoading(false);
-        };
-        
-        audio.onended = () => setIsVoicePlaying(false);
-        setVoiceAudioElement(audio);
-        
-        await audio.play();
-        setIsVoicePlaying(true);
-      } catch (error: any) {
-        setVoiceAudioError(error.message || 'Failed to play voice audio');
-        setVoiceAudioLoading(false);
-        setIsVoicePlaying(false);
-        setVoiceAudioElement(null);
-      }
+      const audio = new Audio(voiceAudioUrl);
+      audio.onended = () => setIsVoicePlaying(false);
+      setVoiceAudioElement(audio);
+      audio.play();
+      setIsVoicePlaying(true);
     } else {
       if (isVoicePlaying) {
         voiceAudioElement.pause();
         setIsVoicePlaying(false);
       } else {
-        // Resume playback - audio is already loaded, so we can manage loading state directly
-        try {
-          setVoiceAudioLoading(true);
-          setVoiceAudioError(null);
-          await voiceAudioElement.play();
-          setIsVoicePlaying(true);
-          setVoiceAudioLoading(false);
-        } catch (error: any) {
-          setVoiceAudioError(error.message || 'Failed to play voice audio');
-          setVoiceAudioLoading(false);
-          setIsVoicePlaying(false);
-        }
+        voiceAudioElement.play();
+        setIsVoicePlaying(true);
       }
     }
   };
@@ -338,11 +309,57 @@ function CreateSongForm() {
         setMessage({ type: 'success', text: 'Music generated successfully!' });
       }
 
-      setActiveTab("publish");
+      setActiveTab("video");
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setMusicLoading(false);
+    }
+  };
+
+  const handleGenerateVideo = async () => {
+    setVideoLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/generate/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          lyrics,
+          genre: selectedGenres.join(', '),
+          mood: selectedMood,
+          style: videoStyle,
+          duration: 180, // Default 3 minutes
+          resolution: videoResolution,
+          aspectRatio: videoAspectRatio,
+          videoMood,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate video');
+      }
+
+      if (data.demoVideo) {
+        setVideoUrl(data.demoVideo.file);
+        setMessage({ 
+          type: 'info', 
+          text: 'Demo mode: Configure video API keys in .env for real video generation. Using sample video.' 
+        });
+      } else if (data.videoUrl) {
+        setVideoUrl(data.videoUrl);
+        setMessage({ type: 'success', text: 'Video generated successfully!' });
+      }
+
+      setActiveTab("publish");
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setVideoLoading(false);
     }
   };
 
@@ -387,14 +404,10 @@ function CreateSongForm() {
       } else {
         // Resume playback - audio is already loaded, so we can manage loading state directly
         try {
-          setAudioLoading(true);
-          setAudioError(null);
           await audioElement.play();
           setIsPlaying(true);
-          setAudioLoading(false);
         } catch (error: any) {
           setAudioError(error.message || 'Failed to play audio');
-          setAudioLoading(false);
           setIsPlaying(false);
         }
       }
@@ -467,6 +480,16 @@ function CreateSongForm() {
         lyrics: lyrics,
         voice_audio_path: voiceAudioPath,
         voice_metadata: voiceMetadata,
+        video_url: videoUrl,
+        video_status: videoUrl ? 'completed' : 'none',
+        video_metadata: videoUrl ? {
+          style: videoStyle,
+          resolution: videoResolution,
+          aspectRatio: videoAspectRatio,
+          duration: 180,
+          provider: 'demo' as const,
+          generatedAt: new Date().toISOString(),
+        } as VideoMetadata : null,
         generation_metadata: {
           prompt,
           genres: selectedGenres,
@@ -544,6 +567,16 @@ function CreateSongForm() {
         lyrics: lyrics,
         voice_audio_path: voiceAudioPath,
         voice_metadata: voiceMetadata,
+        video_url: videoUrl,
+        video_status: videoUrl ? 'completed' : 'none',
+        video_metadata: videoUrl ? {
+          style: videoStyle,
+          resolution: videoResolution,
+          aspectRatio: videoAspectRatio,
+          duration: 180,
+          provider: 'demo' as const,
+          generatedAt: new Date().toISOString(),
+        } as VideoMetadata : null,
         generation_metadata: {
           prompt,
           genres: selectedGenres,
@@ -631,11 +664,12 @@ function CreateSongForm() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4" aria-label="Song creation steps">
+        <TabsList className="grid w-full grid-cols-5" aria-label="Song creation steps">
           <TabsTrigger value="lyrics" aria-label="Step 1: Generate Lyrics">1. Lyrics</TabsTrigger>
           <TabsTrigger value="voice" aria-label="Step 2: Select and Generate Voice">2. Voice</TabsTrigger>
           <TabsTrigger value="music" aria-label="Step 3: Generate Music">3. Music</TabsTrigger>
-          <TabsTrigger value="publish" aria-label="Step 4: Publish Song">4. Publish</TabsTrigger>
+          <TabsTrigger value="video" aria-label="Step 4: Generate Video">4. Video</TabsTrigger>
+          <TabsTrigger value="publish" aria-label="Step 5: Publish Song">5. Publish</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lyrics" className="space-y-4">
@@ -998,31 +1032,13 @@ function CreateSongForm() {
               {voiceAudioUrl && (
                 <div className="card" style={{ padding: '1rem' }}>
                   <Label>Voice Preview</Label>
-                  
-                  {voiceAudioError && (
-                    <div className="card" style={{ 
-                      padding: '0.75rem', 
-                      marginTop: '0.5rem',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1rem' }}>⚠️</span>
-                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
-                          {voiceAudioError}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={toggleVoicePlayback}
-                      disabled={voiceAudioLoading}
                     >
-                      {voiceAudioLoading ? <Spinner /> : (isVoicePlaying ? <Pause size={16} /> : <Play size={16} />)}
+                      {isVoicePlaying ? <Pause size={16} /> : <Play size={16} />}
                     </Button>
                     <span className="muted">
                       {selectedVoice?.name} - {selectedVoice?.languageName}
@@ -1109,18 +1125,18 @@ function CreateSongForm() {
                   </div>
                   
                   {audioError && (
-                    <div className="card" style={{ 
-                      padding: '1rem', 
-                      marginBottom: '1rem',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
-                          {audioError}
-                        </p>
-                      </div>
+                    <div 
+                      className="card" 
+                      style={{ 
+                        padding: '0.75rem', 
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        marginBottom: '1rem',
+                        border: '1px solid rgb(239, 68, 68)'
+                      }}
+                    >
+                      <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                        ⚠️ {audioError}
+                      </p>
                     </div>
                   )}
                   
@@ -1134,7 +1150,7 @@ function CreateSongForm() {
                     >
                       {audioLoading ? (
                         <>
-                          <Spinner className="mr-2" />
+                          <Spinner className="mr-2" size={16} />
                           Loading...
                         </>
                       ) : isPlaying ? (
@@ -1161,6 +1177,144 @@ function CreateSongForm() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="video" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Generate Music Video</CardTitle>
+              <CardDescription>
+                Create an AI-generated music video for your song
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Video Style</Label>
+                <Select value={videoStyle} onValueChange={setVideoStyle}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select video style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VIDEO_STYLES.map(style => (
+                      <SelectItem key={style} value={style.toLowerCase()}>
+                        {style}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Resolution</Label>
+                  <Select value={videoResolution} onValueChange={setVideoResolution}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VIDEO_RESOLUTIONS.map(res => (
+                        <SelectItem key={res.value} value={res.value}>
+                          {res.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Aspect Ratio</Label>
+                  <Select value={videoAspectRatio} onValueChange={setVideoAspectRatio}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select aspect ratio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VIDEO_ASPECT_RATIOS.map(ratio => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label>Video Mood</Label>
+                <Select value={videoMood} onValueChange={setVideoMood}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select video mood" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VIDEO_MOODS.map(mood => (
+                      <SelectItem key={mood} value={mood.toLowerCase()}>
+                        {mood}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={handleGenerateVideo}
+                disabled={videoLoading || !audioUrl}
+                className="w-full"
+              >
+                {videoLoading ? (
+                  <>
+                    <Spinner className="mr-2" />
+                    Generating Video...
+                  </>
+                ) : (
+                  <>
+                    <Video className="mr-2" size={16} />
+                    Generate Video
+                  </>
+                )}
+              </Button>
+
+              {!audioUrl && (
+                <div className="card" style={{ padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
+                  <p style={{ fontSize: '0.875rem', margin: 0, color: 'var(--destructive)' }}>
+                    ⚠️ Please generate music first before creating a video
+                  </p>
+                </div>
+              )}
+
+              {videoUrl && (
+                <div className="card" style={{ padding: '1.5rem', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <Label style={{ fontSize: '1rem', fontWeight: 600 }}>🎬 Preview Your Video</Label>
+                    <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
+                  </div>
+                  
+                  <div style={{ marginBottom: '1rem' }}>
+                    <video 
+                      src={videoUrl} 
+                      controls 
+                      style={{ 
+                        width: '100%', 
+                        borderRadius: '8px',
+                        backgroundColor: '#000',
+                        maxHeight: '400px'
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="card" style={{ padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                      💡 <strong>Tip:</strong> Preview your video before publishing to ensure it matches your song's vibe!
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="card" style={{ padding: '1rem', backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
+                <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                  ℹ️ Video generation can take 2-5 minutes depending on the provider and settings.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1229,36 +1383,14 @@ function CreateSongForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
-                  {audioError && (
-                    <div className="card" style={{ 
-                      padding: '1rem', 
-                      marginBottom: '1rem',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
-                          {audioError}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
-                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {audioLoading ? (
-                        <>
-                          <Spinner className="mr-2" />
-                          Loading...
-                        </>
-                      ) : isPlaying ? (
+                      {isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause

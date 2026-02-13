@@ -1,12 +1,13 @@
 # Aixontra
 
-AIXONTRA is a curated AI music gallery where creators can share exceptional AI-generated music. The platform features moderation, user profiles, and an AI-powered song creation tool.
+AIXONTRA is a curated AI music gallery where creators can share exceptional AI-generated music. The platform features moderation, user profiles, and an AI-powered song creation tool with video generation.
 
 ## Features
 
 - 🎵 **Curated Music Gallery**: Browse and discover AI-generated music
-- ✨ **Create Song Feature**: Generate songs with AI-powered lyrics, voices, and music (NEW!)
-- 🎤 **AI Voice Generation**: Synthesize realistic vocals with state-of-the-art TTS (NEW!)
+- ✨ **Create Song Feature**: Generate songs with AI-powered lyrics, voices, music, and videos (NEW!)
+- 🎬 **AI Video Generation**: Create music videos for your AI-generated songs (NEW!)
+- 🎤 **AI Voice Generation**: Synthesize realistic vocals with state-of-the-art TTS
 - 📤 **Track Upload**: Upload your AI-generated tracks for review
 - 👥 **User Profiles**: Creator pages with tracks and stats
 - 🎯 **Admin Review System**: Content moderation before publication
@@ -19,14 +20,15 @@ AIXONTRA is a curated AI music gallery where creators can share exceptional AI-g
 
 ## Create Song Feature (UPDATED!)
 
-The Create Song feature allows logged-in users to generate AI-powered songs with lyrics, AI voices, and music. Features include:
+The Create Song feature allows logged-in users to generate AI-powered songs with lyrics, AI voices, music, and videos. Features include:
 
 - **AI Lyrics Generation**: Using OpenAI GPT models in multiple languages
 - **AI Voice Generation**: High-quality vocal synthesis with OpenAI TTS, ElevenLabs, Google TTS, or Azure Neural TTS
 - **Voice Selection**: Choose from various voices with different genders, languages, and styles
 - **Music Generation**: Support for Suno, Stable Audio, and Riffusion
+- **Video Generation**: Create music videos with Replicate, Runway ML, Stability AI, Pika Labs, or Luma AI (NEW!)
 - **Demo Mode**: Works without API keys using sample data
-- **Multi-step Process**: Generate lyrics → Select & generate voice → Generate music → Publish
+- **5-step Process**: Generate lyrics → Select & generate voice → Generate music → Generate video → Publish
 
 For detailed setup and usage instructions, see [docs/CREATE_SONG_FEATURE.md](docs/CREATE_SONG_FEATURE.md)
 
@@ -39,6 +41,13 @@ For detailed setup and usage instructions, see [docs/CREATE_SONG_FEATURE.md](doc
    GOOGLE_TTS_API_KEY=your-key-here       # Optional: For multi-language TTS
    AZURE_TTS_API_KEY=your-key-here        # Optional: For enterprise TTS
    SUNO_API_KEY=your-key-here             # Optional: For music generation
+   
+   # Video Generation APIs (NEW - Optional)
+   REPLICATE_API_KEY=your-key-here        # For Stable Video Diffusion
+   RUNWAY_API_KEY=your-key-here           # For Runway ML
+   STABILITY_API_KEY=your-key-here        # For Stability AI
+   PIKA_API_KEY=your-key-here             # For Pika Labs
+   LUMA_API_KEY=your-key-here             # For Luma AI Dream Machine
    ```
 
 2. Run database migrations:
@@ -46,6 +55,9 @@ For detailed setup and usage instructions, see [docs/CREATE_SONG_FEATURE.md](doc
    # Execute migrations in Supabase:
    # - supabase/migrations/002_add_create_song_fields.sql
    # - supabase/migrations/003_add_voice_generation_fields.sql
+   # - supabase/migrations/004_add_video_generation_fields.sql (NEW)
+=======
+>>>>>>> main
    # Or use: supabase db push
    ```
 
