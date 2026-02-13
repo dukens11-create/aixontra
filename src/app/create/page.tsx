@@ -2,6 +2,7 @@
 
 import AuthGuard from "@/components/AuthGuard";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +25,7 @@ export default function CreatePage() {
 
 function CreateSongForm() {
   const supabase = supabaseBrowser();
+  const router = useRouter();
   
   const [activeTab, setActiveTab] = useState("lyrics");
   const [prompt, setPrompt] = useState("");
@@ -175,7 +177,9 @@ function CreateSongForm() {
         throw new Error('Not logged in');
       }
 
-      const audioPath = 'demo/placeholder.mp3';
+      // Note: In production, you would upload the actual generated audio file
+      // For demo purposes, we use a placeholder path that should be handled by the admin
+      const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
 
       const { error: insErr } = await supabase.from("tracks").insert({
         creator_id: user.id,
@@ -203,8 +207,9 @@ function CreateSongForm() {
         text: 'Song submitted for review! Your track will be published after approval.' 
       });
       
+      // Navigate using Next.js router
       setTimeout(() => {
-        window.location.href = '/';
+        router.push('/');
       }, 2000);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });

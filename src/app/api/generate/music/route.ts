@@ -50,87 +50,41 @@ export async function POST(request: NextRequest) {
     if (musicAPIs.suno.enabled && musicAPIs.suno.apiKey) {
       // NOTE: This is a placeholder for Suno API integration
       // Real implementation would call Suno's API endpoint
-      // Example structure:
-      /*
-      const response = await fetch('https://api.suno.ai/v1/generate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${musicAPIs.suno.apiKey}`,
-          'Content-Type': 'application/json',
+      // For now, return 501 Not Implemented
+      return NextResponse.json(
+        { 
+          error: 'Suno API integration is configured but not yet fully implemented. Please see code comments in /src/app/api/generate/music/route.ts for implementation guidance.',
+          provider: 'suno',
+          status: 'not_implemented'
         },
-        body: JSON.stringify({
-          prompt: `${genre || ''} ${mood || ''} ${prompt}`,
-          duration,
-          instruments,
-        }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return NextResponse.json({
-          audioUrl: data.audio_url,
-          metadata: {
-            prompt,
-            genre,
-            mood,
-            instruments,
-            isDemoMode: false,
-            provider: 'suno',
-          }
-        });
-      }
-      */
-      
-      return NextResponse.json({
-        error: 'Suno API integration is configured but not yet implemented. Please see code comments in /src/app/api/generate/music/route.ts',
-        demoTracks: AI_CONFIG.demo.sampleTracks,
-        metadata: {
-          prompt,
-          genre,
-          mood,
-          instruments,
-          isDemoMode: true,
-          provider: 'demo',
-        }
-      });
+        { status: 501 }
+      );
     }
     
     // Try Stable Audio
     if (musicAPIs.stableAudio.enabled && musicAPIs.stableAudio.apiKey) {
       // NOTE: Placeholder for Stable Audio integration
-      // Real implementation would follow Stable Audio's API documentation
-      
-      return NextResponse.json({
-        error: 'Stable Audio API integration is configured but not yet implemented. Please see code comments in /src/app/api/generate/music/route.ts',
-        demoTracks: AI_CONFIG.demo.sampleTracks,
-        metadata: {
-          prompt,
-          genre,
-          mood,
-          instruments,
-          isDemoMode: true,
-          provider: 'demo',
-        }
-      });
+      return NextResponse.json(
+        { 
+          error: 'Stable Audio API integration is configured but not yet fully implemented. Please see code comments in /src/app/api/generate/music/route.ts for implementation guidance.',
+          provider: 'stable_audio',
+          status: 'not_implemented'
+        },
+        { status: 501 }
+      );
     }
     
     // Try Riffusion
     if (musicAPIs.riffusion.enabled && musicAPIs.riffusion.apiKey) {
       // NOTE: Placeholder for Riffusion integration
-      // Riffusion works with spectrograms and can generate short music clips
-      
-      return NextResponse.json({
-        error: 'Riffusion API integration is configured but not yet implemented. Please see code comments in /src/app/api/generate/music/route.ts',
-        demoTracks: AI_CONFIG.demo.sampleTracks,
-        metadata: {
-          prompt,
-          genre,
-          mood,
-          instruments,
-          isDemoMode: true,
-          provider: 'demo',
-        }
-      });
+      return NextResponse.json(
+        { 
+          error: 'Riffusion API integration is configured but not yet fully implemented. Please see code comments in /src/app/api/generate/music/route.ts for implementation guidance.',
+          provider: 'riffusion',
+          status: 'not_implemented'
+        },
+        { status: 501 }
+      );
     }
 
     // Demo mode - return sample tracks
