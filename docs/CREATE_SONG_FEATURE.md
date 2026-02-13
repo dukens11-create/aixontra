@@ -8,13 +8,16 @@ The **Create Song** feature allows logged-in users to generate AI-powered songs 
 
 - **AI-Powered Lyrics Generation**: Uses OpenAI GPT models to generate creative song lyrics
 - **Music Generation Support**: Integrates with music AI APIs (Suno, Stable Audio, Riffusion)
+- **Audio Preview**: Listen to your generated music before publishing with an in-browser audio player
+- **Save as Draft**: Save your work in progress and return to it later
+- **Draft Management**: Access and manage your drafts from the "My Music" page
 - **Demo Mode**: Works without API keys using sample data
 - **Multi-Step Creation Process**:
   1. Generate Lyrics: Input prompt, select genre/mood, generate and edit lyrics
-  2. Generate Music: Select instruments, generate audio tracks
-  3. Publish: Review and submit song for approval
+  2. Generate Music: Select instruments, generate audio tracks, and preview them
+  3. Publish: Review, save as draft, or submit song for approval
 - **Authentication Required**: Only logged-in users can create songs
-- **Review System**: All created songs go through moderation before publication
+- **Review System**: All submitted songs go through moderation before publication
 
 ## Setup Instructions
 
@@ -118,15 +121,25 @@ Demo mode is perfect for:
 3. **Step 2: Generate Music**
    - Select instruments you want in your track
    - Click "Generate Music"
-   - Preview the generated audio
-   - Adjust instrument selection if needed
+   - **Preview the audio** using the enhanced audio player
+   - Listen to ensure you're happy with the result
+   - Adjust instrument selection and regenerate if needed
 
-4. **Step 3: Publish**
+4. **Step 3: Publish or Save as Draft**
    - Enter a title for your track
    - Review the lyrics (you can still edit them)
+   - **Preview the audio one last time** before deciding
    - Check your selected genres and mood
-   - Click "Submit for Review"
-   - Your song will be sent for moderation
+   - Choose one of two options:
+     - **Save as Draft**: Save your work to continue later
+     - **Submit for Review**: Send your song for moderation
+   
+5. **Managing Drafts**
+   - Access your drafts from the "My Music" page (navigation menu)
+   - View all your drafts, pending, and published tracks
+   - Edit any draft to continue working on it
+   - Publish drafts when ready
+   - Delete drafts you no longer want
 
 5. **After Submission**
    - Your song enters the review queue

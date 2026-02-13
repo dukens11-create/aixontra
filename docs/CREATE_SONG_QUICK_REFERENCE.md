@@ -17,14 +17,37 @@
 ### Step 2: Generate Music
 1. Select instruments (Piano, Guitar, Drums, Synth, etc.)
 2. Click "Generate Music"
-3. Preview the generated audio with the play button
+3. **🎵 Preview your music** with the enhanced audio player
+4. Click Play/Pause to listen before proceeding
+5. Regenerate if you want to try different instruments
 
-### Step 3: Publish Song
-1. Enter a track title
+### Step 3: Publish or Save as Draft
+1. Enter a track title (required)
 2. Review and edit lyrics one final time
-3. Verify selected genres and mood
-4. Click "Submit for Review"
-5. Your song will be sent to admins for approval
+3. **🎵 Preview the audio again** in the final review section
+4. Verify selected genres and mood
+5. Choose one of two options:
+   - **"Save as Draft"** - Save your work to continue later
+   - **"Submit for Review"** - Send to admins for approval
+
+## Managing Your Music
+
+### My Music Page
+Access via the "My Music" link in the navigation (visible when logged in)
+
+**Drafts Tab:**
+- View all saved drafts
+- Edit drafts to continue working
+- Publish drafts when ready
+- Delete unwanted drafts
+
+**Pending Review Tab:**
+- View songs submitted for review
+- Track approval status
+
+**Published Tab:**
+- View all your approved songs
+- See published tracks in the gallery
 
 ## Demo Mode vs Live Mode
 
@@ -84,6 +107,20 @@ Piano 🎹, Guitar 🎸, Bass 🎸, Drums 🥁, Synthesizer 🎛️, Strings �
 - Title is required
 - Lyrics are required
 - Check console for error messages
+
+**Cannot find "My Music" page**
+- Must be logged in to see the link
+- Navigate directly to `/profile` after logging in
+
+**Draft not loading**
+- Ensure you're logged in as the draft owner
+- Draft may have been deleted or published
+- Check the "Pending Review" or "Published" tabs
+
+**Audio preview not working**
+- Check browser audio permissions
+- Ensure audio was generated (not skipped)
+- Try regenerating the music
 
 ## Support
 
