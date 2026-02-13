@@ -4,7 +4,8 @@ import AuthGuard from "@/components/AuthGuard";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { GENRES, INSTRUMENTS, MOODS, LANGUAGES } from "@/lib/aiConfig";
+import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { LANGUAGES } from "@/lib/constants";
 import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
 
 export default function CreatePage() {
@@ -33,9 +41,11 @@ function CreateSongForm() {
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [styleDescription, setStyleDescription] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [customLanguage, setCustomLanguage] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
   
   const [lyricsLoading, setLyricsLoading] = useState(false);
@@ -58,6 +68,11 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
+      // Determine the actual language to use
+      const languageToUse = selectedLanguage === 'custom' 
+        ? (customLanguage.trim() || 'English')
+        : selectedLanguage;
+
       const response = await fetch('/api/generate/lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,7 +80,8 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
-          language: selectedLanguage,
+          styleDescription,
+          language: languageToUse,
         }),
       });
 
@@ -109,6 +125,7 @@ function CreateSongForm() {
           genre: selectedGenres.join(', '),
           mood: selectedMood,
           instruments: selectedInstruments,
+          styleDescription,
         }),
       });
 
@@ -212,6 +229,7 @@ function CreateSongForm() {
           genres: selectedGenres,
           mood: selectedMood,
           instruments: selectedInstruments,
+          styleDescription,
           isDemoMode,
           ...generationMetadata,
         },
@@ -355,24 +373,51 @@ function CreateSongForm() {
               </div>
 
               <div>
-                <Label htmlFor="language">Language</Label>
-                <select
-                  id="language"
+                <Label htmlFor="styleDescription">Style/Rhythm Description (optional)</Label>
+                <Textarea
+                  id="styleDescription"
+                  placeholder="e.g., traditional Vodou drumming, upbeat carnival Rabòday, slow romantic ballad..."
+                  value={styleDescription}
+                  onChange={(e) => setStyleDescription(e.target.value)}
+                  rows={3}
+                  className="mt-2"
+                />
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Describe the specific style or rhythm you want for your song
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="language">Lyrics Language</Label>
+                <Select
                   value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full mt-2 px-3 py-2 border rounded-md bg-background text-foreground"
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor: 'var(--background)',
-                    color: 'var(--foreground)',
-                  }}
+                  onValueChange={(value) => setSelectedLanguage(value)}
                 >
-                  {LANGUAGES.map(language => (
-                    <option key={language} value={language}>
-                      {language}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.name}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Custom Language...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedLanguage === 'custom' && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <Input
+                      id="customLanguage"
+                      placeholder="Enter language (e.g., Haitian Creole, Swahili, etc.)"
+                      value={customLanguage}
+                      onChange={(e) => setCustomLanguage(e.target.value)}
+                    />
+                  </div>
+                )}
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Select the language for AI-generated lyrics. The AI will generate singable, clear lyrics in the selected language.
+                </p>
               </div>
 
               <Button
@@ -559,6 +604,15 @@ function CreateSongForm() {
                   <Label>Mood</Label>
                   <div style={{ marginTop: '0.5rem' }}>
                     <Badge>{selectedMood}</Badge>
+                  </div>
+                </div>
+              )}
+
+              {styleDescription && (
+                <div>
+                  <Label>Style/Rhythm Description</Label>
+                  <div className="card" style={{ padding: '0.75rem', marginTop: '0.5rem', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                    <p style={{ fontSize: '0.875rem', margin: 0 }}>{styleDescription}</p>
                   </div>
                 </div>
               )}
