@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ function CreateSongForm() {
   const [selectedMood, setSelectedMood] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
-  const [generationMetadata, setGenerationMetadata] = useState<any>(null);
+  const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
   
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [musicLoading, setMusicLoading] = useState(false);
@@ -177,8 +178,23 @@ function CreateSongForm() {
         throw new Error('Not logged in');
       }
 
-      // Note: In production, you would upload the actual generated audio file
-      // For demo purposes, we use a placeholder path that should be handled by the admin
+      // Note: Audio file handling for Create Song feature
+      // 
+      // DEMO MODE: Uses a placeholder path. Admins should be aware that tracks created
+      // in demo mode don't have actual audio files and should handle them accordingly.
+      // 
+      // PRODUCTION: When using real music generation APIs, you would:
+      // 1. Receive audioUrl from the music generation API
+      // 2. Download the audio file from that URL
+      // 3. Upload it to Supabase storage
+      // 4. Use the Supabase storage path here
+      // 
+      // Example implementation for production:
+      // if (audioUrl && !isDemoMode) {
+      //   const audioBlob = await fetch(audioUrl).then(r => r.blob());
+      //   const audioPath = `${user.id}/${crypto.randomUUID()}.mp3`;
+      //   await supabase.storage.from('tracks').upload(audioPath, audioBlob);
+      // }
       const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
 
       const { error: insErr } = await supabase.from("tracks").insert({

@@ -343,6 +343,19 @@ Returns information about available music generation providers.
 - Check that `lyrics` column exists in `tracks` table
 - Verify RLS policies allow insert with lyrics field
 
+### Demo mode tracks don't have audio
+
+This is expected behavior. Tracks created in demo mode use a placeholder audio path (`demo/placeholder.mp3`). These tracks:
+- Are still submitted for review
+- Show up in the admin review queue
+- Should be reviewed/approved based on lyrics and metadata
+- May need special handling by admins (marked as demo/sample tracks)
+
+For production use with real audio:
+- Configure music generation API keys
+- Implement audio file download and upload (see code comments in `src/app/create/page.tsx`)
+- Or use the existing Upload feature for tracks with audio files
+
 ## Cost Considerations
 
 ### OpenAI API Costs
@@ -363,8 +376,9 @@ Returns information about available music generation providers.
 
 Potential improvements for this feature:
 
-1. **Multi-track Editing**: Allow users to mix multiple instrument tracks
-2. **Audio Upload**: Let users upload custom audio instead of generating
+1. **Audio File Upload**: Complete audio file handling by downloading generated audio and uploading to Supabase storage
+2. **Multi-track Editing**: Allow users to mix multiple instrument tracks
+3. **Audio Upload**: Let users upload custom audio instead of generating
 3. **Collaboration**: Multiple users working on same song
 4. **Version History**: Save multiple versions of lyrics/audio
 5. **Genre-specific Templates**: Pre-configured settings for popular genres

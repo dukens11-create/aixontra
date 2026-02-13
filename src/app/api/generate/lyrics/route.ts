@@ -118,13 +118,14 @@ export async function POST(request: NextRequest) {
  * Generate demo lyrics when no API key is available
  */
 function generateDemoLyrics(prompt: string, genre?: string, mood?: string): string {
+  const MAX_PROMPT_PREVIEW_LENGTH = 50;
   const genreText = genre ? ` ${genre}` : '';
   const moodText = mood ? ` ${mood.toLowerCase()}` : '';
   
   return `[DEMO MODE - Replace OPENAI_API_KEY in .env for real generation]
 
 [Verse 1]
-${prompt.slice(0, 50)}...
+${prompt.slice(0, MAX_PROMPT_PREVIEW_LENGTH)}...
 This is a demo track, generated without AI
 ${genreText}${moodText} vibes flowing through
 Sample lyrics just for you

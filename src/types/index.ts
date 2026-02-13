@@ -1,4 +1,20 @@
 // ============================================================================
+// Create Song Feature Types
+// ============================================================================
+
+export interface GenerationMetadata {
+  prompt: string;
+  genres?: string[];
+  mood?: string;
+  instruments?: string[];
+  isDemoMode: boolean;
+  model?: string;
+  provider?: string;
+  generatedAt?: string;
+  [key: string]: any; // Allow additional properties for extensibility
+}
+
+// ============================================================================
 // Base Types and Enums
 // ============================================================================
 
@@ -55,7 +71,7 @@ export interface Track {
   deleted_at: string | null;
   // Create Song feature fields
   lyrics: string | null;
-  generation_metadata: any | null;
+  generation_metadata: GenerationMetadata | null;
   // Joined data
   creator?: Profile;
   is_liked?: boolean;
