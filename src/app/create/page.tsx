@@ -109,6 +109,11 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
+      // Determine the language to use
+      const languageToUse = selectedLanguage === 'custom' 
+        ? customLanguage.trim() || 'English'
+        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
+
       const response = await fetch('/api/generate/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,6 +121,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          language: languageToUse,
           instruments: selectedInstruments,
         }),
       });
