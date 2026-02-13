@@ -454,7 +454,7 @@ function CreateSongForm() {
           resolution: videoResolution,
           aspectRatio: videoAspectRatio,
           duration: 180,
-          provider: isDemoMode ? 'demo' : 'api',
+          provider: 'demo' as const,
           generatedAt: new Date().toISOString(),
         } as VideoMetadata : null,
         generation_metadata: {
@@ -541,7 +541,7 @@ function CreateSongForm() {
           resolution: videoResolution,
           aspectRatio: videoAspectRatio,
           duration: 180,
-          provider: isDemoMode ? 'demo' : 'api',
+          provider: 'demo' as const,
           generatedAt: new Date().toISOString(),
         } as VideoMetadata : null,
         generation_metadata: {

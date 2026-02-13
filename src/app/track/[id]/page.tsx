@@ -2,7 +2,6 @@ import AudioPlayer from "@/components/AudioPlayer";
 import LikeButton from "@/components/LikeButton";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import Link from "next/link";
-import { useState } from "react";
 
 export const dynamic = "force-dynamic";
 
