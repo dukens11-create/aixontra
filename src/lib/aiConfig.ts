@@ -87,9 +87,9 @@ export const AI_CONFIG = {
     
     // Demo voice samples
     sampleVoices: [
-      { id: 'demo-male-1', name: 'Demo Male Voice', gender: 'male', language: 'en', provider: 'demo', file: '/demo-audio/voice-male-demo.mp3' },
-      { id: 'demo-female-1', name: 'Demo Female Voice', gender: 'female', language: 'en', provider: 'demo', file: '/demo-audio/voice-female-demo.mp3' },
-    ],
+      { id: 'demo-male-1', name: 'Demo Male Voice', gender: 'male', language: 'en', languageName: 'English', provider: 'demo', file: '/demo-audio/voice-male-demo.mp3' },
+      { id: 'demo-female-1', name: 'Demo Female Voice', gender: 'female', language: 'en', languageName: 'English', provider: 'demo', file: '/demo-audio/voice-female-demo.mp3' },
+    ] as VoiceOption[],
   },
 };
 
@@ -160,6 +160,7 @@ export interface VoiceOption {
   style?: string;
   previewUrl?: string;
   singing?: boolean; // Indicates if voice supports singing
+  file?: string; // For demo mode voice samples
 }
 
 // OpenAI TTS Voices
@@ -227,7 +228,7 @@ export function getAvailableVoices(): VoiceOption[] {
   
   // Always include demo voices if no TTS providers are configured
   if (voices.length === 0) {
-    voices.push(...(AI_CONFIG.demo.sampleVoices as any[]));
+    voices.push(...AI_CONFIG.demo.sampleVoices);
   }
   
   return voices;

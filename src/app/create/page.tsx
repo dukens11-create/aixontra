@@ -180,18 +180,22 @@ function CreateSongForm() {
           text: 'Demo mode: Configure TTS API keys in .env for real voice generation' 
         });
       } else {
-        // Convert base64 audio data to blob and create URL
-        const audioData = data.audioData;
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(audioData), c => c.charCodeAt(0))],
-          { type: 'audio/mpeg' }
-        );
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        setVoiceAudioUrl(audioUrl);
-        setVoiceAudioBlob(audioBlob);
-        setVoiceMetadata(data.metadata);
-        setMessage({ type: 'success', text: 'Voice generated successfully! Preview below.' });
+        try {
+          // Convert base64 audio data to blob and create URL
+          const audioData = data.audioData;
+          const audioBlob = new Blob(
+            [Uint8Array.from(atob(audioData), c => c.charCodeAt(0))],
+            { type: 'audio/mpeg' }
+          );
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          setVoiceAudioUrl(audioUrl);
+          setVoiceAudioBlob(audioBlob);
+          setVoiceMetadata(data.metadata);
+          setMessage({ type: 'success', text: 'Voice generated successfully! Preview below.' });
+        } catch (decodeError) {
+          throw new Error('Failed to decode audio data. Please try again.');
+        }
       }
 
       setActiveTab("music");
@@ -228,6 +232,11 @@ function CreateSongForm() {
       const languageMatch = voiceFilterLanguage === 'all' || voice.language.startsWith(voiceFilterLanguage);
       return genderMatch && languageMatch;
     });
+  };
+
+  // Helper function to capitalize first letter
+  const capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   const handleGenerateMusic = async () => {
@@ -432,11 +441,11 @@ function CreateSongForm() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="lyrics">1. Lyrics</TabsTrigger>
-          <TabsTrigger value="voice">2. Voice</TabsTrigger>
-          <TabsTrigger value="music">3. Music</TabsTrigger>
-          <TabsTrigger value="publish">4. Publish</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4" aria-label="Song creation steps">
+          <TabsTrigger value="lyrics" aria-label="Step 1: Generate Lyrics">1. Lyrics</TabsTrigger>
+          <TabsTrigger value="voice" aria-label="Step 2: Select and Generate Voice">2. Voice</TabsTrigger>
+          <TabsTrigger value="music" aria-label="Step 3: Generate Music">3. Music</TabsTrigger>
+          <TabsTrigger value="publish" aria-label="Step 4: Publish Song">4. Publish</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lyrics" className="space-y-4">
@@ -669,7 +678,7 @@ function CreateSongForm() {
                         <strong>{voice.name}</strong>
                       </div>
                       <div style={{ fontSize: '0.875rem' }} className="muted">
-                        <div>{voice.gender && `${voice.gender.charAt(0).toUpperCase() + voice.gender.slice(1)}`}</div>
+                        <div>{voice.gender && capitalizeFirstLetter(voice.gender)}</div>
                         <div>{voice.languageName}</div>
                         {voice.style && <div>{voice.style}</div>}
                         <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>

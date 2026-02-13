@@ -243,11 +243,26 @@ export async function POST(request: NextRequest) {
     // Try Azure Neural TTS
     if (voiceProvider === 'azure' && AI_CONFIG.tts.azureTTS.enabled && AI_CONFIG.tts.azureTTS.apiKey) {
       const region = AI_CONFIG.tts.azureTTS.region;
+      
+      // Sanitize values for SSML to prevent XML injection
+      const sanitizeForXML = (text: string) => {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      };
+      
+      const sanitizedLyrics = sanitizeForXML(cleanedLyrics);
+      const sanitizedVoiceId = sanitizeForXML(voiceId);
+      const sanitizedLanguage = sanitizeForXML(language);
+      
       const ssml = `
-        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${language}">
-          <voice name="${voiceId}">
+        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${sanitizedLanguage}">
+          <voice name="${sanitizedVoiceId}">
             <prosody rate="${speed}">
-              ${cleanedLyrics}
+              ${sanitizedLyrics}
             </prosody>
           </voice>
         </speak>
