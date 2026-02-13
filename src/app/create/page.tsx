@@ -22,7 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Music, Sparkles, Save, Play, Pause, Mic2 } from "lucide-react";
+import { LyricQualityScore } from "@/components/LyricQualityScore";
+import { HitPotentialMeter } from "@/components/HitPotentialMeter";
+import { FlowAnalysisDisplay } from "@/components/FlowAnalysisDisplay";
+import { rhymeEngine } from "@/lib/services/rhymeEngine";
+import { lyricAnalyzer } from "@/lib/services/lyricAnalyzer";
+import { hitPotentialAnalyzer } from "@/lib/services/hitPotentialAnalyzer";
+import { getIdealBpmForGenres, enhanceLyricPromptWithGenre } from "@/lib/services/genreRules";
 
 export default function CreatePage() {
   return (
@@ -46,6 +54,8 @@ function CreateSongForm() {
   const [lyrics, setLyrics] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [customLanguage, setCustomLanguage] = useState("");
+  const [bpm, setBpm] = useState(120); // BPM control
+  const [showAnalysis, setShowAnalysis] = useState(false); // Toggle analysis display
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
   
   // Voice generation state
@@ -87,6 +97,14 @@ function CreateSongForm() {
     loadVoices();
   }, []);
 
+  // Auto-suggest BPM when genres change
+  useEffect(() => {
+    if (selectedGenres.length > 0) {
+      const idealBpm = getIdealBpmForGenres(selectedGenres);
+      setBpm(idealBpm);
+    }
+  }, [selectedGenres]);
+
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
       setMessage({ type: 'error', text: 'Please enter a creative prompt' });
@@ -102,11 +120,14 @@ function CreateSongForm() {
         ? (customLanguage.trim() || 'English')
         : selectedLanguage;
 
+      // Enhance prompt with genre-specific guidance
+      const enhancedPrompt = enhanceLyricPromptWithGenre(prompt, selectedGenres);
+
       const response = await fetch('/api/generate/lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt,
+          prompt: enhancedPrompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
           styleDescription,
@@ -661,6 +682,32 @@ function CreateSongForm() {
                 </p>
               </div>
 
+              <div>
+                <Label htmlFor="bpm">BPM (Beats Per Minute)</Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <Slider
+                    id="bpm"
+                    min={60}
+                    max={180}
+                    step={5}
+                    value={[bpm]}
+                    onValueChange={(value) => setBpm(value[0])}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    min="60"
+                    max="180"
+                    value={bpm}
+                    onChange={(e) => setBpm(parseInt(e.target.value) || 120)}
+                    className="w-20"
+                  />
+                </div>
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Set the tempo for your song (60-180 BPM). This affects flow analysis and ideal syllable count.
+                </p>
+              </div>
+
               <Button
                 onClick={handleGenerateLyrics}
                 disabled={lyricsLoading || !prompt.trim()}
@@ -699,6 +746,32 @@ function CreateSongForm() {
                     rows={12}
                     className="mt-2 font-mono"
                   />
+                  
+                  {/* Analysis Section */}
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAnalysis(!showAnalysis)}
+                      className="w-full"
+                    >
+                      {showAnalysis ? "Hide" : "Show"} Lyric Analysis
+                    </Button>
+                    
+                    {showAnalysis && lyrics && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                        <LyricQualityScore score={lyricAnalyzer.analyzeLyrics(lyrics)} />
+                        <FlowAnalysisDisplay 
+                          analysis={rhymeEngine.analyzeFlow(lyrics, bpm)} 
+                          bpm={bpm}
+                        />
+                        <div className="lg:col-span-2">
+                          <HitPotentialMeter 
+                            score={hitPotentialAnalyzer.analyzeHitPotential(lyrics, bpm, 180)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
