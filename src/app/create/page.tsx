@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { LANGUAGES } from "@/lib/constants";
 import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
 
 export default function CreatePage() {
@@ -33,6 +35,8 @@ function CreateSongForm() {
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [customLanguage, setCustomLanguage] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
@@ -57,6 +61,11 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
+      // Determine the language to use
+      const languageToUse = selectedLanguage === 'custom' 
+        ? customLanguage.trim() || 'English'
+        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
+
       const response = await fetch('/api/generate/lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,6 +73,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          language: languageToUse,
         }),
       });
 
@@ -197,6 +207,11 @@ function CreateSongForm() {
       // }
       const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
 
+      // Determine the language to save
+      const languageToSave = selectedLanguage === 'custom' 
+        ? customLanguage.trim() || 'English'
+        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
+
       const { error: insErr } = await supabase.from("tracks").insert({
         creator_id: user.id,
         title,
@@ -205,10 +220,12 @@ function CreateSongForm() {
         ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
         audio_path: audioPath,
         lyrics: lyrics,
+        language: selectedLanguage === 'custom' ? customLanguage.trim() || 'en' : selectedLanguage,
         generation_metadata: {
           prompt,
           genres: selectedGenres,
           mood: selectedMood,
+          language: languageToSave,
           instruments: selectedInstruments,
           isDemoMode,
           ...generationMetadata,
@@ -350,6 +367,30 @@ function CreateSongForm() {
                     </Badge>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="language">Language</Label>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger id="language" className="mt-2">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedLanguage === 'custom' && (
+                  <Input
+                    placeholder="Enter your language (e.g., Swahili, Tagalog)"
+                    value={customLanguage}
+                    onChange={(e) => setCustomLanguage(e.target.value)}
+                    className="mt-2"
+                  />
+                )}
               </div>
 
               <Button
