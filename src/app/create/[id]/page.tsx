@@ -61,6 +61,8 @@ function EditDraftForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDraft();
@@ -227,22 +229,57 @@ function EditDraftForm() {
     }
   };
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioUrl) return;
 
     if (!audioElement) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setIsPlaying(false);
-      setAudioElement(audio);
-      audio.play();
-      setIsPlaying(true);
+      setAudioLoading(true);
+      setAudioError(null);
+      
+      try {
+        const audio = new Audio(audioUrl);
+        
+        // Add error handler
+        audio.onerror = () => {
+          setAudioError('Failed to load audio file. Please check if the file exists and is accessible.');
+          setAudioLoading(false);
+          setIsPlaying(false);
+          setAudioElement(null);
+        };
+        
+        // Add canplay handler
+        audio.oncanplay = () => {
+          setAudioLoading(false);
+        };
+        
+        audio.onended = () => setIsPlaying(false);
+        setAudioElement(audio);
+        
+        await audio.play();
+        setIsPlaying(true);
+        setAudioLoading(false);
+      } catch (error: any) {
+        setAudioError(error.message || 'Failed to play audio');
+        setAudioLoading(false);
+        setIsPlaying(false);
+        setAudioElement(null);
+      }
     } else {
       if (isPlaying) {
         audioElement.pause();
         setIsPlaying(false);
       } else {
-        audioElement.play();
-        setIsPlaying(true);
+        try {
+          setAudioLoading(true);
+          setAudioError(null);
+          await audioElement.play();
+          setIsPlaying(true);
+          setAudioLoading(false);
+        } catch (error: any) {
+          setAudioError(error.message || 'Failed to play audio');
+          setAudioLoading(false);
+          setIsPlaying(false);
+        }
       }
     }
   };
@@ -591,14 +628,36 @@ function EditDraftForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
+                  {audioError && (
+                    <div className="card" style={{ 
+                      padding: '1rem', 
+                      marginBottom: '1rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                          {audioError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? (
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause
@@ -690,14 +749,36 @@ function EditDraftForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
+                  {audioError && (
+                    <div className="card" style={{ 
+                      padding: '1rem', 
+                      marginBottom: '1rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                          {audioError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? (
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause
