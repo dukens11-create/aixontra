@@ -51,6 +51,22 @@ function CreateSongForm() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
+  // Helper function to get language name for display/API calls
+  const getLanguageName = () => {
+    if (selectedLanguage === 'custom') {
+      return customLanguage.trim() || 'English';
+    }
+    return LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
+  };
+
+  // Helper function to get language code for database storage
+  const getLanguageCode = () => {
+    if (selectedLanguage === 'custom') {
+      return customLanguage.trim() || 'en';
+    }
+    return selectedLanguage;
+  };
+
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
       setMessage({ type: 'error', text: 'Please enter a creative prompt' });
@@ -61,11 +77,6 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
-      // Determine the language to use
-      const languageToUse = selectedLanguage === 'custom' 
-        ? customLanguage.trim() || 'English'
-        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
-
       const response = await fetch('/api/generate/lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +84,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
-          language: languageToUse,
+          language: getLanguageName(),
         }),
       });
 
@@ -109,11 +120,6 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
-      // Determine the language to use
-      const languageToUse = selectedLanguage === 'custom' 
-        ? customLanguage.trim() || 'English'
-        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
-
       const response = await fetch('/api/generate/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,7 +127,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
-          language: languageToUse,
+          language: getLanguageName(),
           instruments: selectedInstruments,
         }),
       });
@@ -213,11 +219,6 @@ function CreateSongForm() {
       // }
       const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
 
-      // Determine the language to save
-      const languageToSave = selectedLanguage === 'custom' 
-        ? customLanguage.trim() || 'English'
-        : LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
-
       const { error: insErr } = await supabase.from("tracks").insert({
         creator_id: user.id,
         title,
@@ -226,12 +227,12 @@ function CreateSongForm() {
         ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
         audio_path: audioPath,
         lyrics: lyrics,
-        language: selectedLanguage === 'custom' ? customLanguage.trim() || 'en' : selectedLanguage,
+        language: getLanguageCode(),
         generation_metadata: {
           prompt,
           genres: selectedGenres,
           mood: selectedMood,
-          language: languageToSave,
+          language: getLanguageName(),
           instruments: selectedInstruments,
           isDemoMode,
           ...generationMetadata,
@@ -391,7 +392,7 @@ function CreateSongForm() {
                 </Select>
                 {selectedLanguage === 'custom' && (
                   <Input
-                    placeholder="Enter your language (e.g., Swahili, Tagalog)"
+                    placeholder="Enter your language (e.g., Esperanto, Klingon, Ancient Greek)"
                     value={customLanguage}
                     onChange={(e) => setCustomLanguage(e.target.value)}
                     className="mt-2"

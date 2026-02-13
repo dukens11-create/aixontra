@@ -28,7 +28,7 @@ export default function HomePage() {
         .select("*")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(50);
 
       const creatorIds = (tracks ?? []).map((t: any) => t.creator_id);
       const { data: profiles } = await supabase
