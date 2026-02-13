@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { LANGUAGES } from "@/lib/constants";
 import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
 
 export default function CreatePage() {
@@ -36,6 +44,8 @@ function CreateSongForm() {
   const [styleDescription, setStyleDescription] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [customLanguage, setCustomLanguage] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
   
   const [lyricsLoading, setLyricsLoading] = useState(false);
@@ -58,6 +68,11 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
+      // Determine the actual language to use
+      const languageToUse = selectedLanguage === 'custom' 
+        ? (customLanguage.trim() || 'English')
+        : selectedLanguage;
+
       const response = await fetch('/api/generate/lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,6 +81,7 @@ function CreateSongForm() {
           genre: selectedGenres.join(', '),
           mood: selectedMood,
           styleDescription,
+          language: languageToUse,
         }),
       });
 
@@ -368,6 +384,39 @@ function CreateSongForm() {
                 />
                 <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
                   Describe the specific style or rhythm you want for your song
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="language">Lyrics Language</Label>
+                <Select
+                  value={selectedLanguage}
+                  onValueChange={(value) => setSelectedLanguage(value)}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.name}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Custom Language...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedLanguage === 'custom' && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <Input
+                      id="customLanguage"
+                      placeholder="Enter language (e.g., Haitian Creole, Swahili, etc.)"
+                      value={customLanguage}
+                      onChange={(e) => setCustomLanguage(e.target.value)}
+                    />
+                  </div>
+                )}
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Select the language for AI-generated lyrics. The AI will generate singable, clear lyrics in the selected language.
                 </p>
               </div>
 

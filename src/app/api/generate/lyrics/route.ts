@@ -55,13 +55,15 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: 'system',
-              content: `You are a creative songwriter. Generate song lyrics based on the user's prompt. 
+              content: `You are a creative songwriter. Generate singable, clear, and precise song lyrics in ${language} based on the user's prompt. 
+                       The lyrics MUST be written entirely in ${language} language.
                        Include verse, chorus, and bridge sections. Make the lyrics creative, engaging, and appropriate for the ${genre || 'any'} genre with a ${mood || 'neutral'} mood.${
                          styleDescription 
                            ? ` Pay special attention to the following style/rhythm description: ${styleDescription}` 
                            : ''
                        } 
-                       Write in ${language}. Format with clear section labels like [Verse 1], [Chorus], [Verse 2], [Bridge], etc.`
+                       Ensure the lyrics are natural and singable in ${language}, using appropriate rhythm and phrasing for that language.
+                       Format with clear section labels like [Verse 1], [Chorus], [Verse 2], [Bridge], etc.`
             },
             {
               role: 'user',
@@ -92,6 +94,7 @@ export async function POST(request: NextRequest) {
           genre,
           mood,
           styleDescription,
+          language,
           model: AI_CONFIG.openai.model,
           isDemoMode: false,
         }
@@ -107,6 +110,7 @@ export async function POST(request: NextRequest) {
           genre,
           mood,
           styleDescription,
+          language,
           model: 'demo',
           isDemoMode: true,
         }
