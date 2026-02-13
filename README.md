@@ -1,8 +1,46 @@
 # Aixontra
 
+AIXONTRA is a curated AI music gallery where creators can share exceptional AI-generated music. The platform features moderation, user profiles, and an AI-powered song creation tool.
+
+## Features
+
+- 🎵 **Curated Music Gallery**: Browse and discover AI-generated music
+- ✨ **Create Song Feature**: Generate songs with AI-powered lyrics and music (NEW!)
+- 📤 **Track Upload**: Upload your AI-generated tracks for review
+- 👥 **User Profiles**: Creator pages with tracks and stats
+- 🎯 **Admin Review System**: Content moderation before publication
+- ❤️ **Like & Play Tracking**: Engagement metrics for tracks
+- 🔐 **Secure Authentication**: User accounts with role-based access
+
 ## Quick Start
 
 [Existing quick start instructions here]
+
+## Create Song Feature (NEW!)
+
+The Create Song feature allows logged-in users to generate AI-powered songs with lyrics and music. Features include:
+
+- **AI Lyrics Generation**: Using OpenAI GPT models
+- **Music Generation**: Support for Suno, Stable Audio, and Riffusion
+- **Demo Mode**: Works without API keys using sample data
+- **Multi-step Process**: Generate lyrics → Generate music → Publish
+
+For detailed setup and usage instructions, see [docs/CREATE_SONG_FEATURE.md](docs/CREATE_SONG_FEATURE.md)
+
+### Quick Setup
+
+1. Add API keys to `.env` (optional - works in demo mode without keys):
+   ```env
+   OPENAI_API_KEY=sk-your-key-here  # For lyrics generation
+   SUNO_API_KEY=your-key-here       # For music generation (optional)
+   ```
+
+2. Run database migration:
+   ```bash
+   # Execute supabase/migrations/002_add_create_song_fields.sql in Supabase
+   ```
+
+3. Access the feature at `/create` (login required)
 
 ## Admin Account Setup
 
