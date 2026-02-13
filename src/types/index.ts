@@ -13,6 +13,18 @@ export interface VoiceMetadata {
   generatedAt?: string;
 }
 
+export interface VideoMetadata {
+  style: string;
+  resolution: string;
+  aspectRatio: string;
+  duration: number;
+  provider: 'replicate' | 'runway' | 'stability' | 'pika' | 'luma' | 'demo';
+  model?: string;
+  prompt?: string;
+  generatedAt?: string;
+  thumbnailUrl?: string;
+}
+
 export interface GenerationMetadata {
   prompt: string;
   genres?: string[];
@@ -88,6 +100,10 @@ export interface Track {
   // Voice generation fields
   voice_audio_path: string | null;
   voice_metadata: VoiceMetadata | null;
+  // Video generation fields
+  video_url: string | null;
+  video_status: 'none' | 'pending' | 'generating' | 'completed' | 'failed';
+  video_metadata: VideoMetadata | null;
   // Draft feature
   is_draft: boolean;
   // Joined data

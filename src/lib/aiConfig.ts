@@ -74,6 +74,39 @@ export const AI_CONFIG = {
     },
   },
   
+  // Video generation API configurations
+  video: {
+    // Replicate (Stable Video Diffusion) configuration
+    replicate: {
+      enabled: !!process.env.REPLICATE_API_KEY,
+      apiKey: process.env.REPLICATE_API_KEY,
+    },
+    
+    // Runway ML configuration
+    runway: {
+      enabled: !!process.env.RUNWAY_API_KEY,
+      apiKey: process.env.RUNWAY_API_KEY,
+    },
+    
+    // Stability AI configuration
+    stabilityAI: {
+      enabled: !!process.env.STABILITY_API_KEY,
+      apiKey: process.env.STABILITY_API_KEY,
+    },
+    
+    // Pika Labs configuration
+    pika: {
+      enabled: !!process.env.PIKA_API_KEY,
+      apiKey: process.env.PIKA_API_KEY,
+    },
+    
+    // Luma AI Dream Machine configuration
+    luma: {
+      enabled: !!process.env.LUMA_API_KEY,
+      apiKey: process.env.LUMA_API_KEY,
+    },
+  },
+  
   // Demo mode settings
   demo: {
     // Enable demo mode when no API keys are configured
@@ -93,6 +126,13 @@ export const AI_CONFIG = {
       { id: 'demo-male-1', name: 'Demo Male Voice', gender: 'male', language: 'en', languageName: 'English', provider: 'demo', file: '/demo-audio/voice-male-demo.mp3' },
       { id: 'demo-female-1', name: 'Demo Female Voice', gender: 'female', language: 'en', languageName: 'English', provider: 'demo', file: '/demo-audio/voice-female-demo.mp3' },
     ] as VoiceOption[],
+    
+    // Demo video samples
+    sampleVideos: [
+      { name: 'Abstract Demo', file: '/demo-video/abstract-demo.mp4', style: 'abstract' },
+      { name: 'Nature Demo', file: '/demo-video/nature-demo.mp4', style: 'nature' },
+      { name: 'Urban Demo', file: '/demo-video/urban-demo.mp4', style: 'urban' },
+    ],
   },
 };
 
@@ -242,3 +282,41 @@ export function getVoicesByLanguage(languageCode: string): VoiceOption[] {
   const allVoices = getAvailableVoices();
   return allVoices.filter(v => v.language.startsWith(languageCode) || v.language === languageCode);
 }
+
+// Video generation options
+export const VIDEO_STYLES = [
+  'Abstract',
+  'Nature',
+  'Urban',
+  'Animated',
+  'Visualizer',
+  'Cinematic',
+  'Retro',
+  'Minimal',
+  'Psychedelic',
+  'Neon',
+];
+
+export const VIDEO_RESOLUTIONS = [
+  { value: '720p', label: '720p (HD)' },
+  { value: '1080p', label: '1080p (Full HD)' },
+  { value: '4k', label: '4K (Ultra HD)' },
+];
+
+export const VIDEO_ASPECT_RATIOS = [
+  { value: '16:9', label: '16:9 (Landscape)' },
+  { value: '9:16', label: '9:16 (Vertical/Mobile)' },
+  { value: '1:1', label: '1:1 (Square)' },
+  { value: '4:3', label: '4:3 (Classic)' },
+];
+
+export const VIDEO_MOODS = [
+  'Dark',
+  'Vibrant',
+  'Minimalist',
+  'Energetic',
+  'Calm',
+  'Dreamy',
+  'Intense',
+  'Futuristic',
+];
