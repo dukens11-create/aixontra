@@ -122,10 +122,19 @@ function generateDemoLyrics(prompt: string, genre?: string, mood?: string): stri
   const genreText = genre ? ` ${genre}` : '';
   const moodText = mood ? ` ${mood.toLowerCase()}` : '';
   
+  // Truncate at word boundary
+  let promptPreview = prompt.slice(0, MAX_PROMPT_PREVIEW_LENGTH);
+  if (prompt.length > MAX_PROMPT_PREVIEW_LENGTH) {
+    const lastSpace = promptPreview.lastIndexOf(' ');
+    if (lastSpace > 20) { // Only truncate at word if we have at least 20 chars
+      promptPreview = promptPreview.slice(0, lastSpace);
+    }
+  }
+  
   return `[DEMO MODE - Replace OPENAI_API_KEY in .env for real generation]
 
 [Verse 1]
-${prompt.slice(0, MAX_PROMPT_PREVIEW_LENGTH)}...
+${promptPreview}${prompt.length > MAX_PROMPT_PREVIEW_LENGTH ? '...' : ''}
 This is a demo track, generated without AI
 ${genreText}${moodText} vibes flowing through
 Sample lyrics just for you

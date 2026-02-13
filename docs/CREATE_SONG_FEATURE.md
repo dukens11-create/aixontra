@@ -379,11 +379,11 @@ Potential improvements for this feature:
 1. **Audio File Upload**: Complete audio file handling by downloading generated audio and uploading to Supabase storage
 2. **Multi-track Editing**: Allow users to mix multiple instrument tracks
 3. **Audio Upload**: Let users upload custom audio instead of generating
-3. **Collaboration**: Multiple users working on same song
-4. **Version History**: Save multiple versions of lyrics/audio
-5. **Genre-specific Templates**: Pre-configured settings for popular genres
-6. **Real-time Preview**: Live lyrics/music preview during generation
-7. **Export Options**: Download lyrics as text file, audio in various formats
+4. **Collaboration**: Multiple users working on same song
+5. **Version History**: Save multiple versions of lyrics/audio
+6. **Genre-specific Templates**: Pre-configured settings for popular genres
+7. **Real-time Preview**: Live lyrics/music preview during generation
+8. **Export Options**: Download lyrics as text file, audio in various formats
 
 ## Support
 

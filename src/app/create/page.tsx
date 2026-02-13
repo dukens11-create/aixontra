@@ -303,7 +303,7 @@ function CreateSongForm() {
               </div>
 
               <div>
-                <Label>Genres</Label>
+                <Label>Genres (select one or more)</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                   {GENRES.map(genre => (
                     <Badge
@@ -311,6 +311,15 @@ function CreateSongForm() {
                       variant={selectedGenres.includes(genre) ? "default" : "outline"}
                       style={{ cursor: 'pointer' }}
                       onClick={() => toggleGenre(genre)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleGenre(genre);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="checkbox"
+                      aria-checked={selectedGenres.includes(genre)}
                     >
                       {genre}
                     </Badge>
@@ -319,7 +328,7 @@ function CreateSongForm() {
               </div>
 
               <div>
-                <Label>Mood</Label>
+                <Label>Mood/Style</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                   {MOODS.map(mood => (
                     <Badge
@@ -327,6 +336,15 @@ function CreateSongForm() {
                       variant={selectedMood === mood ? "default" : "outline"}
                       style={{ cursor: 'pointer' }}
                       onClick={() => setSelectedMood(mood)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedMood(mood);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="radio"
+                      aria-checked={selectedMood === mood}
                     >
                       {mood}
                     </Badge>
@@ -383,6 +401,12 @@ function CreateSongForm() {
                     <div
                       key={instrument.id}
                       onClick={() => toggleInstrument(instrument.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleInstrument(instrument.id);
+                        }
+                      }}
                       className="card"
                       style={{
                         cursor: 'pointer',
@@ -395,6 +419,10 @@ function CreateSongForm() {
                           ? 'rgba(139, 92, 246, 0.1)'
                           : 'var(--card)',
                       }}
+                      tabIndex={0}
+                      role="checkbox"
+                      aria-checked={selectedInstruments.includes(instrument.id)}
+                      aria-label={`${instrument.label} instrument`}
                     >
                       <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{instrument.icon}</div>
                       <div style={{ fontSize: '0.875rem' }}>{instrument.label}</div>
