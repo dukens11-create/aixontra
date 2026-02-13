@@ -248,14 +248,14 @@ export async function POST(request: NextRequest) {
       const validSpeed = Math.max(0.5, Math.min(2.0, Number(speed) || 1.0));
       
       // Sanitize values for SSML to prevent XML injection
-      // IMPORTANT: Ampersand must be replaced last to avoid double-encoding
+      // IMPORTANT: Ampersand must be replaced FIRST to avoid double-encoding
       const sanitizeForXML = (text: string) => {
         return text
+          .replace(/&/g, '&amp;')  // Must be first
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;')
-          .replace(/&/g, '&amp;');
+          .replace(/'/g, '&apos;');
       };
       
       const sanitizedLyrics = sanitizeForXML(cleanedLyrics);
