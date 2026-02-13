@@ -33,6 +33,7 @@ export default function Nav() {
           <Link href="/faq" className="badge">FAQ</Link>
           <Link href="/create" className="badge">Create</Link>
           <Link href="/upload" className="badge">Upload</Link>
+          {email && <Link href="/profile" className="badge">My Music</Link>}
           <Link href="/admin/review" className="badge">Admin</Link>
           {!email ? (
             <>

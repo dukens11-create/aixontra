@@ -51,12 +51,14 @@ function CreateSongForm() {
   const [lyricsLoading, setLyricsLoading] = useState(false);
   const [musicLoading, setMusicLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info', text: string } | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
@@ -251,6 +253,82 @@ function CreateSongForm() {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setPublishLoading(false);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    if (!title.trim()) {
+      setMessage({ type: 'error', text: 'Please enter a track title' });
+      return;
+    }
+
+    if (!lyrics.trim()) {
+      setMessage({ type: 'error', text: 'Please generate or enter lyrics first' });
+      return;
+    }
+
+    setDraftLoading(true);
+    setMessage(null);
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user;
+      if (!user) {
+        throw new Error('Not logged in');
+      }
+
+      const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
+
+      const draftData = {
+        creator_id: user.id,
+        title,
+        genre: selectedGenres.join(', '),
+        mood: selectedMood,
+        ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
+        audio_path: audioPath,
+        lyrics: lyrics,
+        generation_metadata: {
+          prompt,
+          genres: selectedGenres,
+          mood: selectedMood,
+          instruments: selectedInstruments,
+          styleDescription,
+          isDemoMode,
+          ...generationMetadata,
+        },
+        status: "pending" as const,
+        is_draft: true,
+      };
+
+      if (draftId) {
+        // Update existing draft
+        const { error: updateErr } = await supabase
+          .from("tracks")
+          .update(draftData)
+          .eq("id", draftId)
+          .eq("creator_id", user.id);
+
+        if (updateErr) throw new Error(updateErr.message);
+      } else {
+        // Create new draft
+        const { data: insertedTrack, error: insErr } = await supabase
+          .from("tracks")
+          .insert(draftData)
+          .select()
+          .single();
+
+        if (insErr) throw new Error(insErr.message);
+        if (insertedTrack) setDraftId(insertedTrack.id);
+      }
+
+      setMessage({ 
+        type: 'success', 
+        text: 'Draft saved! You can continue editing or return to it later from your profile.' 
+      });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setDraftLoading(false);
     }
   };
 
@@ -518,19 +596,40 @@ function CreateSongForm() {
               </Button>
 
               {audioUrl && (
-                <div className="card" style={{ padding: '1rem' }}>
-                  <Label>Audio Preview</Label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                <div className="card" style={{ padding: '1.5rem', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <Label style={{ fontSize: '1rem', fontWeight: 600 }}>🎵 Preview Your Music</Label>
+                    <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="lg"
                       onClick={togglePlayback}
+                      style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                      {isPlaying ? (
+                        <>
+                          <Pause className="mr-2" size={20} />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-2" size={20} />
+                          Play
+                        </>
+                      )}
                     </Button>
-                    <span className="muted">
-                      {isDemoMode ? 'Demo Sample' : 'Generated Track'}
-                    </span>
+                    <div style={{ flex: 1, fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                      Listen to your generated music before publishing
+                    </div>
+                  </div>
+                  
+                  <div className="card" style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                      💡 <strong>Tip:</strong> Make sure you're happy with how it sounds before proceeding to publish!
+                    </p>
                   </div>
                 </div>
               )}
@@ -595,6 +694,39 @@ function CreateSongForm() {
                 </div>
               )}
 
+              {audioUrl && (
+                <div className="card" style={{ padding: '1.5rem', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <Label style={{ fontSize: '1rem', fontWeight: 600 }}>🎵 Final Audio Preview</Label>
+                    <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={togglePlayback}
+                      style={{ minWidth: '120px' }}
+                    >
+                      {isPlaying ? (
+                        <>
+                          <Pause className="mr-2" size={20} />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-2" size={20} />
+                          Play
+                        </>
+                      )}
+                    </Button>
+                    <div style={{ flex: 1, fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                      Listen one last time before submitting
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="card" style={{ padding: '1rem', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
                 <p style={{ fontSize: '0.875rem', margin: 0 }}>
                   📝 Your song will be submitted for review. Once approved, 
@@ -602,23 +734,44 @@ function CreateSongForm() {
                 </p>
               </div>
 
-              <Button
-                onClick={handlePublish}
-                disabled={publishLoading || !title.trim() || !lyrics.trim()}
-                className="w-full"
-              >
-                {publishLoading ? (
-                  <>
-                    <Spinner className="mr-2" />
-                    Publishing...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2" size={16} />
-                    Submit for Review
-                  </>
-                )}
-              </Button>
+              <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                <Button
+                  onClick={handleSaveAsDraft}
+                  disabled={draftLoading || !title.trim() || !lyrics.trim()}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {draftLoading ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2" size={16} />
+                      Save as Draft
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={handlePublish}
+                  disabled={publishLoading || !title.trim() || !lyrics.trim()}
+                  className="w-full"
+                >
+                  {publishLoading ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2" size={16} />
+                      Submit for Review
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
