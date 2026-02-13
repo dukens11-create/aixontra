@@ -244,14 +244,18 @@ export async function POST(request: NextRequest) {
     if (voiceProvider === 'azure' && AI_CONFIG.tts.azureTTS.enabled && AI_CONFIG.tts.azureTTS.apiKey) {
       const region = AI_CONFIG.tts.azureTTS.region;
       
+      // Validate speed parameter
+      const validSpeed = Math.max(0.5, Math.min(2.0, Number(speed) || 1.0));
+      
       // Sanitize values for SSML to prevent XML injection
+      // IMPORTANT: Ampersand must be replaced last to avoid double-encoding
       const sanitizeForXML = (text: string) => {
         return text
-          .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
+          .replace(/'/g, '&apos;')
+          .replace(/&/g, '&amp;');
       };
       
       const sanitizedLyrics = sanitizeForXML(cleanedLyrics);
@@ -261,7 +265,7 @@ export async function POST(request: NextRequest) {
       const ssml = `
         <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${sanitizedLanguage}">
           <voice name="${sanitizedVoiceId}">
-            <prosody rate="${speed}">
+            <prosody rate="${validSpeed}">
               ${sanitizedLyrics}
             </prosody>
           </voice>

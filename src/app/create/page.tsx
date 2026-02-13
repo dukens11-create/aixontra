@@ -194,7 +194,7 @@ function CreateSongForm() {
           setVoiceMetadata(data.metadata);
           setMessage({ type: 'success', text: 'Voice generated successfully! Preview below.' });
         } catch (decodeError) {
-          throw new Error('Failed to decode audio data. Please try again.');
+          throw new Error('Failed to process audio data. This may be due to network issues or invalid response from the server. Please try generating again.');
         }
       }
 
