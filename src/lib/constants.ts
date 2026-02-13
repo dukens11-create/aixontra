@@ -21,6 +21,9 @@ export const GENRES = [
   "Folk",
   "Metal",
   "Indie",
+  "Kompa (Haiti)",
+  "Zouk",
+  "Rabòday",
   "Other",
 ] as const;
 
