@@ -56,6 +56,8 @@ For detailed setup and usage instructions, see [docs/CREATE_SONG_FEATURE.md](doc
    # - supabase/migrations/002_add_create_song_fields.sql
    # - supabase/migrations/003_add_voice_generation_fields.sql
    # - supabase/migrations/004_add_video_generation_fields.sql (NEW)
+=======
+>>>>>>> main
    # Or use: supabase db push
    ```
 

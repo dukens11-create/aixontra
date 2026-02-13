@@ -84,6 +84,8 @@ function CreateSongForm() {
   const [voiceAudioElement, setVoiceAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   
   // Video generation state
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -361,22 +363,53 @@ function CreateSongForm() {
     }
   };
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioUrl) return;
 
     if (!audioElement) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setIsPlaying(false);
-      setAudioElement(audio);
-      audio.play();
-      setIsPlaying(true);
+      setAudioLoading(true);
+      setAudioError(null);
+      
+      try {
+        const audio = new Audio(audioUrl);
+        
+        // Add error handler
+        audio.onerror = () => {
+          setAudioError('Failed to load audio file. Please check if the file exists and is accessible.');
+          setAudioLoading(false);
+          setIsPlaying(false);
+          setAudioElement(null);
+        };
+        
+        // Add canplay handler - clears loading state when audio is ready
+        audio.oncanplay = () => {
+          setAudioLoading(false);
+        };
+        
+        audio.onended = () => setIsPlaying(false);
+        setAudioElement(audio);
+        
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error: any) {
+        setAudioError(error.message || 'Failed to play audio');
+        setAudioLoading(false);
+        setIsPlaying(false);
+        setAudioElement(null);
+      }
     } else {
       if (isPlaying) {
         audioElement.pause();
         setIsPlaying(false);
       } else {
-        audioElement.play();
-        setIsPlaying(true);
+        // Resume playback - audio is already loaded, so we can manage loading state directly
+        try {
+          await audioElement.play();
+          setIsPlaying(true);
+        } catch (error: any) {
+          setAudioError(error.message || 'Failed to play audio');
+          setIsPlaying(false);
+        }
       }
     }
   };
@@ -1091,14 +1124,36 @@ function CreateSongForm() {
                     <Badge variant="outline">{isDemoMode ? 'Demo Sample' : 'Generated'}</Badge>
                   </div>
                   
+                  {audioError && (
+                    <div 
+                      className="card" 
+                      style={{ 
+                        padding: '0.75rem', 
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        marginBottom: '1rem',
+                        border: '1px solid rgb(239, 68, 68)'
+                      }}
+                    >
+                      <p style={{ fontSize: '0.875rem', margin: 0, color: 'rgb(239, 68, 68)' }}>
+                        ⚠️ {audioError}
+                      </p>
+                    </div>
+                  )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                       style={{ minWidth: '120px' }}
                     >
-                      {isPlaying ? (
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="mr-2" size={16} />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
                         <>
                           <Pause className="mr-2" size={20} />
                           Pause
