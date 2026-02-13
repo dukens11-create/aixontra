@@ -57,6 +57,8 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
 
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
@@ -156,22 +158,59 @@ function CreateSongForm() {
     }
   };
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioUrl) return;
 
-    if (!audioElement) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setIsPlaying(false);
-      setAudioElement(audio);
-      audio.play();
-      setIsPlaying(true);
-    } else {
-      if (isPlaying) {
-        audioElement.pause();
-        setIsPlaying(false);
-      } else {
-        audioElement.play();
+    try {
+      if (!audioElement) {
+        setAudioLoading(true);
+        setAudioError(null);
+        
+        const audio = new Audio(audioUrl);
+        
+        // Add error handler
+        audio.onerror = (e) => {
+          console.error('Audio error:', e);
+          setAudioError('Failed to load audio file. The file may not exist or is in an unsupported format.');
+          setIsPlaying(false);
+          setAudioLoading(false);
+          setAudioElement(null);
+        };
+        
+        // Add canplay handler
+        audio.oncanplay = () => {
+          setAudioLoading(false);
+        };
+        
+        audio.onended = () => setIsPlaying(false);
+        
+        setAudioElement(audio);
+        
+        // Play returns a promise
+        await audio.play();
         setIsPlaying(true);
+        setAudioLoading(false);
+      } else {
+        if (isPlaying) {
+          audioElement.pause();
+          setIsPlaying(false);
+        } else {
+          setAudioError(null);
+          setAudioLoading(true);
+          await audioElement.play();
+          setIsPlaying(true);
+          setAudioLoading(false);
+        }
+      }
+    } catch (error: any) {
+      console.error('Playback error:', error);
+      setAudioError(error.message || 'Failed to play audio. Please try again.');
+      setIsPlaying(false);
+      setAudioLoading(false);
+      // Reset audio element on error
+      if (audioElement) {
+        audioElement.pause();
+        setAudioElement(null);
       }
     }
   };
@@ -525,13 +564,32 @@ function CreateSongForm() {
                       variant="outline"
                       size="sm"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                     >
-                      {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                      {audioLoading ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : isPlaying ? (
+                        <Pause size={16} />
+                      ) : (
+                        <Play size={16} />
+                      )}
                     </Button>
                     <span className="muted">
                       {isDemoMode ? 'Demo Sample' : 'Generated Track'}
                     </span>
                   </div>
+                  {audioError && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      padding: '0.5rem', 
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem',
+                      color: 'rgb(239, 68, 68)'
+                    }}>
+                      ⚠️ {audioError}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -576,9 +634,24 @@ function CreateSongForm() {
                       variant="outline"
                       size="sm"
                       onClick={togglePlayback}
+                      disabled={audioLoading}
                     >
-                      {isPlaying ? <Pause size={16} className="mr-2" /> : <Play size={16} className="mr-2" />}
-                      {isPlaying ? 'Pause' : 'Play Preview'}
+                      {audioLoading ? (
+                        <>
+                          <Spinner className="h-4 w-4 mr-2" />
+                          Loading...
+                        </>
+                      ) : isPlaying ? (
+                        <>
+                          <Pause size={16} className="mr-2" />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play size={16} className="mr-2" />
+                          Play Preview
+                        </>
+                      )}
                     </Button>
                     <span className="muted">
                       {isDemoMode ? 'Demo Sample' : 'Generated Track'}
@@ -587,6 +660,18 @@ function CreateSongForm() {
                   <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', opacity: 0.8 }}>
                     Listen to your song before publishing
                   </p>
+                  {audioError && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      padding: '0.5rem', 
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem',
+                      color: 'rgb(239, 68, 68)'
+                    }}>
+                      ⚠️ {audioError}
+                    </div>
+                  )}
                 </div>
               )}
 
