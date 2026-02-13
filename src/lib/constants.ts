@@ -24,6 +24,7 @@ export const GENRES = [
   "Kompa (Haiti)",
   "Zouk",
   "Rabòday",
+  "Vodou (Haitian)",
   "Other",
 ] as const;
 

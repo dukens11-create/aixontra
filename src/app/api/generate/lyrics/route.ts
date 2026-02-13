@@ -12,6 +12,7 @@ import { AI_CONFIG } from '@/lib/aiConfig';
  *   prompt: string,      // Creative prompt or song idea
  *   genre?: string,      // Musical genre
  *   mood?: string,       // Mood/style
+ *   styleDescription?: string, // Free-text style/rhythm description
  *   language?: string    // Language for lyrics (default: English)
  * }
  * 
@@ -31,7 +32,7 @@ import { AI_CONFIG } from '@/lib/aiConfig';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, genre, mood, language = 'English' } = body;
+    const { prompt, genre, mood, styleDescription, language = 'English' } = body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
@@ -54,9 +55,15 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: 'system',
-              content: `You are a creative songwriter. Generate song lyrics based on the user's prompt. 
-                       Include verse, chorus, and bridge sections. Make the lyrics creative, engaging, and appropriate for the ${genre || 'any'} genre with a ${mood || 'neutral'} mood. 
-                       Write in ${language}. Format with clear section labels like [Verse 1], [Chorus], [Verse 2], [Bridge], etc.`
+              content: `You are a creative songwriter. Generate singable, clear, and precise song lyrics in ${language} based on the user's prompt. 
+                       The lyrics MUST be written entirely in ${language} language.
+                       Include verse, chorus, and bridge sections. Make the lyrics creative, engaging, and appropriate for the ${genre || 'any'} genre with a ${mood || 'neutral'} mood.${
+                         styleDescription 
+                           ? ` Pay special attention to the following style/rhythm description: ${styleDescription}` 
+                           : ''
+                       } 
+                       Ensure the lyrics are natural and singable in ${language}, using appropriate rhythm and phrasing for that language.
+                       Format with clear section labels like [Verse 1], [Chorus], [Verse 2], [Bridge], etc.`
             },
             {
               role: 'user',
@@ -86,13 +93,15 @@ export async function POST(request: NextRequest) {
           prompt,
           genre,
           mood,
+          styleDescription,
+          language,
           model: AI_CONFIG.openai.model,
           isDemoMode: false,
         }
       });
     } else {
       // Demo mode - return sample lyrics
-      const demoLyrics = generateDemoLyrics(prompt, genre, mood);
+      const demoLyrics = generateDemoLyrics(prompt, genre, mood, styleDescription);
       
       return NextResponse.json({
         lyrics: demoLyrics,
@@ -100,6 +109,8 @@ export async function POST(request: NextRequest) {
           prompt,
           genre,
           mood,
+          styleDescription,
+          language,
           model: 'demo',
           isDemoMode: true,
         }
@@ -117,10 +128,11 @@ export async function POST(request: NextRequest) {
 /**
  * Generate demo lyrics when no API key is available
  */
-function generateDemoLyrics(prompt: string, genre?: string, mood?: string): string {
+function generateDemoLyrics(prompt: string, genre?: string, mood?: string, styleDescription?: string): string {
   const MAX_PROMPT_PREVIEW_LENGTH = 50;
   const genreText = genre ? ` ${genre}` : '';
   const moodText = mood ? ` ${mood.toLowerCase()}` : '';
+  const styleText = styleDescription ? `\nStyle: ${styleDescription}` : '';
   
   // Truncate at word boundary
   let promptPreview = prompt.slice(0, MAX_PROMPT_PREVIEW_LENGTH);
@@ -136,7 +148,7 @@ function generateDemoLyrics(prompt: string, genre?: string, mood?: string): stri
 [Verse 1]
 ${promptPreview}${prompt.length > MAX_PROMPT_PREVIEW_LENGTH ? '...' : ''}
 This is a demo track, generated without AI
-${genreText}${moodText} vibes flowing through
+${genreText}${moodText} vibes flowing through${styleText}
 Sample lyrics just for you
 
 [Chorus]

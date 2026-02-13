@@ -7,6 +7,7 @@ export interface GenerationMetadata {
   genres?: string[];
   mood?: string;
   instruments?: string[];
+  language?: string;
   isDemoMode: boolean;
   model?: string;
   provider?: string;
