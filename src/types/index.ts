@@ -73,6 +73,7 @@ export interface Track {
   // Create Song feature fields
   lyrics: string | null;
   generation_metadata: GenerationMetadata | null;
+  is_draft: boolean;
   // Joined data
   creator?: Profile;
   is_liked?: boolean;

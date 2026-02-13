@@ -1,12 +1,12 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
 import { LANGUAGES } from "@/lib/constants";
 import { GenerationMetadata } from "@/types";
+import AuthGuard from "@/components/AuthGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,18 +24,21 @@ import {
 } from "@/components/ui/select";
 import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
 
-export default function CreatePage() {
+export default function EditDraftPage() {
   return (
     <AuthGuard>
-      <CreateSongForm />
+      <EditDraftForm />
     </AuthGuard>
   );
 }
 
-function CreateSongForm() {
+function EditDraftForm() {
   const supabase = supabaseBrowser();
   const router = useRouter();
+  const params = useParams();
+  const draftId = params.id as string;
   
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("lyrics");
   const [prompt, setPrompt] = useState("");
   const [title, setTitle] = useState("");
@@ -58,7 +61,74 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const [draftId, setDraftId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadDraft();
+  }, [draftId]);
+
+  const loadDraft = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user;
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      const { data: draft, error } = await supabase
+        .from("tracks")
+        .select("*")
+        .eq("id", draftId)
+        .eq("creator_id", user.id)
+        .eq("is_draft", true)
+        .single();
+
+      if (error || !draft) {
+        setMessage({ type: 'error', text: 'Draft not found or access denied' });
+        setTimeout(() => router.push('/profile'), 2000);
+        return;
+      }
+
+      // Helper function to check if audio path is a placeholder
+      const isPlaceholderAudio = (path: string | null) => {
+        return !path || path.includes('placeholder') || path.includes('demo/');
+      };
+
+      // Load draft data
+      setTitle(draft.title);
+      setLyrics(draft.lyrics || "");
+      setSelectedGenres(draft.genre ? draft.genre.split(', ') : []);
+      setSelectedMood(draft.mood || "");
+      
+      if (draft.generation_metadata) {
+        const metadata = draft.generation_metadata as GenerationMetadata;
+        setPrompt(metadata.prompt || "");
+        setSelectedInstruments(metadata.instruments || []);
+        setStyleDescription(metadata.styleDescription || "");
+        setIsDemoMode(metadata.isDemoMode || false);
+        setGenerationMetadata(metadata);
+      }
+
+      // Set audio URL if available
+      const base = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      if (draft.audio_path) {
+        setAudioUrl(`${base}/storage/v1/object/public/tracks/${draft.audio_path}`);
+      }
+
+      // Set appropriate starting tab based on content
+      if (!draft.lyrics) {
+        setActiveTab("lyrics"); // Start with lyrics if none exist
+      } else if (isPlaceholderAudio(draft.audio_path)) {
+        setActiveTab("music"); // Start with music if no real audio
+      } else {
+        setActiveTab("publish"); // Go to publish if everything is ready
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
@@ -70,7 +140,6 @@ function CreateSongForm() {
     setMessage(null);
 
     try {
-      // Determine the actual language to use
       const languageToUse = selectedLanguage === 'custom' 
         ? (customLanguage.trim() || 'English')
         : selectedLanguage;
@@ -199,55 +268,37 @@ function CreateSongForm() {
         throw new Error('Not logged in');
       }
 
-      // Note: Audio file handling for Create Song feature
-      // 
-      // DEMO MODE: Uses a placeholder path. Admins should be aware that tracks created
-      // in demo mode don't have actual audio files and should handle them accordingly.
-      // 
-      // PRODUCTION: When using real music generation APIs, you would:
-      // 1. Receive audioUrl from the music generation API
-      // 2. Download the audio file from that URL
-      // 3. Upload it to Supabase storage
-      // 4. Use the Supabase storage path here
-      // 
-      // Example implementation for production:
-      // if (audioUrl && !isDemoMode) {
-      //   const audioBlob = await fetch(audioUrl).then(r => r.blob());
-      //   const audioPath = `${user.id}/${crypto.randomUUID()}.mp3`;
-      //   await supabase.storage.from('tracks').upload(audioPath, audioBlob);
-      // }
-      const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
-
-      const { error: insErr } = await supabase.from("tracks").insert({
-        creator_id: user.id,
-        title,
-        genre: selectedGenres.join(', '),
-        mood: selectedMood,
-        ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
-        audio_path: audioPath,
-        lyrics: lyrics,
-        generation_metadata: {
-          prompt,
-          genres: selectedGenres,
+      const { error: updateErr } = await supabase
+        .from("tracks")
+        .update({
+          title,
+          genre: selectedGenres.join(', '),
           mood: selectedMood,
-          instruments: selectedInstruments,
-          styleDescription,
-          isDemoMode,
-          ...generationMetadata,
-        },
-        status: "pending",
-      });
+          lyrics: lyrics,
+          generation_metadata: {
+            prompt,
+            genres: selectedGenres,
+            mood: selectedMood,
+            instruments: selectedInstruments,
+            styleDescription,
+            isDemoMode,
+            ...generationMetadata,
+          },
+          is_draft: false,
+          status: "pending",
+        })
+        .eq("id", draftId)
+        .eq("creator_id", user.id);
 
-      if (insErr) throw new Error(insErr.message);
+      if (updateErr) throw new Error(updateErr.message);
 
       setMessage({ 
         type: 'success', 
         text: 'Song submitted for review! Your track will be published after approval.' 
       });
       
-      // Navigate using Next.js router
       setTimeout(() => {
-        router.push('/');
+        router.push('/profile');
       }, 2000);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
@@ -277,53 +328,31 @@ function CreateSongForm() {
         throw new Error('Not logged in');
       }
 
-      const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
-
-      const draftData = {
-        creator_id: user.id,
-        title,
-        genre: selectedGenres.join(', '),
-        mood: selectedMood,
-        ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
-        audio_path: audioPath,
-        lyrics: lyrics,
-        generation_metadata: {
-          prompt,
-          genres: selectedGenres,
+      const { error: updateErr } = await supabase
+        .from("tracks")
+        .update({
+          title,
+          genre: selectedGenres.join(', '),
           mood: selectedMood,
-          instruments: selectedInstruments,
-          styleDescription,
-          isDemoMode,
-          ...generationMetadata,
-        },
-        status: "pending" as const,
-        is_draft: true,
-      };
+          lyrics: lyrics,
+          generation_metadata: {
+            prompt,
+            genres: selectedGenres,
+            mood: selectedMood,
+            instruments: selectedInstruments,
+            styleDescription,
+            isDemoMode,
+            ...generationMetadata,
+          },
+        })
+        .eq("id", draftId)
+        .eq("creator_id", user.id);
 
-      if (draftId) {
-        // Update existing draft
-        const { error: updateErr } = await supabase
-          .from("tracks")
-          .update(draftData)
-          .eq("id", draftId)
-          .eq("creator_id", user.id);
-
-        if (updateErr) throw new Error(updateErr.message);
-      } else {
-        // Create new draft
-        const { data: insertedTrack, error: insErr } = await supabase
-          .from("tracks")
-          .insert(draftData)
-          .select()
-          .single();
-
-        if (insErr) throw new Error(insErr.message);
-        if (insertedTrack) setDraftId(insertedTrack.id);
-      }
+      if (updateErr) throw new Error(updateErr.message);
 
       setMessage({ 
         type: 'success', 
-        text: 'Draft saved! You can continue editing or return to it later from your profile.' 
+        text: 'Draft updated successfully!' 
       });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
@@ -344,13 +373,22 @@ function CreateSongForm() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+        <Spinner className="mx-auto mb-4" />
+        <p>Loading draft...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="card" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
         <Sparkles size={32} style={{ color: 'var(--primary)' }} />
         <div>
-          <h1 style={{ marginBottom: '0.25rem' }}>Create AI Song</h1>
-          <p className="muted">Generate lyrics and music with AI</p>
+          <h1 style={{ marginBottom: '0.25rem' }}>Edit Draft</h1>
+          <p className="muted">Continue editing your AI song</p>
         </div>
       </div>
 
@@ -358,21 +396,19 @@ function CreateSongForm() {
         <div 
           className="card" 
           style={{ 
-            marginBottom: '1rem',
-            padding: '1rem',
+            padding: '1rem', 
+            marginBottom: '1.5rem',
             backgroundColor: message.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 
-                           message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 
-                           'rgba(59, 130, 246, 0.1)',
-            border: `1px solid ${message.type === 'error' ? 'rgb(239, 68, 68)' : 
-                                 message.type === 'success' ? 'rgb(34, 197, 94)' : 
-                                 'rgb(59, 130, 246)'}`
+                           message.type === 'info' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+            border: `1px solid ${message.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 
+                                message.type === 'info' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`
           }}
         >
-          {message.text}
+          <p style={{ margin: 0 }}>{message.text}</p>
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="lyrics">1. Lyrics</TabsTrigger>
           <TabsTrigger value="music">2. Music</TabsTrigger>
@@ -382,32 +418,29 @@ function CreateSongForm() {
         <TabsContent value="lyrics" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Song Idea</CardTitle>
+              <CardTitle>Edit or Generate Lyrics</CardTitle>
               <CardDescription>
-                Describe your song idea or theme
+                Modify your lyrics or generate new ones
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="prompt">Creative Prompt</Label>
-                <Textarea
+                <Input
                   id="prompt"
-                  placeholder="e.g., A song about chasing dreams under the city lights..."
+                  placeholder="A song about..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
                   className="mt-2"
                 />
               </div>
 
               <div>
-                <Label>Genres (select one or more)</Label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <Label>Genres</Label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
                   {GENRES.map(genre => (
-                    <Badge
+                    <div
                       key={genre}
-                      variant={selectedGenres.includes(genre) ? "default" : "outline"}
-                      style={{ cursor: 'pointer' }}
                       onClick={() => toggleGenre(genre)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -415,92 +448,48 @@ function CreateSongForm() {
                           toggleGenre(genre);
                         }
                       }}
+                      className="card"
+                      style={{
+                        cursor: 'pointer',
+                        padding: '0.75rem',
+                        textAlign: 'center',
+                        border: selectedGenres.includes(genre) 
+                          ? '2px solid var(--primary)' 
+                          : '1px solid var(--border)',
+                        backgroundColor: selectedGenres.includes(genre)
+                          ? 'rgba(139, 92, 246, 0.1)'
+                          : 'var(--card)',
+                      }}
                       tabIndex={0}
                       role="checkbox"
                       aria-checked={selectedGenres.includes(genre)}
+                      aria-label={`${genre} genre`}
                     >
                       {genre}
-                    </Badge>
+                    </div>
                   ))}
                 </div>
               </div>
 
               <div>
-                <Label>Mood/Style</Label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {MOODS.map(mood => (
-                    <Badge
-                      key={mood}
-                      variant={selectedMood === mood ? "default" : "outline"}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setSelectedMood(mood)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedMood(mood);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="radio"
-                      aria-checked={selectedMood === mood}
-                    >
-                      {mood}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="styleDescription">Style/Rhythm Description (optional)</Label>
-                <Textarea
-                  id="styleDescription"
-                  placeholder="e.g., traditional Vodou drumming, upbeat carnival Rabòday, slow romantic ballad..."
-                  value={styleDescription}
-                  onChange={(e) => setStyleDescription(e.target.value)}
-                  rows={3}
-                  className="mt-2"
-                />
-                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Describe the specific style or rhythm you want for your song
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="language">Lyrics Language</Label>
-                <Select
-                  value={selectedLanguage}
-                  onValueChange={(value) => setSelectedLanguage(value)}
-                >
+                <Label htmlFor="mood">Mood/Style</Label>
+                <Select value={selectedMood} onValueChange={setSelectedMood}>
                   <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue placeholder="Select a mood" />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGES.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.name}>
-                        {lang.name}
+                    {MOODS.map(mood => (
+                      <SelectItem key={mood} value={mood}>
+                        {mood}
                       </SelectItem>
                     ))}
-                    <SelectItem value="custom">Custom Language...</SelectItem>
                   </SelectContent>
                 </Select>
-                {selectedLanguage === 'custom' && (
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <Input
-                      id="customLanguage"
-                      placeholder="Enter language (e.g., Haitian Creole, Swahili, etc.)"
-                      value={customLanguage}
-                      onChange={(e) => setCustomLanguage(e.target.value)}
-                    />
-                  </div>
-                )}
-                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Select the language for AI-generated lyrics. The AI will generate singable, clear lyrics in the selected language.
-                </p>
               </div>
 
               <Button
                 onClick={handleGenerateLyrics}
-                disabled={lyricsLoading || !prompt.trim()}
+                disabled={lyricsLoading}
                 className="w-full"
               >
                 {lyricsLoading ? (
@@ -511,25 +500,14 @@ function CreateSongForm() {
                 ) : (
                   <>
                     <Sparkles className="mr-2" size={16} />
-                    Generate Lyrics with AI (ChatGPT)
+                    Generate New Lyrics
                   </>
                 )}
               </Button>
 
               {lyrics && (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <Label>Generated Lyrics (editable)</Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGenerateLyrics}
-                      disabled={lyricsLoading || !prompt.trim()}
-                    >
-                      <Sparkles className="mr-2" size={14} />
-                      Regenerate
-                    </Button>
-                  </div>
+                  <Label>Lyrics (editable)</Label>
                   <Textarea
                     value={lyrics}
                     onChange={(e) => setLyrics(e.target.value)}
@@ -545,7 +523,7 @@ function CreateSongForm() {
         <TabsContent value="music" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Generate Music</CardTitle>
+              <CardTitle>Generate or Update Music</CardTitle>
               <CardDescription>
                 Select instruments and generate audio
               </CardDescription>
@@ -601,7 +579,7 @@ function CreateSongForm() {
                 ) : (
                   <>
                     <Music className="mr-2" size={16} />
-                    Generate Music
+                    Generate New Music
                   </>
                 )}
               </Button>
@@ -651,9 +629,9 @@ function CreateSongForm() {
         <TabsContent value="publish" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Publish Your Song</CardTitle>
+              <CardTitle>Review and Publish</CardTitle>
               <CardDescription>
-                Review and publish your creation
+                Review your changes and publish or save as draft
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -760,7 +738,7 @@ function CreateSongForm() {
                   ) : (
                     <>
                       <Save className="mr-2" size={16} />
-                      Save as Draft
+                      Update Draft
                     </>
                   )}
                 </Button>
