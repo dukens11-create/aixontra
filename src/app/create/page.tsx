@@ -568,6 +568,28 @@ function CreateSongForm() {
                 />
               </div>
 
+              {audioUrl && (
+                <div className="card" style={{ padding: '1rem', backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+                  <Label>Preview Your Song</Label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={togglePlayback}
+                    >
+                      {isPlaying ? <Pause size={16} className="mr-2" /> : <Play size={16} className="mr-2" />}
+                      {isPlaying ? 'Pause' : 'Play Preview'}
+                    </Button>
+                    <span className="muted">
+                      {isDemoMode ? 'Demo Sample' : 'Generated Track'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', opacity: 0.8 }}>
+                    Listen to your song before publishing
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label>Genres</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
