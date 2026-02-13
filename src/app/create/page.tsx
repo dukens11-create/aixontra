@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { LANGUAGES } from "@/lib/constants";
 import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
 
 export default function CreatePage() {
@@ -33,6 +35,8 @@ function CreateSongForm() {
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [customLanguage, setCustomLanguage] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
@@ -46,6 +50,22 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  // Helper function to get language name for display/API calls
+  const getLanguageName = () => {
+    if (selectedLanguage === 'custom') {
+      return customLanguage.trim() || 'English';
+    }
+    return LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'English';
+  };
+
+  // Helper function to get language code for database storage
+  const getLanguageCode = () => {
+    if (selectedLanguage === 'custom') {
+      return customLanguage.trim() || 'en';
+    }
+    return selectedLanguage;
+  };
 
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
@@ -64,6 +84,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          language: getLanguageName(),
         }),
       });
 
@@ -106,6 +127,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          language: getLanguageName(),
           instruments: selectedInstruments,
         }),
       });
@@ -205,10 +227,12 @@ function CreateSongForm() {
         ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
         audio_path: audioPath,
         lyrics: lyrics,
+        language: getLanguageCode(),
         generation_metadata: {
           prompt,
           genres: selectedGenres,
           mood: selectedMood,
+          language: getLanguageName(),
           instruments: selectedInstruments,
           isDemoMode,
           ...generationMetadata,
@@ -350,6 +374,30 @@ function CreateSongForm() {
                     </Badge>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="language">Language</Label>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger id="language" className="mt-2">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedLanguage === 'custom' && (
+                  <Input
+                    placeholder="Enter your language (e.g., Esperanto, Klingon, Ancient Greek)"
+                    value={customLanguage}
+                    onChange={(e) => setCustomLanguage(e.target.value)}
+                    className="mt-2"
+                  />
+                )}
               </div>
 
               <Button
