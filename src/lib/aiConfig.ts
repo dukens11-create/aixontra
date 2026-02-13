@@ -75,6 +75,9 @@ export const GENRES = [
   'Indie',
   'Funk',
   'Soul',
+  'Kompa (Haiti)',
+  'Zouk',
+  'Rabòday',
 ];
 
 // Available instruments for track generation
