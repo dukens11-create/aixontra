@@ -1,12 +1,12 @@
 "use client";
 
 import AuthGuard from "@/components/AuthGuard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { GENRES, INSTRUMENTS, MOODS, VoiceOption, getAvailableVoices } from "@/lib/aiConfig";
 import { LANGUAGES } from "@/lib/constants";
-import { GenerationMetadata } from "@/types";
+import { GenerationMetadata, VoiceMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Music, Sparkles, Save, Play, Pause } from "lucide-react";
+import { Music, Sparkles, Save, Play, Pause, Mic2 } from "lucide-react";
 
 export default function CreatePage() {
   return (
@@ -48,7 +48,18 @@ function CreateSongForm() {
   const [customLanguage, setCustomLanguage] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
   
+  // Voice generation state
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption | null>(null);
+  const [voiceFilterGender, setVoiceFilterGender] = useState<string>("all");
+  const [voiceFilterLanguage, setVoiceFilterLanguage] = useState<string>("all");
+  const [voiceSpeed, setVoiceSpeed] = useState(1.0);
+  const [voiceMetadata, setVoiceMetadata] = useState<VoiceMetadata | null>(null);
+  const [voiceAudioUrl, setVoiceAudioUrl] = useState<string | null>(null);
+  const [voiceAudioBlob, setVoiceAudioBlob] = useState<Blob | null>(null);
+  
   const [lyricsLoading, setLyricsLoading] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
   const [musicLoading, setMusicLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info', text: string } | null>(null);
@@ -57,6 +68,22 @@ function CreateSongForm() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [voiceAudioElement, setVoiceAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+
+  // Load available voices on mount
+  useEffect(() => {
+    const loadVoices = async () => {
+      try {
+        const response = await fetch('/api/generate/voice');
+        const data = await response.json();
+        setAvailableVoices(data.voices || []);
+      } catch (error) {
+        console.error('Error loading voices:', error);
+      }
+    };
+    loadVoices();
+  }, []);
 
   const handleGenerateLyrics = async () => {
     if (!prompt.trim()) {
@@ -104,12 +131,103 @@ function CreateSongForm() {
         setMessage({ type: 'success', text: 'Lyrics generated successfully!' });
       }
       
-      setActiveTab("music");
+      setActiveTab("voice");
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setLyricsLoading(false);
     }
+  };
+
+  const handleGenerateVoice = async () => {
+    if (!selectedVoice) {
+      setMessage({ type: 'error', text: 'Please select a voice' });
+      return;
+    }
+
+    if (!lyrics.trim()) {
+      setMessage({ type: 'error', text: 'Please generate lyrics first' });
+      return;
+    }
+
+    setVoiceLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/generate/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lyrics,
+          voiceId: selectedVoice.id,
+          voiceProvider: selectedVoice.provider,
+          language: selectedVoice.language,
+          speed: voiceSpeed,
+          singing: false, // Can be made configurable later
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate voice');
+      }
+
+      if (data.demoMode) {
+        setIsDemoMode(true);
+        setMessage({ 
+          type: 'info', 
+          text: 'Demo mode: Configure TTS API keys in .env for real voice generation' 
+        });
+      } else {
+        // Convert base64 audio data to blob and create URL
+        const audioData = data.audioData;
+        const audioBlob = new Blob(
+          [Uint8Array.from(atob(audioData), c => c.charCodeAt(0))],
+          { type: 'audio/mpeg' }
+        );
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        setVoiceAudioUrl(audioUrl);
+        setVoiceAudioBlob(audioBlob);
+        setVoiceMetadata(data.metadata);
+        setMessage({ type: 'success', text: 'Voice generated successfully! Preview below.' });
+      }
+
+      setActiveTab("music");
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setVoiceLoading(false);
+    }
+  };
+
+  const toggleVoicePlayback = () => {
+    if (!voiceAudioUrl) return;
+
+    if (!voiceAudioElement) {
+      const audio = new Audio(voiceAudioUrl);
+      audio.onended = () => setIsVoicePlaying(false);
+      setVoiceAudioElement(audio);
+      audio.play();
+      setIsVoicePlaying(true);
+    } else {
+      if (isVoicePlaying) {
+        voiceAudioElement.pause();
+        setIsVoicePlaying(false);
+      } else {
+        voiceAudioElement.play();
+        setIsVoicePlaying(true);
+      }
+    }
+  };
+
+  const getFilteredVoices = () => {
+    return availableVoices.filter(voice => {
+      const genderMatch = voiceFilterGender === 'all' || voice.gender === voiceFilterGender;
+      const languageMatch = voiceFilterLanguage === 'all' || voice.language.startsWith(voiceFilterLanguage);
+      return genderMatch && languageMatch;
+    });
   };
 
   const handleGenerateMusic = async () => {
@@ -216,6 +334,22 @@ function CreateSongForm() {
       // }
       const audioPath = isDemoMode ? 'demo/placeholder.mp3' : `generated/${user.id}/${crypto.randomUUID()}.mp3`;
 
+      // Handle voice audio upload if generated
+      let voiceAudioPath = null;
+      if (voiceAudioBlob && !isDemoMode) {
+        const voicePath = `voices/${user.id}/${crypto.randomUUID()}.mp3`;
+        const { error: uploadError } = await supabase.storage
+          .from('tracks')
+          .upload(voicePath, voiceAudioBlob);
+        
+        if (!uploadError) {
+          voiceAudioPath = voicePath;
+        } else {
+          console.error('Voice upload error:', uploadError);
+          // Continue with publishing even if voice upload fails
+        }
+      }
+
       const { error: insErr } = await supabase.from("tracks").insert({
         creator_id: user.id,
         title,
@@ -224,6 +358,8 @@ function CreateSongForm() {
         ai_tool: isDemoMode ? 'AIXONTRA Demo Mode' : 'AIXONTRA Create',
         audio_path: audioPath,
         lyrics: lyrics,
+        voice_audio_path: voiceAudioPath,
+        voice_metadata: voiceMetadata,
         generation_metadata: {
           prompt,
           genres: selectedGenres,
@@ -231,6 +367,7 @@ function CreateSongForm() {
           instruments: selectedInstruments,
           styleDescription,
           isDemoMode,
+          voice: voiceMetadata,
           ...generationMetadata,
         },
         status: "pending",
@@ -295,10 +432,11 @@ function CreateSongForm() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="lyrics">1. Lyrics</TabsTrigger>
-          <TabsTrigger value="music">2. Music</TabsTrigger>
-          <TabsTrigger value="publish">3. Publish</TabsTrigger>
+          <TabsTrigger value="voice">2. Voice</TabsTrigger>
+          <TabsTrigger value="music">3. Music</TabsTrigger>
+          <TabsTrigger value="publish">4. Publish</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lyrics" className="space-y-4">
@@ -447,6 +585,162 @@ function CreateSongForm() {
                     rows={12}
                     className="mt-2 font-mono"
                   />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="voice" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Select AI Voice</CardTitle>
+              <CardDescription>
+                Choose a voice to sing your lyrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Voice Filters */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <Label>Filter by Gender</Label>
+                  <Select value={voiceFilterGender} onValueChange={setVoiceFilterGender}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Genders</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="neutral">Neutral</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Filter by Language</Label>
+                  <Select value={voiceFilterLanguage} onValueChange={setVoiceFilterLanguage}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Languages</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Spanish</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="de">German</SelectItem>
+                      <SelectItem value="pt">Portuguese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Voice Selection Grid */}
+              <div>
+                <Label>Available Voices</Label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  {getFilteredVoices().map(voice => (
+                    <div
+                      key={voice.id}
+                      onClick={() => setSelectedVoice(voice)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedVoice(voice);
+                        }
+                      }}
+                      className="card"
+                      style={{
+                        cursor: 'pointer',
+                        padding: '1rem',
+                        border: selectedVoice?.id === voice.id 
+                          ? '2px solid var(--primary)' 
+                          : '1px solid var(--border)',
+                        backgroundColor: selectedVoice?.id === voice.id
+                          ? 'rgba(139, 92, 246, 0.1)'
+                          : 'var(--card)',
+                      }}
+                      tabIndex={0}
+                      role="radio"
+                      aria-checked={selectedVoice?.id === voice.id}
+                      aria-label={`${voice.name} voice`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <Mic2 size={20} style={{ color: 'var(--primary)' }} />
+                        <strong>{voice.name}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.875rem' }} className="muted">
+                        <div>{voice.gender && `${voice.gender.charAt(0).toUpperCase() + voice.gender.slice(1)}`}</div>
+                        <div>{voice.languageName}</div>
+                        {voice.style && <div>{voice.style}</div>}
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                          {voice.provider}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {getFilteredVoices().length === 0 && (
+                  <p className="muted" style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    No voices available. Configure TTS API keys in .env
+                  </p>
+                )}
+              </div>
+
+              {/* Voice Speed Control */}
+              {selectedVoice && (
+                <div>
+                  <Label>Voice Speed: {voiceSpeed.toFixed(1)}x</Label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={voiceSpeed}
+                    onChange={(e) => setVoiceSpeed(parseFloat(e.target.value))}
+                    style={{ width: '100%', marginTop: '0.5rem' }}
+                  />
+                  <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                    Adjust the speed of the voice (0.5x = slower, 2.0x = faster)
+                  </p>
+                </div>
+              )}
+
+              <Button
+                onClick={handleGenerateVoice}
+                disabled={voiceLoading || !selectedVoice || !lyrics.trim()}
+                className="w-full"
+              >
+                {voiceLoading ? (
+                  <>
+                    <Spinner className="mr-2" />
+                    Generating Voice...
+                  </>
+                ) : (
+                  <>
+                    <Mic2 className="mr-2" size={16} />
+                    Generate Voice
+                  </>
+                )}
+              </Button>
+
+              {voiceAudioUrl && (
+                <div className="card" style={{ padding: '1rem' }}>
+                  <Label>Voice Preview</Label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleVoicePlayback}
+                    >
+                      {isVoicePlaying ? <Pause size={16} /> : <Play size={16} />}
+                    </Button>
+                    <span className="muted">
+                      {selectedVoice?.name} - {selectedVoice?.languageName}
+                    </span>
+                  </div>
+                  <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                    Listen to the generated voice. You can regenerate with different settings if needed.
+                  </p>
                 </div>
               )}
             </CardContent>
