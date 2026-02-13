@@ -88,6 +88,8 @@ export interface Track {
   // Voice generation fields
   voice_audio_path: string | null;
   voice_metadata: VoiceMetadata | null;
+  // Draft feature
+  is_draft: boolean;
   // Joined data
   creator?: Profile;
   is_liked?: boolean;

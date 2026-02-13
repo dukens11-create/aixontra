@@ -7,18 +7,21 @@ The **Create Song** feature allows logged-in users to generate AI-powered songs 
 ## Features
 
 - **AI-Powered Lyrics Generation**: Uses OpenAI GPT models to generate creative song lyrics
-- **AI Voice Generation (NEW!)**: Synthesize realistic human-like vocals from lyrics using state-of-the-art TTS
+- **AI Voice Generation**: Synthesize realistic human-like vocals from lyrics using state-of-the-art TTS
 - **Music Generation Support**: Integrates with music AI APIs (Suno, Stable Audio, Riffusion)
+- **Audio Preview**: Listen to your generated music and voice before publishing with an in-browser audio player
+- **Save as Draft**: Save your work in progress and return to it later
+- **Draft Management**: Access and manage your drafts from the "My Music" page
 - **Demo Mode**: Works without API keys using sample data
 - **Multi-Step Creation Process**:
   1. Generate Lyrics: Input prompt, select genre/mood, generate and edit lyrics
   2. Generate Voice: Select AI voice, preview and generate vocal audio from lyrics
-  3. Generate Music: Select instruments, generate audio tracks
-  4. Publish: Review and submit song for approval
+  3. Generate Music: Select instruments, generate audio tracks, and preview them
+  4. Publish: Review, save as draft, or submit song for approval
 - **Multi-language Support**: Generate lyrics and voices in multiple languages
 - **Voice Options**: Choose from various voice styles, genders, and languages
 - **Authentication Required**: Only logged-in users can create songs
-- **Review System**: All created songs go through moderation before publication
+- **Review System**: All submitted songs go through moderation before publication
 
 ## Setup Instructions
 
@@ -129,7 +132,7 @@ ALTER TABLE public.tracks ADD COLUMN IF NOT EXISTS generation_metadata JSONB;
 CREATE INDEX IF NOT EXISTS tracks_lyrics_idx ON public.tracks USING gin(to_tsvector('english', lyrics));
 ```
 
-**Migration 003 - Voice Generation Fields (NEW):**
+**Migration 003 - Voice Generation Fields:**
 ```sql
 ALTER TABLE public.tracks ADD COLUMN IF NOT EXISTS voice_audio_path TEXT;
 ALTER TABLE public.tracks ADD COLUMN IF NOT EXISTS voice_metadata JSONB;
@@ -177,7 +180,7 @@ Demo mode is perfect for:
    - Click "Generate Lyrics"
    - Review and edit the generated lyrics
 
-3. **Step 2: Generate Voice (NEW!)**
+3. **Step 2: Generate Voice**
    - Filter available voices by gender and language
    - Browse and select an AI voice that fits your song
    - Adjust voice speed if desired (0.5x to 2.0x)
@@ -188,17 +191,27 @@ Demo mode is perfect for:
 4. **Step 3: Generate Music**
    - Select instruments you want in your track
    - Click "Generate Music"
-   - Preview the generated audio
-   - Adjust instrument selection if needed
+   - **Preview the audio** using the enhanced audio player
+   - Listen to ensure you're happy with the result
+   - Adjust instrument selection and regenerate if needed
 
-5. **Step 4: Publish**
+5. **Step 4: Publish or Save as Draft**
    - Enter a title for your track
-   - Review the lyrics, voice, and music
+   - Review the lyrics, voice, and music (you can still edit lyrics)
+   - **Preview the audio one last time** before deciding
    - Check your selected genres and mood
-   - Click "Submit for Review"
-   - Your song will be sent for moderation
+   - Choose one of two options:
+     - **Save as Draft**: Save your work to continue later
+     - **Submit for Review**: Send your song for moderation
+   
+6. **Managing Drafts**
+   - Access your drafts from the "My Music" page (navigation menu)
+   - View all your drafts, pending, and published tracks
+   - Edit any draft to continue working on it
+   - Publish drafts when ready
+   - Delete drafts you no longer want
 
-6. **After Submission**
+7. **After Submission**
    - Your song enters the review queue
    - Admins will review and approve/reject it
    - Once approved, it appears in the gallery
@@ -218,7 +231,7 @@ src/
 │           ├── lyrics/
 │           │   └── route.ts      # Lyrics generation API
 │           ├── voice/
-│           │   └── route.ts      # Voice/TTS generation API (NEW!)
+│           │   └── route.ts      # Voice/TTS generation API
 │           └── music/
 │               └── route.ts      # Music generation API
 ├── lib/
