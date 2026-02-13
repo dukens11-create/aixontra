@@ -56,7 +56,11 @@ export async function POST(request: NextRequest) {
             {
               role: 'system',
               content: `You are a creative songwriter. Generate song lyrics based on the user's prompt. 
-                       Include verse, chorus, and bridge sections. Make the lyrics creative, engaging, and appropriate for the ${genre || 'any'} genre with a ${mood || 'neutral'} mood.${styleDescription ? ` Pay special attention to the following style/rhythm description: ${styleDescription}` : ''} 
+                       Include verse, chorus, and bridge sections. Make the lyrics creative, engaging, and appropriate for the ${genre || 'any'} genre with a ${mood || 'neutral'} mood.${
+                         styleDescription 
+                           ? ` Pay special attention to the following style/rhythm description: ${styleDescription}` 
+                           : ''
+                       } 
                        Write in ${language}. Format with clear section labels like [Verse 1], [Chorus], [Verse 2], [Bridge], etc.`
             },
             {
