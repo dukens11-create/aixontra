@@ -89,6 +89,11 @@ function EditDraftForm() {
         return;
       }
 
+      // Helper function to check if audio path is a placeholder
+      const isPlaceholderAudio = (path: string | null) => {
+        return !path || path.includes('placeholder') || path.includes('demo/');
+      };
+
       // Load draft data
       setTitle(draft.title);
       setLyrics(draft.lyrics || "");
@@ -113,8 +118,8 @@ function EditDraftForm() {
       // Set appropriate starting tab based on content
       if (!draft.lyrics) {
         setActiveTab("lyrics"); // Start with lyrics if none exist
-      } else if (!draft.audio_path || draft.audio_path.includes('placeholder')) {
-        setActiveTab("music"); // Start with music if no audio
+      } else if (isPlaceholderAudio(draft.audio_path)) {
+        setActiveTab("music"); // Start with music if no real audio
       } else {
         setActiveTab("publish"); // Go to publish if everything is ready
       }

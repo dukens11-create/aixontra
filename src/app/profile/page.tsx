@@ -102,8 +102,11 @@ function ProfileContent() {
 
       if (error) throw error;
 
+      // Update the draft object to reflect the new status
+      const updatedDraft = { ...draft, is_draft: false, status: "pending" as const };
+      
       setDrafts(drafts.filter(d => d.id !== draft.id));
-      setPendingTracks([draft, ...pendingTracks]);
+      setPendingTracks([updatedDraft, ...pendingTracks]);
       setMessage({ type: 'success', text: 'Draft submitted for review!' });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
@@ -144,7 +147,7 @@ function ProfileContent() {
                   textOverflow: 'ellipsis',
                   marginBottom: '0.75rem'
                 }}>
-                  {track.lyrics.length > 100 ? track.lyrics.substring(0, 100) + '...' : track.lyrics}
+                  {track.lyrics.substring(0, 100)}{track.lyrics.length > 100 ? '...' : ''}
                 </p>
               )}
 
