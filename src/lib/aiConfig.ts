@@ -109,3 +109,29 @@ export const MOODS = [
   'Mysterious',
   'Playful',
 ];
+
+// Languages for lyrics generation
+export const LANGUAGES = [
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Japanese',
+  'Korean',
+  'Chinese',
+  'Russian',
+  'Arabic',
+  'Hindi',
+  'Turkish',
+  'Dutch',
+  'Swedish',
+  'Polish',
+  'Greek',
+  'Hebrew',
+  'Thai',
+  'Vietnamese',
+  'Indonesian',
+  'Haitian Creole',
+];

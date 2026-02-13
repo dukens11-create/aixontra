@@ -4,7 +4,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { GENRES, INSTRUMENTS, MOODS } from "@/lib/aiConfig";
+import { GENRES, INSTRUMENTS, MOODS, LANGUAGES } from "@/lib/aiConfig";
 import { GenerationMetadata } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ function CreateSongForm() {
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
@@ -64,6 +65,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          language: selectedLanguage,
         }),
       });
 
@@ -352,6 +354,27 @@ function CreateSongForm() {
                 </div>
               </div>
 
+              <div>
+                <Label htmlFor="language">Language</Label>
+                <select
+                  id="language"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="w-full mt-2 px-3 py-2 border rounded-md bg-background text-foreground"
+                  style={{
+                    borderColor: 'var(--border)',
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--foreground)',
+                  }}
+                >
+                  {LANGUAGES.map(language => (
+                    <option key={language} value={language}>
+                      {language}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <Button
                 onClick={handleGenerateLyrics}
                 disabled={lyricsLoading || !prompt.trim()}
@@ -499,6 +522,28 @@ function CreateSongForm() {
                   className="mt-2 font-mono"
                 />
               </div>
+
+              {audioUrl && (
+                <div className="card" style={{ padding: '1rem', backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+                  <Label>Preview Your Song</Label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={togglePlayback}
+                    >
+                      {isPlaying ? <Pause size={16} className="mr-2" /> : <Play size={16} className="mr-2" />}
+                      {isPlaying ? 'Pause' : 'Play Preview'}
+                    </Button>
+                    <span className="muted">
+                      {isDemoMode ? 'Demo Sample' : 'Generated Track'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', opacity: 0.8 }}>
+                    Listen to your song before publishing
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label>Genres</Label>
