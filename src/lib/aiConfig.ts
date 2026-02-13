@@ -15,7 +15,10 @@ export const AI_CONFIG = {
     enabled: !!process.env.OPENAI_API_KEY,
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL || 'gpt-4', // Configurable model: gpt-4, gpt-4-turbo, gpt-3.5-turbo, gpt-4o, etc.
-    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1500', 10), // Configurable max tokens for longer lyrics if needed
+    maxTokens: (() => {
+      const parsed = parseInt(process.env.OPENAI_MAX_TOKENS || '1500', 10);
+      return isNaN(parsed) || parsed <= 0 ? 1500 : parsed;
+    })(), // Configurable max tokens for longer lyrics if needed
   },
   
   // Music generation API configurations
