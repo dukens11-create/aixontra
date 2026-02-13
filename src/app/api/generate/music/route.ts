@@ -12,6 +12,7 @@ import { AI_CONFIG } from '@/lib/aiConfig';
  *   prompt: string,          // Musical prompt/description
  *   genre?: string,          // Musical genre
  *   mood?: string,           // Mood/style
+ *   styleDescription?: string, // Free-text style/rhythm description
  *   instruments?: string[],  // Selected instruments
  *   duration?: number        // Duration in seconds (default: 30)
  * }
@@ -34,7 +35,7 @@ import { AI_CONFIG } from '@/lib/aiConfig';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, genre, mood, instruments = [], duration = 30 } = body;
+    const { prompt, genre, mood, styleDescription, instruments = [], duration = 30 } = body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         prompt,
         genre,
         mood,
+        styleDescription,
         instruments,
         isDemoMode: true,
         provider: 'demo',

@@ -33,6 +33,7 @@ function CreateSongForm() {
   const [title, setTitle] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState("");
+  const [styleDescription, setStyleDescription] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [lyrics, setLyrics] = useState("");
   const [generationMetadata, setGenerationMetadata] = useState<GenerationMetadata | null>(null);
@@ -64,6 +65,7 @@ function CreateSongForm() {
           prompt,
           genre: selectedGenres.join(', '),
           mood: selectedMood,
+          styleDescription,
         }),
       });
 
@@ -107,6 +109,7 @@ function CreateSongForm() {
           genre: selectedGenres.join(', '),
           mood: selectedMood,
           instruments: selectedInstruments,
+          styleDescription,
         }),
       });
 
@@ -210,6 +213,7 @@ function CreateSongForm() {
           genres: selectedGenres,
           mood: selectedMood,
           instruments: selectedInstruments,
+          styleDescription,
           isDemoMode,
           ...generationMetadata,
         },
@@ -350,6 +354,21 @@ function CreateSongForm() {
                     </Badge>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="styleDescription">Style/Rhythm Description (optional)</Label>
+                <Textarea
+                  id="styleDescription"
+                  placeholder="e.g., traditional Vodou drumming, upbeat carnival Rabòday, slow romantic ballad..."
+                  value={styleDescription}
+                  onChange={(e) => setStyleDescription(e.target.value)}
+                  rows={3}
+                  className="mt-2"
+                />
+                <p className="muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Describe the specific style or rhythm you want for your song
+                </p>
               </div>
 
               <Button
@@ -514,6 +533,15 @@ function CreateSongForm() {
                   <Label>Mood</Label>
                   <div style={{ marginTop: '0.5rem' }}>
                     <Badge>{selectedMood}</Badge>
+                  </div>
+                </div>
+              )}
+
+              {styleDescription && (
+                <div>
+                  <Label>Style/Rhythm Description</Label>
+                  <div className="card" style={{ padding: '0.75rem', marginTop: '0.5rem', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}>
+                    <p style={{ fontSize: '0.875rem', margin: 0 }}>{styleDescription}</p>
                   </div>
                 </div>
               )}

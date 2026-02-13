@@ -78,6 +78,7 @@ export const GENRES = [
   'Kompa (Haiti)',
   'Zouk',
   'Rabòday',
+  'Vodou (Haitian)',
 ];
 
 // Available instruments for track generation
