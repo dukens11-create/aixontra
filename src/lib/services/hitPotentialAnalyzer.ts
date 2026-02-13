@@ -260,6 +260,8 @@ export class HitPotentialAnalyzer {
     const firstChorusIndex = sections.indexOf(firstChorus);
 
     // Estimate timing (rough approximation)
+    // Note: This assumes equal section durations, which may not be accurate in practice
+    // A more precise implementation would need actual audio duration data
     const avgSectionDuration = duration / sections.length;
     const start = Math.floor(firstChorusIndex * avgSectionDuration);
     const end = Math.floor((firstChorusIndex + 1) * avgSectionDuration);

@@ -39,7 +39,10 @@ export class RhymeEngine {
     // Handle special cases
     if (text.length <= 3) return 1;
     
-    // Count vowel groups
+    // Count vowel groups to estimate syllables
+    // Remove silent 'e' at end (e.g., "make" = 1 syllable, not 2)
+    // Remove 'ed' ending for past tense (e.g., "walked" = 1 syllable)
+    // Handle 'es' plural ending (e.g., "wishes" doesn't add extra syllable)
     text = text.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
     text = text.replace(/^y/, '');
     const matches = text.match(/[aeiouy]{1,2}/g);

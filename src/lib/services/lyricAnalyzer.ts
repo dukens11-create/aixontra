@@ -115,6 +115,7 @@ export class LyricAnalyzer {
     score += diversityRatio * 40;
 
     // Check for clichés (reduce score)
+    // TODO: Consider moving to configuration file for easier maintenance
     const cliches = [
       'baby', 'yeah', 'oh', 'la la', 'na na', 'uh', 'ooh',
       'tonight', 'all night', 'dance floor', 'party'

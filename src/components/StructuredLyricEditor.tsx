@@ -8,7 +8,7 @@
  * - Professional lyric formatting
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,9 +48,10 @@ export function StructuredLyricEditor({
   rows = 12 
 }: StructuredLyricEditorProps) {
   const [cursorPosition, setCursorPosition] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertSection = (sectionTag: string) => {
-    const textarea = document.getElementById('lyrics-editor') as HTMLTextAreaElement;
+    const textarea = textareaRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -141,6 +142,7 @@ export function StructuredLyricEditor({
 
         {/* Lyric Editor */}
         <Textarea
+          ref={textareaRef}
           id="lyrics-editor"
           value={value}
           onChange={(e) => {

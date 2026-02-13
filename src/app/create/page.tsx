@@ -710,7 +710,7 @@ function CreateSongForm() {
                     min="60"
                     max="180"
                     value={bpm}
-                    onChange={(e) => setBpm(parseInt(e.target.value) || 120)}
+                    onChange={(e) => setBpm(parseInt(e.target.value, 10) || 120)}
                     className="w-20"
                   />
                 </div>
