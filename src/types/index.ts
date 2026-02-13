@@ -2,6 +2,17 @@
 // Create Song Feature Types
 // ============================================================================
 
+export interface VoiceMetadata {
+  voiceId: string;
+  voiceName: string;
+  voiceProvider: 'openai' | 'elevenlabs' | 'google' | 'azure' | 'demo';
+  voiceGender?: 'male' | 'female' | 'neutral';
+  voiceLanguage: string;
+  voiceStyle?: string;
+  audioUrl?: string; // URL of generated voice audio
+  generatedAt?: string;
+}
+
 export interface GenerationMetadata {
   prompt: string;
   genres?: string[];
@@ -12,6 +23,7 @@ export interface GenerationMetadata {
   model?: string;
   provider?: string;
   generatedAt?: string;
+  voice?: VoiceMetadata; // Voice generation metadata
   [key: string]: any; // Allow additional properties for extensibility
 }
 
@@ -73,6 +85,9 @@ export interface Track {
   // Create Song feature fields
   lyrics: string | null;
   generation_metadata: GenerationMetadata | null;
+  // Voice generation fields
+  voice_audio_path: string | null;
+  voice_metadata: VoiceMetadata | null;
   // Joined data
   creator?: Profile;
   is_liked?: boolean;
