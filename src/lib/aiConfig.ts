@@ -14,8 +14,8 @@ export const AI_CONFIG = {
   openai: {
     enabled: !!process.env.OPENAI_API_KEY,
     apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4', // or 'gpt-3.5-turbo' for faster/cheaper generation
-    maxTokens: 1000,
+    model: process.env.OPENAI_MODEL || 'gpt-4', // Configurable model: gpt-4, gpt-4-turbo, gpt-3.5-turbo, gpt-4o, etc.
+    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1500', 10), // Configurable max tokens for longer lyrics if needed
   },
   
   // Music generation API configurations

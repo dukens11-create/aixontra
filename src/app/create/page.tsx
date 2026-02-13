@@ -433,14 +433,25 @@ function CreateSongForm() {
                 ) : (
                   <>
                     <Sparkles className="mr-2" size={16} />
-                    Generate Lyrics
+                    Generate Lyrics with AI (ChatGPT)
                   </>
                 )}
               </Button>
 
               {lyrics && (
                 <div>
-                  <Label>Generated Lyrics (editable)</Label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <Label>Generated Lyrics (editable)</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateLyrics}
+                      disabled={lyricsLoading || !prompt.trim()}
+                    >
+                      <Sparkles className="mr-2" size={14} />
+                      Regenerate
+                    </Button>
+                  </div>
                   <Textarea
                     value={lyrics}
                     onChange={(e) => setLyrics(e.target.value)}
