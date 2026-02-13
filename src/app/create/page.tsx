@@ -27,6 +27,7 @@ import { Music, Sparkles, Save, Play, Pause, Mic2 } from "lucide-react";
 import { LyricQualityScore } from "@/components/LyricQualityScore";
 import { HitPotentialMeter } from "@/components/HitPotentialMeter";
 import { FlowAnalysisDisplay } from "@/components/FlowAnalysisDisplay";
+import { GenreRecommendations } from "@/components/GenreRecommendations";
 import { rhymeEngine } from "@/lib/services/rhymeEngine";
 import { lyricAnalyzer } from "@/lib/services/lyricAnalyzer";
 import { hitPotentialAnalyzer } from "@/lib/services/hitPotentialAnalyzer";
@@ -583,6 +584,16 @@ function CreateSongForm() {
                   className="mt-2"
                 />
               </div>
+
+              <GenreRecommendations
+                prompt={prompt}
+                selectedGenres={selectedGenres}
+                onGenreSelect={(genre) => {
+                  if (!selectedGenres.includes(genre)) {
+                    setSelectedGenres([...selectedGenres, genre]);
+                  }
+                }}
+              />
 
               <div>
                 <Label>Genres (select one or more)</Label>
