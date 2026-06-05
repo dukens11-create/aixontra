@@ -41,6 +41,15 @@ export const RATE_LIMIT_CONFIG = {
   
   // Auth (10 attempts per 15 minutes)
   auth: { points: 10, duration: 900 },
+
+  // Track play actions (120 per minute)
+  play: { points: 120, duration: 60 },
+
+  // Moderation report submissions (20 per hour)
+  moderationReport: { points: 20, duration: 3600 },
+
+  // Voice model submissions (10 per day)
+  voiceModelSubmit: { points: 10, duration: 86400 },
 } as const;
 
 /**
