@@ -122,7 +122,7 @@ export default function GeneratePage() {
       if (!job.result) return;
       setAudioUrl(job.result.audioUrl);
       setWavUrl(job.result.wavUrl ?? null);
-      setStemsUrls((job.result.stemsUrls as any) ?? null);
+      setStemsUrls(job.result.stemsUrls ?? null);
       setMasteredAudioUrl(job.result.masteredAudioUrl ?? null);
       setDraftId(job.result.songDraftId ?? null);
     },
@@ -132,11 +132,13 @@ export default function GeneratePage() {
   const startPolling = useCallback(
     (jobId: string) => {
       stopPolling();
+      let consecutiveErrors = 0;
       pollRef.current = setInterval(async () => {
         try {
           const res = await fetch(`/api/generate/${jobId}`);
           if (!res.ok) { stopPolling(); return; }
           const job: GenerationJobRecord = await res.json();
+          consecutiveErrors = 0;
           setCurrentJob(job);
 
           if (job.status === 'COMPLETE') {
@@ -153,7 +155,12 @@ export default function GeneratePage() {
             setLoading(false);
           }
         } catch {
-          // network error — keep polling
+          consecutiveErrors += 1;
+          if (consecutiveErrors >= 5) {
+            stopPolling();
+            setLoading(false);
+            toast.error('Lost connection to the generation service. Please refresh and try again.');
+          }
         }
       }, POLL_INTERVAL_MS);
     },
@@ -195,9 +202,10 @@ export default function GeneratePage() {
         completedAt: null,
       });
       startPolling(data.jobId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false);
-      toast.error(error.message ?? 'Something went wrong');
+      const message = error instanceof Error ? error.message : 'Something went wrong';
+      toast.error(message);
     }
   };
 

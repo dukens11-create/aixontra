@@ -17,10 +17,12 @@ export type GenerationJobData = {
   enqueuedAt: string;
 };
 
+export type StemKey = 'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix';
+
 export type GenerationJobResult = {
   audioUrl: string;
   wavUrl: string;
-  stemsUrls?: Record<string, string>;
+  stemsUrls?: Partial<Record<StemKey, string>>;
   masteredAudioUrl?: string;
   coverUrl?: string;
   videoUrl?: string;

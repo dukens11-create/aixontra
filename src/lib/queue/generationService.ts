@@ -96,7 +96,11 @@ export async function enqueueGeneration(data: GenerationJobData): Promise<Genera
   // Fallback: run synchronously (no Redis), update history inline.
   const record = createRecord(jobId, data, null);
   jobHistory.set(jobId, record);
-  runDirectGeneration(jobId, data).catch(() => undefined);
+  runDirectGeneration(jobId, data).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : 'Generation failed unexpectedly';
+    console.error('[generationService] Direct generation error:', message);
+    failJob(jobId, message);
+  });
   return record;
 }
 
@@ -146,8 +150,9 @@ export async function runDirectGeneration(jobId: string, data: GenerationJobData
       provider: generation.provider,
       songDraftId: songDraft.id,
     });
-  } catch (err: any) {
-    failJob(jobId, err?.message ?? 'Generation failed');
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Generation failed';
+    failJob(jobId, message);
   }
 }
 
