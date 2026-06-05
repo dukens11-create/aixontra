@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { PlayerState, Track } from '@/types';
+import {
+  setMediaSessionMetadata,
+  registerMediaSessionHandlers,
+  updateMediaSessionPosition,
+  setMediaSessionPlaybackState,
+} from '@/lib/mobile/mediaSession';
 
 const toSrc = (track: Track | null) => track?.audio_path ?? null;
 
@@ -47,7 +53,10 @@ export function GlobalPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onTimeUpdate = () => seek(audio.currentTime);
+    const onTimeUpdate = () => {
+      seek(audio.currentTime);
+      updateMediaSessionPosition(audio.currentTime, audio.duration || 0);
+    };
     const onEnded = () => next();
 
     audio.addEventListener('timeupdate', onTimeUpdate);
@@ -57,6 +66,32 @@ export function GlobalPlayer() {
       audio.removeEventListener('ended', onEnded);
     };
   }, [next, seek]);
+
+  // ── Media Session API – lock screen & notification controls ──────────────
+  useEffect(() => {
+    if (!currentTrack) return;
+
+    setMediaSessionMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.creator?.display_name ?? 'AIXENTRA',
+      coverUrl: currentTrack.cover_path ?? undefined,
+    });
+
+    registerMediaSessionHandlers({
+      onPlay: () => play(),
+      onPause: () => pause(),
+      onNextTrack: () => next(),
+      onPreviousTrack: () => previous(),
+      onSeek: (time) => {
+        if (audioRef.current) audioRef.current.currentTime = time;
+        seek(time);
+      },
+    });
+  }, [currentTrack, play, pause, next, previous, seek]);
+
+  useEffect(() => {
+    setMediaSessionPlaybackState(isPlaying ? 'playing' : 'paused');
+  }, [isPlaying]);
 
   if (!currentTrack) return <audio ref={audioRef} preload="metadata" />;
 
