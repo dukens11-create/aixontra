@@ -31,7 +31,7 @@ const readProvider = (value: string | undefined): GpuProviderKey => {
 
 export const GPU_WORKER_CONFIG: GpuWorkerConfig = {
   defaultProvider: readProvider(process.env.AIXENTRA_GPU_DEFAULT_PROVIDER),
-  generationTimeoutMs: readNumber(process.env.AIXENTRA_GPU_GENERATION_TIMEOUT_MS, 12_000),
+  generationTimeoutMs: readNumber(process.env.AIXENTRA_GPU_GENERATION_TIMEOUT_MS, 90_000),
   healthcheckIntervalMs: readNumber(process.env.AIXENTRA_GPU_HEALTHCHECK_INTERVAL_MS, 5_000),
   failoverEnabled: process.env.AIXENTRA_GPU_FAILOVER_ENABLED !== 'false',
   workersPerProvider: {

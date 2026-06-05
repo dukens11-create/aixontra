@@ -21,6 +21,7 @@ import {
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
+const MAX_AUTOCOMPLETE_CHIP_LENGTH = 36;
 
 export default function GeneratePage() {
   const play = usePlayerStore((state) => state.play);
@@ -219,7 +220,9 @@ export default function GeneratePage() {
           <div className="row mt-2">
             {autocompleteSuggestions.map((suggestion) => (
               <button key={suggestion} type="button" className="badge" onClick={() => setPrompt(suggestion)}>
-                {suggestion.slice(0, 36)}...
+                {suggestion.length > MAX_AUTOCOMPLETE_CHIP_LENGTH
+                  ? `${suggestion.slice(0, MAX_AUTOCOMPLETE_CHIP_LENGTH)}...`
+                  : suggestion}
               </button>
             ))}
           </div>

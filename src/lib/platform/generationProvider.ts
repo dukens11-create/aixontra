@@ -1,6 +1,25 @@
 import { DEMO_AUDIO_URL } from './demoData';
 import { GPU_WORKER_CONFIG, type GpuProviderKey } from './gpuWorkerConfig';
 
+const DEFAULT_DURATION_SECONDS = 120;
+const MIN_DURATION_FACTOR = 0.5;
+const MIN_TIMEOUT_MS = 1_000;
+const MAX_TIMEOUT_MS = 300_000;
+const clampTimeout = (value: number) => Math.min(Math.max(value, MIN_TIMEOUT_MS), MAX_TIMEOUT_MS);
+const runWithTimeout = async (task: Promise<GenerationResult>, timeoutMs: number, providerKey: GpuProviderKey) => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race<GenerationResult>([
+      task,
+      new Promise<GenerationResult>((_, reject) => {
+        timeoutHandle = setTimeout(() => reject(new Error(`Provider ${providerKey} timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+};
+
 export type GenerationStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETE' | 'FAILED';
 
 export type GenerationInput = {
@@ -132,7 +151,7 @@ class ExternalGpuPlaceholderProvider implements AiMusicProvider {
   }
 
   estimateCost(input: GenerationInput): number {
-    const durationFactor = Math.max(0.5, (input.targetDurationSeconds ?? 120) / 120);
+    const durationFactor = Math.max(MIN_DURATION_FACTOR, (input.targetDurationSeconds ?? DEFAULT_DURATION_SECONDS) / DEFAULT_DURATION_SECONDS);
     return Number((this.baseCostUsd * durationFactor).toFixed(4));
   }
 }
@@ -171,7 +190,10 @@ export const generateWithFailover = async (
   preferredProvider?: GpuProviderKey,
   options?: { timeoutMs?: number; failoverEnabled?: boolean },
 ) => {
-  const timeoutMs = options?.timeoutMs ?? input.timeoutMs ?? GPU_WORKER_CONFIG.generationTimeoutMs;
+  const requestedTimeout = options?.timeoutMs ?? GPU_WORKER_CONFIG.generationTimeoutMs;
+  const timeoutMs = Number.isFinite(requestedTimeout)
+    ? clampTimeout(Number(requestedTimeout))
+    : GPU_WORKER_CONFIG.generationTimeoutMs;
   const failoverEnabled = options?.failoverEnabled ?? GPU_WORKER_CONFIG.failoverEnabled;
   const providers = getRegisteredProviders();
   const orderedProviders = preferredProvider
@@ -187,25 +209,20 @@ export const generateWithFailover = async (
     const health = await provider.healthCheck();
     if (!health.healthy) {
       lastError = new Error(`Provider ${providerKey} is unhealthy`);
-      if (!failoverEnabled) break;
+      if (!failoverEnabled) throw lastError;
       continue;
     }
 
     try {
-      const result = await Promise.race<GenerationResult>([
-        provider.generate(input),
-        new Promise<GenerationResult>((_, reject) => {
-          setTimeout(() => reject(new Error(`Provider ${providerKey} timed out after ${timeoutMs}ms`)), timeoutMs);
-        }),
-      ]);
+      const result = await runWithTimeout(provider.generate(input), timeoutMs, providerKey);
       return {
         ...result,
         estimatedCostUsd: result.estimatedCostUsd ?? provider.estimateCost(input),
         failoverAttempts: attempts - 1,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error('Generation failed');
-      if (!failoverEnabled) break;
+      if (!failoverEnabled) throw lastError;
     }
   }
 

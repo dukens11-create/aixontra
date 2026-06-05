@@ -1,5 +1,6 @@
 import { SUPPORTED_GENRES } from './demoData';
 
+/** Prompt templates support `[genre]` and `[mood]` token replacement in the generate UI assistant. */
 export const PROMPT_TEMPLATES = [
   'Create a [genre] anthem with [mood] energy, vivid imagery, and a festival-ready drop.',
   'Write a [genre] track inspired by midnight city lights, with emotional [mood] vocals.',
