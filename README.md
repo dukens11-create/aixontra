@@ -151,8 +151,14 @@ Enter admin password (min 8 characters): ********
 - Consider using a password manager for strong, unique passwords
 ## Core platform routes
 - `/generate` – AI music generation workflow (prompt + metadata + publish placeholder)
-- `/feed` – vertical discovery feed with remix/comment/share controls
+- `/feed` – personalized discovery feed with listening-history-aware ranking and remix/comment/share controls
 - `/dashboard/creator` – creator analytics, management, payout placeholders
 - `/marketplace` – monetization listings with purchase placeholders
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
 - `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`
+
+## Recommendation engine
+- `GET /api/recommendations/feed` – personalized feed generation with listening history analysis and ML-ready placeholders
+- `GET /api/recommendations/similar` – similar songs and similar creators
+- `GET /api/recommendations/trending` – trending content ranked by engagement + recency decay
+- `GET/POST /api/recommendations/history` – listening history analysis and event tracking

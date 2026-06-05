@@ -28,7 +28,9 @@ export type Song = {
   likes: number;
   plays: number;
   comments: number;
+  shares?: number;
   remixes: number;
+  averageWatchTimeSeconds?: number;
   audioUrl: string;
   wavUrl?: string;
   stemsUrls?: Partial<Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>>;
@@ -106,7 +108,9 @@ export const songs: Song[] = [
     likes: 2810,
     plays: 90120,
     comments: 290,
+    shares: 412,
     remixes: 73,
+    averageWatchTimeSeconds: 198,
     audioUrl: DEMO_AUDIO_URL,
     wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
     stemsUrls: {
@@ -138,7 +142,9 @@ export const songs: Song[] = [
     likes: 1620,
     plays: 43210,
     comments: 112,
+    shares: 188,
     remixes: 41,
+    averageWatchTimeSeconds: 143,
     audioUrl: DEMO_AUDIO_URL,
     wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
     coverUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=900&q=80',
@@ -160,7 +166,9 @@ export const songs: Song[] = [
     likes: 940,
     plays: 21600,
     comments: 76,
+    shares: 84,
     remixes: 18,
+    averageWatchTimeSeconds: 126,
     audioUrl: DEMO_AUDIO_URL,
     wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
     coverUrl: 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=900&q=80',

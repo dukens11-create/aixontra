@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { songs } from '@/lib/platform/demoData';
+import PersonalizedHomeFeed from '@/components/platform/PersonalizedHomeFeed';
+import { getTrendingSongs } from '@/lib/platform/recommendationEngine';
 
 const sections = [
   'AI song generation',
@@ -11,6 +12,8 @@ const sections = [
 ];
 
 export default function HomePage() {
+  const trendingSongs = getTrendingSongs({ limit: 3 });
+
   return (
     <div className="space-y-10 pb-8">
       <section className="hero-section">
@@ -36,18 +39,23 @@ export default function HomePage() {
         ))}
       </section>
 
+      <PersonalizedHomeFeed />
+
       <section className="card bg-white/5 backdrop-blur-sm">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <h2>Now trending</h2>
           <Link href="/trending" className="badge">View all</Link>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {songs.slice(0, 3).map((song) => (
+          {trendingSongs.map((song) => (
             <div key={song.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={song.coverUrl} alt={song.title} className="h-36 w-full rounded-xl object-cover" />
               <p className="mt-3 font-semibold">{song.title}</p>
               <p className="muted">{song.creatorName} · {song.genre}</p>
+              <p className="muted mt-1">
+                {(song.shares ?? 0).toLocaleString()} shares · {Math.round(song.averageWatchTimeSeconds ?? 0)}s watch
+              </p>
             </div>
           ))}
         </div>

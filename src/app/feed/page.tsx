@@ -4,29 +4,64 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
 import { usePlayerStore } from '@/stores/playerStore';
-import { rankSongs, recommendationScore } from '@/lib/platform/recommendations';
+import { DEFAULT_RECOMMENDATION_USER_ID, getPersonalizedFeed } from '@/lib/platform/recommendationEngine';
 
 export default function FeedPage() {
   const [page, setPage] = useState(1);
   const play = usePlayerStore((state) => state.play);
   const addToQueue = usePlayerStore((state) => state.addToQueue);
 
-  const rankedSongs = useMemo(() => rankSongs(songs), []);
-  const feedSongs = useMemo(() => Array.from({ length: page }).flatMap(() => rankedSongs), [page, rankedSongs]);
+  const personalizedFeed = useMemo(() => getPersonalizedFeed({ userId: DEFAULT_RECOMMENDATION_USER_ID, limit: 6 }), []);
+  const feedSongs = useMemo(
+    () => Array.from({ length: page }).flatMap(() => personalizedFeed.songs),
+    [page, personalizedFeed.songs],
+  );
 
   const action = (message: string) => toast.success(message);
+  const trackListen = async (songId: string) => {
+    try {
+      await fetch('/api/recommendations/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: DEFAULT_RECOMMENDATION_USER_ID,
+          songId,
+          watchTimeSeconds: 45,
+          completed: false,
+        }),
+      });
+    } catch {
+      // Ignore analytics errors in UI interactions.
+    }
+  };
 
   return (
     <div className="space-y-4 pb-6">
       <div className="card bg-white/5 backdrop-blur-sm">
         <h1>Discovery Feed</h1>
-        <p className="muted">Vertical, mobile-first discovery optimized for fast swipe/scroll sessions. Ranking score = plays + likes*3 + comments*4 + remixes*5 + recentBoost.</p>
+        <p className="muted">
+          Personalized ranking blends plays, likes, comments, shares, remixes, watch time, and recency with listening history analysis.
+        </p>
       </div>
 
-      {rankedSongs.length === 0 ? <div className="card bg-black/30">No tracks yet. Follow creators or generate your first song.</div> : <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="card bg-black/30">
+          <p className="font-semibold">Top genres</p>
+          <p className="muted mt-2">{personalizedFeed.historyAnalysis.topGenres.join(', ') || 'Still learning'}</p>
+        </div>
+        <div className="card bg-black/30">
+          <p className="font-semibold">Top creators</p>
+          <p className="muted mt-2">{personalizedFeed.historyAnalysis.topCreators.join(', ') || 'Still learning'}</p>
+        </div>
+        <div className="card bg-black/30">
+          <p className="font-semibold">ML-ready placeholders</p>
+          <p className="muted mt-2">Collaborative filtering + taste embeddings are scaffolded for future model integration.</p>
+        </div>
+      </div>
+
+      {personalizedFeed.songs.length === 0 ? <div className="card bg-black/30">No tracks yet. Follow creators or generate your first song.</div> : <div className="space-y-4">
         {feedSongs.map((song, index) => (
           <motion.article
             key={`${song.id}-${index}`}
@@ -42,8 +77,17 @@ export default function FeedPage() {
                 <audio src={song.audioUrl} controls className="mt-3 w-full" />
                 <h2 className="mt-3">{song.title}</h2>
                 <p className="muted">{song.creatorName} · {song.genre} · {song.mood}</p>
-                <p className="muted">{song.likes} likes · {song.plays} plays · {song.comments} comments · {song.remixes} remixes</p>
-                <p className="muted">Recommendation score: {Math.round(recommendationScore(song))}</p>
+                <p className="muted">
+                  {song.likes} likes · {song.plays} plays · {song.comments} comments · {(song.shares ?? 0)} shares · {song.remixes} remixes
+                </p>
+                <p className="muted">
+                  Avg watch time: {Math.round(song.averageWatchTimeSeconds ?? 0)}s · Recommendation score: {Math.round(song.score)}
+                </p>
+                <ul className="mt-3 space-y-1 text-sm text-slate-200">
+                  {song.reasons.map((reason) => (
+                    <li key={reason}>• {reason}</li>
+                  ))}
+                </ul>
               </div>
               <div className="flex flex-row gap-2 md:flex-col">
                 <button className="badge" onClick={() => action('Liked song')}>Like</button>
@@ -62,6 +106,7 @@ export default function FeedPage() {
                     const track = toTrack(song);
                     addToQueue(track);
                     play(track);
+                    void trackListen(song.id);
                   }}
                 >
                   Play
