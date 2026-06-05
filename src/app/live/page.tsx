@@ -165,7 +165,7 @@ export default function LivePage() {
             <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             <h2>Live Now</h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" style={{ gridTemplateColumns: '' }}>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered(liveStreams).map((stream, i) => (
               <motion.div
                 key={stream.id}

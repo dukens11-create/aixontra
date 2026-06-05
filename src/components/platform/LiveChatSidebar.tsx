@@ -9,7 +9,6 @@ interface LiveChatSidebarProps {
   messages: LiveChatMessage[];
   onSend: (content: string) => void;
   onClose?: () => void;
-  streamId: string;
 }
 
 export function LiveChatSidebar({ messages, onSend, onClose }: LiveChatSidebarProps) {

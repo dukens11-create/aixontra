@@ -356,7 +356,6 @@ export default function LiveStreamPage({ params }: { params: Promise<{ id: strin
             className="h-[500px] w-full lg:h-auto lg:w-80 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10"
           >
             <LiveChatSidebar
-              streamId={id}
               messages={messages}
               onSend={handleSendMessage}
               onClose={() => setIsChatOpen(false)}
@@ -482,7 +481,7 @@ export default function LiveStreamPage({ params }: { params: Promise<{ id: strin
       </AnimatePresence>
 
       {/* Stream Info */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3" style={{ gridTemplateColumns: '' }}>
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           <div className="card bg-black/30">
             <h3 className="mb-1">{stream.title}</h3>
