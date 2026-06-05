@@ -152,7 +152,12 @@ Enter admin password (min 8 characters): ********
 ## Core platform routes
 - `/generate` – AI music generation workflow (prompt + metadata + publish placeholder)
 - `/feed` – vertical discovery feed with remix/comment/share controls
-- `/dashboard/creator` – creator analytics, management, payout placeholders
+- `/dashboard/creator` – creator analytics + monetization dashboard (revenue chart, Stripe Connect status, payout history, pending payouts, referral stats)
 - `/marketplace` – monetization listings with purchase placeholders
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
 - `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`
+
+### Monetization architecture summary
+- `src/lib/platform/monetization.ts` manages creator payouts, Stripe Connect link/verification placeholders, tipping fee handling, subscription tiers, affiliate referral rewards, ad revenue placeholders, and payout analytics attribution.
+- Monetization API routes are under `src/app/api/monetization/**` for dashboard loading, Stripe/bank account management, tips, subscriptions, referral code + reward tracking, and payout scheduling.
+- TODO (payment processing integration): replace in-memory placeholder state with persistent storage and wire real Stripe Connect onboarding, payout transfers, and webhook reconciliation for payout/subscription/referral events.
