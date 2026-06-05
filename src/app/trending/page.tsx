@@ -1,7 +1,10 @@
 import { songs } from '@/lib/platform/demoData';
 
 export default function TrendingPage() {
-  const ranked = [...songs].sort((a, b) => (b.plays + b.likes * 3 + b.remixes * 4) - (a.plays + a.likes * 3 + a.remixes * 4));
+  const LIKE_WEIGHT = 3;
+  const REMIX_WEIGHT = 4;
+  const score = (song: (typeof songs)[number]) => song.plays + song.likes * LIKE_WEIGHT + song.remixes * REMIX_WEIGHT;
+  const ranked = [...songs].sort((a, b) => score(b) - score(a));
 
   return (
     <div className="space-y-4 pb-6">

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { songs } from '@/lib/platform/demoData';
+import { toTrack } from '@/lib/platform/toTrack';
 import { usePlayerStore } from '@/stores/playerStore';
 
 export default function FeedPage() {
@@ -36,7 +37,7 @@ export default function FeedPage() {
               <div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={song.coverUrl} alt={song.title} className="h-[52vh] w-full rounded-2xl object-cover" />
-                <audio src={song.audioUrl} controls autoPlay={index === 0} className="mt-3 w-full" />
+                <audio src={song.audioUrl} controls className="mt-3 w-full" />
                 <h2 className="mt-3">{song.title}</h2>
                 <p className="muted">{song.creatorName} · {song.genre} · {song.mood}</p>
                 <p className="muted">{song.likes} likes · {song.plays} plays · {song.comments} comments · {song.remixes} remixes</p>
@@ -51,8 +52,9 @@ export default function FeedPage() {
                 <button
                   className="badge"
                   onClick={() => {
-                    addToQueue(song as any);
-                    play(song as any);
+                    const track = toTrack(song);
+                    addToQueue(track);
+                    play(track);
                   }}
                 >
                   Play

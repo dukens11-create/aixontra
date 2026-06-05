@@ -1,4 +1,7 @@
 import { songs, marketplaceItems } from '@/lib/platform/demoData';
+export const PLATFORM_FEE_RATE = 0.1;
+const MARKETPLACE_TYPES = ['beats', 'ai_song', 'vocal_pack', 'voice_model', 'exclusive_license', 'commercial_license'] as const;
+type MarketplaceType = (typeof MARKETPLACE_TYPES)[number];
 
 type GeneratedSongDraft = {
   id: string;
@@ -63,10 +66,13 @@ export const addSongToPlaylist = (playlistId: string, songId: string) => {
 };
 
 export const createMarketplaceItem = (input: { title: string; type: string; price: number; licenseType: string; previewAudioUrl?: string; description?: string; seller?: string; cover?: string }) => {
+  const safeType: MarketplaceType = MARKETPLACE_TYPES.includes(input.type as MarketplaceType)
+    ? (input.type as MarketplaceType)
+    : 'beats';
   const item = {
     id: `item-${Date.now()}`,
     title: input.title,
-    type: (input.type as any) ?? 'beats',
+    type: safeType,
     price: input.price,
     licenseType: input.licenseType,
     previewAudioUrl: input.previewAudioUrl ?? songs[0].audioUrl,
@@ -82,7 +88,7 @@ export const createPurchase = (marketplaceItemId: string, amount: number) => ({
   id: `purchase-${Date.now()}`,
   marketplaceItemId,
   amount,
-  platformFee: Number((amount * 0.1).toFixed(2)),
+  platformFee: Number((amount * PLATFORM_FEE_RATE).toFixed(2)),
   payoutStatus: 'pending_stripe_connect_link',
   stripePaymentIntentId: `pi_placeholder_${Date.now()}`,
 });

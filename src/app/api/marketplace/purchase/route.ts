@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createPurchase } from '@/lib/platform/platformStore';
+import { createPurchase, PLATFORM_FEE_RATE } from '@/lib/platform/platformStore';
 
 export async function POST(request: Request) {
   const { marketplaceItemId, amount } = await request.json();
@@ -11,6 +11,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     purchase,
-    message: 'Purchase placeholder created. Stripe Connect split: 10% platform fee, 90% creator payout.',
+    message: `Purchase placeholder created. Stripe Connect split: ${Math.round(PLATFORM_FEE_RATE * 100)}% platform fee, ${Math.round((1 - PLATFORM_FEE_RATE) * 100)}% creator payout.`,
   });
 }

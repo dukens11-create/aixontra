@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
+import { toTrack } from '@/lib/platform/toTrack';
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
@@ -75,7 +76,7 @@ export default function GeneratePage() {
   };
 
   const playPreview = () => {
-    const track = {
+    const track = toTrack({
       ...songs[0],
       id: draftId ?? songs[0].id,
       title: `Generated: ${genre} ${mood}`,
@@ -86,7 +87,7 @@ export default function GeneratePage() {
       language,
       bpm,
       audioUrl,
-    } as any;
+    });
     addToQueue(track);
     play(track);
   };
@@ -143,7 +144,7 @@ export default function GeneratePage() {
           <button type="submit" className="btn" disabled={loading}>Generate</button>
           <button type="button" className="btn secondary" onClick={() => generate('regenerate')} disabled={loading}>Regenerate</button>
           <button type="button" className="btn secondary" onClick={() => generate('extend')} disabled={loading}>Extend</button>
-          <a className="btn secondary" href={audioUrl} download>Download MP3</a>
+          <button type="button" className="btn secondary" onClick={() => window.open(audioUrl, '_blank', 'noopener,noreferrer')}>Download MP3</button>
           <button type="button" className="btn" onClick={publishSong}>Publish</button>
         </div>
       </form>

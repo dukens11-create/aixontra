@@ -293,12 +293,12 @@ model CollaborationRoom {
 }
 
 model CollaborationMember {
-  id             String            @id @default(cuid())
-  roomId          String
-  userId          String
-  role            CollaborationRole
-  royaltyPercent  Float
-  createdAt       DateTime          @default(now())
+  id            String            @id @default(cuid())
+  roomId        String
+  userId        String
+  role          CollaborationRole
+  royaltyPercent Float
+  createdAt     DateTime          @default(now())
 
   room CollaborationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user User              @relation(fields: [userId], references: [id], onDelete: Cascade)

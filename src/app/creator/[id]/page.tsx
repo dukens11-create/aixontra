@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { creators, songs } from '@/lib/platform/demoData';
 
-export default async function CreatorPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function CreatorPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const creator = creators.find((entry) => entry.id === id) ?? creators[0];
   const creatorSongs = songs.filter((song) => song.creatorId === creator.id);
 

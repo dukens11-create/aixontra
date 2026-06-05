@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
+import { PlayerState, Track } from '@/types';
 
-const toSrc = (track: { audio_path?: string | null; audioUrl?: string | null } | null) =>
-  track?.audio_path ?? track?.audioUrl ?? null;
+const toSrc = (track: Track | null) => track?.audio_path ?? null;
 
 export function GlobalPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -24,7 +24,7 @@ export function GlobalPlayer() {
     mode,
   } = usePlayerStore();
 
-  const src = useMemo(() => toSrc(currentTrack as any), [currentTrack]);
+  const src = useMemo(() => toSrc(currentTrack), [currentTrack]);
 
   useEffect(() => {
     if (!audioRef.current || !src) return;
@@ -66,10 +66,10 @@ export function GlobalPlayer() {
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-slate-950/90 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-3 py-2 text-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={(currentTrack as any).coverUrl ?? '/logo.svg'} alt={currentTrack.title} className="h-10 w-10 rounded-lg object-cover" />
+          <img src={currentTrack.cover_path ?? '/logo.svg'} alt={currentTrack.title} className="h-10 w-10 rounded-lg object-cover" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{currentTrack.title}</p>
-            <p className="truncate text-xs text-slate-400">{(currentTrack as any).creatorName ?? 'AIXENTRA'}</p>
+            <p className="truncate text-xs text-slate-400">{currentTrack.creator?.display_name ?? 'AIXENTRA'}</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="badge" onClick={previous}>Prev</button>
@@ -99,7 +99,11 @@ export function GlobalPlayer() {
             onChange={(event) => setVolume(Number(event.target.value))}
             className="w-16"
           />
-          <select value={mode} onChange={(event) => setMode(event.target.value as any)} className="hidden rounded-lg bg-slate-900 p-1 text-xs md:block">
+          <select
+            value={mode}
+            onChange={(event) => setMode(event.target.value as PlayerState['mode'])}
+            className="hidden rounded-lg bg-slate-900 p-1 text-xs md:block"
+          >
             <option value="normal">Queue</option>
             <option value="repeat-one">Repeat 1</option>
             <option value="repeat-all">Repeat All</option>
