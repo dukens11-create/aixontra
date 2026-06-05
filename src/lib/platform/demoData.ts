@@ -30,10 +30,15 @@ export type Song = {
   comments: number;
   remixes: number;
   audioUrl: string;
+  wavUrl?: string;
+  stemsUrls?: Partial<Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>>;
   coverUrl: string;
+  videoUrl?: string;
+  masteredAudioUrl?: string;
   prompt: string;
   lyrics: string;
   isPublic: boolean;
+  createdAt?: string;
 };
 
 export type CreatorProfile = {
@@ -103,10 +108,22 @@ export const songs: Song[] = [
     comments: 290,
     remixes: 73,
     audioUrl: DEMO_AUDIO_URL,
+    wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
+    stemsUrls: {
+      vocals: `${DEMO_AUDIO_URL}&stem=vocals`,
+      drums: `${DEMO_AUDIO_URL}&stem=drums`,
+      bass: `${DEMO_AUDIO_URL}&stem=bass`,
+      melody: `${DEMO_AUDIO_URL}&stem=melody`,
+      instrumental: `${DEMO_AUDIO_URL}&stem=instrumental`,
+      fullMix: `${DEMO_AUDIO_URL}&stem=full_mix`,
+    },
     coverUrl: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?auto=format&fit=crop&w=900&q=80',
+    videoUrl: 'https://example.com/visualizer/placeholder.mp4',
+    masteredAudioUrl: `${DEMO_AUDIO_URL}&mastered=true`,
     prompt: 'Warm guitar kompa groove with neon synth accents.',
     lyrics: 'Nan mitan lannwit la nou danse anba limyè vil la...',
     isPublic: true,
+    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
   },
   {
     id: 'song-2',
@@ -123,10 +140,12 @@ export const songs: Song[] = [
     comments: 112,
     remixes: 41,
     audioUrl: DEMO_AUDIO_URL,
+    wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
     coverUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=900&q=80',
     prompt: 'Aggressive drill beat, gliding bass, cinematic choir textures.',
     lyrics: 'Chrome on the skyline, city pulse in my veins...',
     isPublic: true,
+    createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
   },
   {
     id: 'song-3',
@@ -143,10 +162,12 @@ export const songs: Song[] = [
     comments: 76,
     remixes: 18,
     audioUrl: DEMO_AUDIO_URL,
+    wavUrl: `${DEMO_AUDIO_URL}&format=wav`,
     coverUrl: 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=900&q=80',
     prompt: 'Festival-ready drop with hopeful vocals and side-chained synths.',
     lyrics: 'On danse jusqu’au matin, nos rêves deviennent lumière...',
     isPublic: true,
+    createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
   },
 ];
 

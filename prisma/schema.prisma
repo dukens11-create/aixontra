@@ -66,6 +66,50 @@ enum NotificationType {
   PURCHASE
   PAYOUT_UPDATE
   COLLAB_INVITE
+  VERIFICATION_UPDATE
+}
+
+enum GenerationStatus {
+  QUEUED
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+enum SubscriptionPlan {
+  FREE
+  CREATOR
+  PRO
+  STUDIO
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  TAKEN_DOWN
+}
+
+enum VerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VoiceModelStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CreditTransactionType {
+  MONTHLY_FREE_CREDIT
+  GENERATION_DEBIT
+  CREDIT_PURCHASE
+  REFUND
+  ADMIN_ADJUSTMENT
 }
 
 model User {
@@ -74,6 +118,10 @@ model User {
   email                String?               @unique
   image                String?
   role                 UserRole              @default(USER)
+  subscriptionPlan     SubscriptionPlan      @default(FREE)
+  creditBalance        Int                   @default(0)
+  monthlyFreeCredits   Int                   @default(25)
+  verificationStatus   VerificationStatus    @default(NOT_SUBMITTED)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   deletedAt            DateTime?
@@ -92,8 +140,17 @@ model User {
   ownedCollabRooms     CollaborationRoom[]   @relation("roomOwner")
   collaborationMembers CollaborationMember[]
   notifications        Notification[]
+  generations          AiGeneration[]
+  creditTransactions   CreditTransaction[]
+  verificationRequests VerificationRequest[]
+  voiceModels          VoiceModel[]
+  reports              SongReport[]
+  dmcaClaims           DmcaClaim[]
+  creditPackPurchases  CreditPackPurchase[]
+  payouts              Payout[]
 
   @@index([role])
+  @@index([subscriptionPlan])
 }
 
 model CreatorProfile {
@@ -127,7 +184,15 @@ model Song {
   bpm            Int?
   vocalStyle     VocalStyle?
   audioUrl       String
+  wavUrl         String?
+  stemsUrls      Json?
   coverUrl       String?
+  videoUrl       String?
+  masteredAudioUrl String?
+  generationStatus GenerationStatus @default(QUEUED)
+  moderationStatus ModerationStatus @default(PENDING)
+  recommendationScore Float         @default(0)
+  commercialRights   Boolean        @default(false)
   duration       Int?
   isPublic       Boolean     @default(false)
   isInstrumental Boolean     @default(false)
@@ -147,10 +212,16 @@ model Song {
   playlistSongs PlaylistSong[]
   sourceRemixes Remix[]         @relation("sourceSong")
   childRemixes  Remix[]         @relation("remixSong")
+  generation    AiGeneration?
+  reports       SongReport[]
+  dmcaClaims    DmcaClaim[]
+  royaltySplits RoyaltySplit[]
+  moderationActions ModerationAction[]
 
   @@index([creatorId, createdAt])
   @@index([status, isPublic])
   @@index([genre, mood, language])
+  @@index([generationStatus, moderationStatus])
 }
 
 model Like {
@@ -288,6 +359,7 @@ model CollaborationRoom {
 
   owner   User                  @relation("roomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members CollaborationMember[]
+  royaltySplits RoyaltySplit[]
 
   @@index([ownerId, status])
 }
@@ -319,4 +391,160 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead, createdAt])
+}
+
+model AiGeneration {
+  id          String           @id @default(cuid())
+  userId      String
+  songId      String?          @unique
+  providerKey String
+  status      GenerationStatus @default(QUEUED)
+  error       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song Song? @relation(fields: [songId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, createdAt])
+}
+
+model CreditTransaction {
+  id           String                @id @default(cuid())
+  userId       String
+  type         CreditTransactionType
+  amount       Int
+  balanceAfter Int
+  description  String?
+  metadata     Json?
+  createdAt    DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model CreditPack {
+  id        String               @id @default(cuid())
+  name      String
+  credits   Int
+  priceUsd  Decimal              @db.Decimal(10, 2)
+  isActive  Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  purchases CreditPackPurchase[]
+}
+
+model CreditPackPurchase {
+  id           String   @id @default(cuid())
+  userId       String
+  creditPackId String
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditPack CreditPack @relation(fields: [creditPackId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model SongReport {
+  id        String           @id @default(cuid())
+  songId    String
+  reporterId String
+  reason    String
+  status    ModerationStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+
+  song     Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([songId, status, createdAt])
+}
+
+model DmcaClaim {
+  id         String           @id @default(cuid())
+  songId     String
+  claimantId String
+  noticeUrl  String?
+  status     ModerationStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+
+  song     Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  claimant User @relation(fields: [claimantId], references: [id], onDelete: Cascade)
+
+  @@index([songId, status, createdAt])
+}
+
+model ModerationAction {
+  id          String           @id @default(cuid())
+  songId       String
+  adminId      String
+  status       ModerationStatus
+  note         String?
+  createdAt    DateTime         @default(now())
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId, createdAt])
+}
+
+model VoiceModel {
+  id               String           @id @default(cuid())
+  userId           String
+  name             String
+  consentConfirmed Boolean
+  proofUrl         String
+  status           VoiceModelStatus @default(PENDING)
+  isPublic         Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, isPublic])
+}
+
+model VerificationRequest {
+  id                 String             @id @default(cuid())
+  userId             String
+  legalName          String
+  stageName          String
+  idUploadPlaceholder String?
+  links              Json?
+  reason             String
+  status             VerificationStatus @default(PENDING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+model RoyaltySplit {
+  id         String   @id @default(cuid())
+  songId     String?
+  roomId     String?
+  userId     String
+  percentage Float
+  createdAt  DateTime @default(now())
+
+  song Song?               @relation(fields: [songId], references: [id], onDelete: Cascade)
+  room CollaborationRoom?  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([songId])
+  @@index([roomId])
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Decimal  @db.Decimal(10, 2)
+  status      String
+  externalRef String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

@@ -26,7 +26,7 @@ export default function Nav() {
       <div className="container row" style={{ justifyContent: "space-between", paddingTop: '1rem', paddingBottom: '1rem' }}>
         <div className="row">
           <Link href="/" style={{ fontWeight: 900, letterSpacing: 1 }}>AIXENTRA</Link>
-          <span className="badge">AI Music Platform</span>
+          <span className="badge">The Future of Sound Starts Here.</span>
         </div>
         <div className="row">
           <Link href="/generate" className="badge">Generate</Link>
@@ -36,6 +36,8 @@ export default function Nav() {
           <Link href="/search" className="badge">Search</Link>
           <Link href="/library" className="badge">Library</Link>
           <Link href="/notifications" className="badge">Notifications</Link>
+          <Link href="/terms" className="badge">Terms</Link>
+          <Link href="/privacy" className="badge">Privacy</Link>
           {email && <Link href="/dashboard/creator" className="badge">Creator Hub</Link>}
           <Link href="/admin" className="badge">Admin</Link>
           {!email ? (

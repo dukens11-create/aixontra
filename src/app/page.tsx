@@ -15,6 +15,7 @@ export default function HomePage() {
     <div className="space-y-10 pb-8">
       <section className="hero-section">
         <div className="hero-content">
+          <p className="badge">The Future of Sound Starts Here.</p>
           <h1 className="hero-title">Create, Stream, Remix, and Monetize AI Music.</h1>
           <p className="hero-description">
             AIXENTRA is the next-generation AI music platform for creators, fans, and the future of sound.

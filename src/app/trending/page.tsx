@@ -1,10 +1,8 @@
 import { songs } from '@/lib/platform/demoData';
+import { recommendationScore, rankSongs } from '@/lib/platform/recommendations';
 
 export default function TrendingPage() {
-  const LIKE_WEIGHT = 3;
-  const REMIX_WEIGHT = 4;
-  const score = (song: (typeof songs)[number]) => song.plays + song.likes * LIKE_WEIGHT + song.remixes * REMIX_WEIGHT;
-  const ranked = [...songs].sort((a, b) => score(b) - score(a));
+  const ranked = rankSongs(songs);
 
   return (
     <div className="space-y-4 pb-6">
@@ -17,7 +15,7 @@ export default function TrendingPage() {
               <p className="font-semibold">{song.title}</p>
               <p className="muted">{song.creatorName} · {song.plays} plays · {song.likes} likes · {song.remixes} remixes</p>
             </div>
-            <span className="badge">Growth +{Math.max(5, Math.floor(song.likes / 100))}%</span>
+            <span className="badge">Score {Math.round(recommendationScore(song))}</span>
           </article>
         ))}
       </section>
