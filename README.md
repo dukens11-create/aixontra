@@ -155,5 +155,35 @@ Enter admin password (min 8 characters): ********
 - `/feed` – vertical discovery feed with remix/comment/share controls
 - `/dashboard/creator` – creator analytics, management, payout placeholders
 - `/marketplace` – monetization listings with purchase placeholders
+- `/distribution` – music distribution preparation dashboard (metadata, ISRC/UPC placeholders, release scheduling, Spotify/Apple Music/TikTok/YouTube Music export packages)
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
 - `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`
+
+## Distribution system
+
+The distribution system at `/distribution` and `src/lib/platform/distributionService.ts` provides:
+
+- **Export-ready metadata** with full credits (title, artist, songwriters, producers, genre, language, lyrics).
+- **ISRC placeholder** (`US-AXN-YY-NNNNN` format) – replace with a registered ISRC before submission.
+- **UPC/EAN placeholder** – replace with a GS1-issued barcode before submission.
+- **Distributor-ready formatting** for Spotify, Apple Music, TikTok, and YouTube Music.
+- **Release scheduling** with release-date and pre-save/pre-order date fields.
+- **Album, EP, and single** release types with appropriate metadata templates.
+- **Metadata validation** (errors + warnings) before export.
+
+### API routes
+- `GET /api/distribution/releases` – list all releases.
+- `POST /api/distribution/releases` – create a new release.
+- `POST /api/distribution/export` – generate a distributor-ready export package.
+
+### Follow-up distributor API integration TODOs
+- Integrate real ISRC registrar API (RIAA / PPL / SoundExchange).
+- Integrate GS1 UPC/EAN barcode issuer.
+- Implement Spotify for Artists OAuth submission flow.
+- Implement Apple Music / iTunes Connect aggregator API.
+- Implement TikTok for Artists partner API submission.
+- Implement YouTube Music / Content ID asset delivery API.
+- Add artwork validation (dimensions ≥3000×3000 px, DPI, colour-space).
+- Persist release data in Supabase / Prisma instead of in-memory store.
+- Add multi-track form for album and EP releases.
+- Build release calendar with drag-and-drop scheduling.
