@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import type { RecommendationFeed } from '@/lib/platform/recommendationEngine';
+import { DEFAULT_RECOMMENDATION_USER_ID, type RecommendationFeed } from '@/lib/platform/recommendationEngine';
 
-const FEED_ENDPOINT = '/api/recommendations/feed?userId=listener-demo&limit=4';
+const FEED_ENDPOINT = `/api/recommendations/feed?userId=${DEFAULT_RECOMMENDATION_USER_ID}&limit=4`;
 
 export default function PersonalizedHomeFeed() {
   const [feed, setFeed] = useState<RecommendationFeed | null>(null);

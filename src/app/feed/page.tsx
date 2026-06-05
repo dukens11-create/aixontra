@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { toTrack } from '@/lib/platform/toTrack';
@@ -22,7 +22,7 @@ export default function FeedPage() {
   );
 
   const action = (message: string) => toast.success(message);
-  const trackListen = async (songId: string) => {
+  const trackListen = useCallback(async (songId: string) => {
     try {
       await fetch('/api/recommendations/history', {
         method: 'POST',
@@ -37,7 +37,7 @@ export default function FeedPage() {
     } catch {
       // Ignore analytics errors in UI interactions.
     }
-  };
+  }, []);
 
   return (
     <div className="space-y-4 pb-6">

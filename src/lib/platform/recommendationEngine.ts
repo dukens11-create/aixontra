@@ -72,6 +72,7 @@ const SCORE_WEIGHTS = {
   remixes: 6,
   watchTime: 0.75,
 };
+const RECENCY_WINDOW_HOURS = 72;
 const RECENCY_BOOST_MULTIPLIER = 1.5;
 const MAX_LISTENING_HISTORY_SIZE = 100;
 const PERSONALIZATION_WEIGHTS = {
@@ -148,12 +149,14 @@ const uniqueTopValues = (values: string[], limit = 3) =>
 const getSongCatalog = (catalogSongs: Song[] = songs) => catalogSongs.filter((song) => song.isPublic !== false);
 
 const getHoursSinceRelease = (createdAt?: string) => {
-  if (!createdAt) return 72;
+  if (!createdAt) return RECENCY_WINDOW_HOURS;
   return Math.max(0, (Date.now() - new Date(createdAt).getTime()) / MS_PER_HOUR);
 };
 
-export const getRecencyBoost = (createdAt?: string) =>
-  Math.max(0, 72 - getHoursSinceRelease(createdAt)) * RECENCY_BOOST_MULTIPLIER;
+export const getRecencyBoost = (createdAt?: string) => {
+  const remainingRecencyWindow = RECENCY_WINDOW_HOURS - getHoursSinceRelease(createdAt);
+  return Math.max(0, remainingRecencyWindow) * RECENCY_BOOST_MULTIPLIER;
+};
 
 export const calculateTrendingScore = (song: Song) => {
   const breakdown: TrendBreakdown = {
@@ -289,6 +292,7 @@ export const getSimilarSongs = (songId: string, options?: { limit?: number; cata
           reasons.push(`Shared language: ${song.language}`);
         }
 
+        // Linear BPM decay: within an 80 BPM window, closer tempos get proportionally higher affinity.
         score += Math.max(0, SIMILAR_SONG_WEIGHTS.maxBpmAffinity - Math.abs(song.bpm - seedSong.bpm));
         score += song.creatorId === seedSong.creatorId ? SIMILAR_SONG_WEIGHTS.sameCreator : 0;
         score += calculateTrendingScore(song).score * 0.01;
