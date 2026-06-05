@@ -29,7 +29,7 @@ import {
 import { audioBufferToWavBlob, extractWaveformPeaks, renderEditedAudio } from '@/lib/audioStudio/audioProcessing';
 import { formatDuration } from '@/lib/utils';
 
-const PERSISTENCE_KEY = 'aixontra:audio-studio:state';
+const PERSISTENCE_KEY = 'aixentra:audio-studio:state';
 
 export default function AudioStudioPage() {
   return (
@@ -54,6 +54,7 @@ function AudioStudioWorkspace() {
   const [restoredState, setRestoredState] = useState<AudioEditorState | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const state = history.present;
 
   const canUndo = history.past.length > 0;
@@ -85,7 +86,7 @@ function AudioStudioWorkspace() {
     const player = audioRef.current;
     if (!player) return;
 
-    player.volume = state.volume / 2;
+    player.volume = Math.min(state.volume, 1);
   }, [state.volume]);
 
   useEffect(() => {
@@ -111,6 +112,29 @@ function AudioStudioWorkspace() {
       player.removeEventListener('pause', onPause);
     };
   }, [state.trimEnd, updateEditorWithoutHistory]);
+
+  const togglePlayback = useCallback(async () => {
+    const player = audioRef.current;
+    if (!player || !audioUrl) return;
+
+    const currentlyPlaying = !player.paused;
+    if (currentlyPlaying) {
+      player.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    if (player.currentTime < state.trimStart || player.currentTime > state.trimEnd) {
+      player.currentTime = state.trimStart;
+    }
+
+    try {
+      await player.play();
+      setIsPlaying(true);
+    } catch {
+      setError('Playback failed. Please interact with the page and try again.');
+    }
+  }, [audioUrl, state.trimEnd, state.trimStart]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -151,28 +175,6 @@ function AudioStudioWorkspace() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [togglePlayback, updateEditor]);
 
-  const togglePlayback = useCallback(async () => {
-    const player = audioRef.current;
-    if (!player || !audioUrl) return;
-
-    if (isPlaying) {
-      player.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    if (player.currentTime < state.trimStart || player.currentTime > state.trimEnd) {
-      player.currentTime = state.trimStart;
-    }
-
-    try {
-      await player.play();
-      setIsPlaying(true);
-    } catch {
-      setError('Playback failed. Please interact with the page and try again.');
-    }
-  }, [audioUrl, isPlaying, state.trimEnd, state.trimStart]);
-
   const handleFileLoad = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
@@ -186,7 +188,7 @@ function AudioStudioWorkspace() {
       const objectUrl = URL.createObjectURL(file);
       const arrayBuffer = await file.arrayBuffer();
       const audioContext = new window.AudioContext();
-      const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+      const decoded = await audioContext.decodeAudioData(arrayBuffer);
       await audioContext.close();
 
       setAudioUrl(objectUrl);
@@ -258,20 +260,22 @@ function AudioStudioWorkspace() {
             <p className="muted">Professional browser-based DAW workflow for AIXENTRA creators.</p>
           </div>
           <div className="row">
-            <label className="btn secondary cursor-pointer">
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               Load audio
-              <input
-                className="hidden"
-                type="file"
-                accept="audio/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    void handleFileLoad(file);
-                  }
-                }}
-              />
-            </label>
+            </Button>
+            <input
+              ref={fileInputRef}
+              className="hidden"
+              type="file"
+              accept="audio/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  void handleFileLoad(file);
+                }
+                event.currentTarget.value = '';
+              }}
+            />
             <Button variant="secondary" onClick={togglePlayback} disabled={!audioUrl}>
               {isPlaying ? 'Pause' : 'Play'}
             </Button>

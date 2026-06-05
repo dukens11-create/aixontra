@@ -73,7 +73,7 @@ export function setDuration(state: AudioEditorState, duration: number): AudioEdi
     cursor: clampToDuration(state.cursor, normalizedDuration),
     trimStart,
     trimEnd,
-    splits: state.splits.filter((split) => split >= trimStart && split <= trimEnd && split <= normalizedDuration),
+    splits: state.splits.filter((split) => split >= trimStart && split <= trimEnd),
     fadeIn: clampToDuration(state.fadeIn, trimEnd - trimStart),
     fadeOut: clampToDuration(state.fadeOut, trimEnd - trimStart),
     chorusReplacement: state.chorusReplacement
@@ -207,7 +207,7 @@ export function createHistoryState<T>(initialState: T): HistoryState<T> {
 }
 
 export function pushHistoryState<T>(history: HistoryState<T>, nextState: T): HistoryState<T> {
-  if (JSON.stringify(history.present) === JSON.stringify(nextState)) {
+  if (history.present === nextState) {
     return history;
   }
 

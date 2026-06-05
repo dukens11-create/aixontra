@@ -13,7 +13,7 @@ export function extractWaveformPeaks(audioBuffer: AudioBuffer, targetPoints = 48
     let peak = 0;
 
     for (let sampleIndex = start; sampleIndex < end; sampleIndex += 1) {
-      peak = Math.max(peak, Math.abs(channelData[sampleIndex] ?? 0));
+      peak = Math.max(peak, Math.abs(channelData[sampleIndex]));
     }
 
     peaks.push(peak);
@@ -94,7 +94,7 @@ export function audioBufferToWavBlob(audioBuffer: AudioBuffer): Blob {
 
   for (let frame = 0; frame < audioBuffer.length; frame += 1) {
     for (let channel = 0; channel < channelCount; channel += 1) {
-      const sample = clamp(channels[channel][frame] ?? 0, -1, 1);
+      const sample = clamp(channels[channel][frame], -1, 1);
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
       offset += bytesPerSample;
     }

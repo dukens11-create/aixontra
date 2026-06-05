@@ -97,7 +97,7 @@ export function AudioControlPanel({
 
       <section className="card space-y-3 bg-black/40">
         <h3 className="text-base font-semibold">Stem mute / solo</h3>
-        <p className="muted">Ready for per-stem files. Controls are stored now and used once stems are connected.</p>
+        <p className="muted">Placeholder controls: values are saved and will drive playback/export once real multi-stem files are integrated.</p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {STEM_KEYS.map((stem) => (
             <div key={stem} className="rounded-lg border border-border bg-black/40 p-3">

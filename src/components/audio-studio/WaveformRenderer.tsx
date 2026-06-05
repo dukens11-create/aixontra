@@ -114,9 +114,18 @@ export function WaveformRenderer({
         onSeek(Math.max(0, ratio) * duration);
       }}
       className="relative h-44 w-full overflow-hidden rounded-xl border border-border bg-black/60"
-      aria-label="Waveform timeline"
+      aria-label={
+        peaks.length === 0
+          ? 'Waveform timeline. Load audio to render waveform.'
+          : 'Waveform timeline. Click to seek playback position.'
+      }
     >
       <canvas ref={canvasRef} className="h-full w-full" />
+      <span className="sr-only">
+        {peaks.length === 0
+          ? 'No waveform loaded yet.'
+          : 'Waveform loaded. Click anywhere on the waveform to move the playhead.'}
+      </span>
     </button>
   );
 }

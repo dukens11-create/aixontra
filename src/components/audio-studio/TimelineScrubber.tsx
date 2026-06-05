@@ -64,7 +64,7 @@ export function TimelineScrubber({
           className="absolute top-0 h-full bg-cyan-500/20"
           style={{
             left: `${toPercentage(trimStart, duration)}%`,
-            width: `${Math.max(toPercentage(trimEnd - trimStart, duration), 0)}%`,
+            width: `${toPercentage(trimEnd - trimStart, duration)}%`,
           }}
         />
 
