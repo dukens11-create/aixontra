@@ -21,8 +21,8 @@ import { getJobRecord } from '@/lib/queue/generationService';
  * }
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ jobId: string }> }) {
-  const resolvedParams = await params;
-  const { jobId } = resolvedParams;
+  const routeParams = await params;
+  const { jobId } = routeParams;
   if (!jobId) {
     return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
   }

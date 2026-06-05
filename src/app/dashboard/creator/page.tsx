@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { songs } from '@/lib/platform/demoData';
 import { getSubscriptionTiers } from '@/lib/platform/monetization';
@@ -38,6 +38,15 @@ export default function CreatorDashboardPage() {
   const [bankLast4, setBankLast4] = useState('4242');
 
   const subscriptionTiers = getSubscriptionTiers();
+  const chartScale = dashboardData ? Math.max(...dashboardData.revenueChart.map((item) => item.amount), 1) : 1;
+  const chartEntries = useMemo(() => {
+    if (!dashboardData) return [];
+    return dashboardData.revenueChart.map((entry) => ({
+      ...entry,
+      width: Math.min(100, Math.max(4, (entry.amount / chartScale) * 100)),
+      monthLabel: entry.month.split('-')[1] ?? entry.month,
+    }));
+  }, [chartScale, dashboardData]);
 
   const topSongs = songs.slice(0, 3);
 
@@ -56,7 +65,7 @@ export default function CreatorDashboardPage() {
     } finally {
       setDashboardLoading(false);
     }
-  }, [creatorId]);
+  }, []);
 
   useEffect(() => {
     void loadDashboard();
@@ -216,7 +225,7 @@ export default function CreatorDashboardPage() {
           <div className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <div className="rounded-xl border border-white/10 p-3"><p className="text-xl font-bold">${dashboardData.payoutAnalytics.totalRevenue.toFixed(2)}</p><p className="muted">Total revenue</p></div>
-              <div className="rounded-xl border border-white/10 p-3"><p className="text-xl font-bold">${dashboardData.payoutAnalytics.availableForPayout.toFixed(2)}</p><p className="muted">Pending payouts</p></div>
+              <div className="rounded-xl border border-white/10 p-3"><p className="text-xl font-bold">${dashboardData.payoutAnalytics.availableForPayout.toFixed(2)}</p><p className="muted">Available for payout</p></div>
               <div className="rounded-xl border border-white/10 p-3"><p className="text-xl font-bold">{dashboardData.referralStats.totalReferrals}</p><p className="muted">Referral conversions</p></div>
               <div className="rounded-xl border border-white/10 p-3"><p className="text-xl font-bold">{dashboardData.stripeConnect.status}</p><p className="muted">Stripe Connect status</p></div>
             </div>
@@ -224,13 +233,12 @@ export default function CreatorDashboardPage() {
             <div className="rounded-xl border border-white/10 p-3">
               <div className="row justify-between"><h3>Revenue chart (6-month net)</h3><span className="badge">Placeholder bars</span></div>
               <div className="mt-3 space-y-2">
-                {dashboardData.revenueChart.map((entry) => {
-                  const scale = Math.max(...dashboardData.revenueChart.map((item) => item.amount), 1);
+                {chartEntries.map((entry) => {
                   return (
                     <div key={entry.month} className="grid grid-cols-[68px_1fr_auto] items-center gap-2">
-                      <span className="muted">{entry.month.slice(5)}</span>
+                      <span className="muted">{entry.monthLabel}</span>
                       <div className="h-2 rounded bg-white/10">
-                        <div className="h-2 rounded bg-violet-400" style={{ width: `${Math.max(4, (entry.amount / scale) * 100)}%` }} />
+                        <div className="h-2 rounded bg-violet-400" style={{ width: `${entry.width}%` }} />
                       </div>
                       <span className="text-xs">${entry.amount.toFixed(2)}</span>
                     </div>
@@ -305,8 +313,8 @@ export default function CreatorDashboardPage() {
                 <div className="rounded-lg border border-white/10 p-2"><p className="font-semibold">${dashboardData.payoutAnalytics.revenueBySource.AD_REVENUE_PLACEHOLDER.toFixed(2)}</p><p className="muted">Ad rev placeholder</p></div>
               </div>
               <div className="mt-2 space-y-1">
-                {dashboardData.payoutAnalytics.attribution.slice(0, 3).map((event, index) => (
-                  <p key={`${event.attribution}-${index}`} className="muted">{event.source} via {event.attribution} · ${event.netAmount.toFixed(2)}</p>
+                {dashboardData.payoutAnalytics.attribution.slice(0, 3).map((event) => (
+                  <p key={`${event.source}-${event.createdAt}`} className="muted">{event.source} via {event.attribution} · ${event.netAmount.toFixed(2)}</p>
                 ))}
               </div>
             </div>

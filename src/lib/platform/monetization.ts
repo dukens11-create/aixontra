@@ -84,6 +84,13 @@ type CreatorMonetizationState = {
 const TIP_FEE_RATE = 0.08;
 const SUBSCRIPTION_FEE_RATE = 0.12;
 const REFERRAL_REWARD_RATE = 0.1;
+const randomToken = () => {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+};
+const createId = (prefix: string) => `${prefix}-${randomToken()}`;
 
 const subscriptionTiers: SubscriptionTier[] = [
   { id: 'tier-supporter', name: 'Supporter', amountUsd: 4.99, billingPeriod: 'MONTHLY', perks: ['Support badge', 'Monthly drops'] },
@@ -97,7 +104,7 @@ const roundToCents = (amount: number) => Number(amount.toFixed(2));
 
 const appendRevenueEvent = (state: CreatorMonetizationState, event: Omit<RevenueEvent, 'id' | 'createdAt'>) => {
   const record: RevenueEvent = {
-    id: `revenue-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    id: createId('revenue'),
     createdAt: new Date().toISOString(),
     ...event,
   };
@@ -105,10 +112,10 @@ const appendRevenueEvent = (state: CreatorMonetizationState, event: Omit<Revenue
   return record;
 };
 
-const seedDemoRevenue = (state: CreatorMonetizationState) => {
+const seedDemoRevenue = (state: CreatorMonetizationState, monthCount = 6) => {
   if (state.revenueEvents.length > 0) return;
   const now = new Date();
-  const months = [0, 1, 2, 3, 4, 5];
+  const months = Array.from({ length: monthCount }, (_, index) => index);
   months.forEach((monthOffset) => {
     const baseDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 10).toISOString();
     const tipNet = roundToCents(80 + monthOffset * 7);
@@ -217,8 +224,8 @@ const ensureCreatorState = (creatorId: string): CreatorMonetizationState => {
 const getLast6MonthKey = () => {
   const keys: string[] = [];
   const now = new Date();
-  for (let index = 5; index >= 0; index -= 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
+  for (let index = 0; index < 6; index += 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
     keys.push(date.toISOString().slice(0, 7));
   }
   return keys;
@@ -230,7 +237,7 @@ export const linkStripeConnectAccount = (creatorId: string, email: string) => {
   const state = ensureCreatorState(creatorId);
   state.linkedEmail = email;
   state.stripeConnectStatus = 'PENDING_VERIFICATION';
-  state.stripeAccountId = state.stripeAccountId ?? `acct_placeholder_${Date.now()}`;
+  state.stripeAccountId = state.stripeAccountId ?? `acct_placeholder_${randomToken()}`;
   return {
     stripeConnectStatus: state.stripeConnectStatus,
     stripeAccountId: state.stripeAccountId,
@@ -249,9 +256,10 @@ export const verifyStripeConnectAccount = (creatorId: string) => {
 };
 
 export const addBankAccount = (creatorId: string, bankName: string, last4: string) => {
+  if (!/^\d{4}$/.test(last4)) return null;
   const state = ensureCreatorState(creatorId);
   const account = {
-    id: `bank-${Date.now()}`,
+    id: createId('bank'),
     bankName,
     last4,
     status: state.stripeConnectStatus === 'VERIFIED' ? 'VERIFIED' as const : 'PENDING' as const,
@@ -265,7 +273,7 @@ export const createTip = (input: { creatorId: string; supporterId: string; amoun
   const platformFee = roundToCents(input.amount * TIP_FEE_RATE);
   const netAmount = roundToCents(input.amount - platformFee);
   const tip: TipRecord = {
-    id: `tip-${Date.now()}`,
+    id: createId('tip'),
     creatorId: input.creatorId,
     supporterId: input.supporterId,
     amount: roundToCents(input.amount),
@@ -300,7 +308,7 @@ export const createSubscription = (input: { creatorId: string; subscriberId: str
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
   }
   const subscription: SubscriptionRecord = {
-    id: `sub-${Date.now()}`,
+    id: createId('sub'),
     creatorId: input.creatorId,
     subscriberId: input.subscriberId,
     tierId: tier.id,
@@ -323,11 +331,18 @@ export const createSubscription = (input: { creatorId: string; subscriberId: str
   return { subscription, tier };
 };
 
-const generateReferralCode = (creatorId: string) => `${creatorId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || 'AIX'}${Math.floor(Math.random() * 900 + 100)}`;
+const generateReferralCode = (creatorId: string) => {
+  const creatorPrefix = creatorId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || 'AIX';
+  const entropy = randomToken().replace(/-/g, '').slice(0, 6).toUpperCase();
+  return `${creatorPrefix}${entropy}`;
+};
 
 export const createReferralCode = (creatorId: string) => {
   const state = ensureCreatorState(creatorId);
-  const referralCode = generateReferralCode(creatorId);
+  let referralCode = generateReferralCode(creatorId);
+  while (state.referralCodes.includes(referralCode)) {
+    referralCode = generateReferralCode(creatorId);
+  }
   state.referralCodes.unshift(referralCode);
   return referralCode;
 };
@@ -337,7 +352,7 @@ export const trackReferralReward = (input: { creatorId: string; referralCode: st
   if (!state.referralCodes.includes(input.referralCode)) return null;
   const rewardAmount = roundToCents(input.conversionAmount * REFERRAL_REWARD_RATE);
   const reward: ReferralReward = {
-    id: `reward-${Date.now()}`,
+    id: createId('reward'),
     creatorId: input.creatorId,
     referralCode: input.referralCode,
     referredUserId: input.referredUserId,
@@ -388,7 +403,7 @@ export const scheduleCreatorPayout = (creatorId: string) => {
   const scheduledFor = new Date();
   scheduledFor.setDate(scheduledFor.getDate() + 2);
   const payout: PayoutRecord = {
-    id: `payout-${Date.now()}`,
+    id: createId('payout'),
     creatorId,
     amount,
     currency: 'USD',
@@ -402,13 +417,18 @@ export const scheduleCreatorPayout = (creatorId: string) => {
 
 export const getMonetizationDashboard = (creatorId: string) => {
   const state = ensureCreatorState(creatorId);
-  const monthTotals = new Map<string, number>(getLast6MonthKey().map((key) => [key, 0]));
-  state.revenueEvents.forEach((event) => {
+  const monthKeys = getLast6MonthKey();
+  const monthTotals = new Map<string, number>(monthKeys.map((key) => [key, 0]));
+  const filteredRevenueEvents = state.revenueEvents.filter((event) => {
+    if (typeof event.createdAt !== 'string' || event.createdAt.length < 7) return false;
+    return monthTotals.has(event.createdAt.slice(0, 7));
+  });
+  filteredRevenueEvents.forEach((event) => {
     const key = event.createdAt.slice(0, 7);
     if (monthTotals.has(key)) monthTotals.set(key, roundToCents((monthTotals.get(key) ?? 0) + event.netAmount));
   });
 
-  const revenueBySource = state.revenueEvents.reduce<Record<RevenueSource, number>>(
+  const revenueBySource = filteredRevenueEvents.reduce<Record<RevenueSource, number>>(
     (accumulator, event) => {
       accumulator[event.source] = roundToCents(accumulator[event.source] + event.netAmount);
       return accumulator;
@@ -442,7 +462,7 @@ export const getMonetizationDashboard = (creatorId: string) => {
       totalRevenue: roundToCents(Object.values(revenueBySource).reduce((sum, value) => sum + value, 0)),
       availableForPayout: getAvailablePayoutAmount(state),
       revenueBySource,
-      attribution: state.revenueEvents.slice(0, 8).map((event) => ({
+      attribution: filteredRevenueEvents.slice(0, 8).map((event) => ({
         source: event.source,
         attribution: event.attribution,
         netAmount: event.netAmount,

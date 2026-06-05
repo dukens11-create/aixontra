@@ -12,8 +12,8 @@ import { cancelJob } from '@/lib/queue/generationService';
  * { error: string }                 — job not found or cannot be cancelled
  */
 export async function POST(_request: Request, { params }: { params: Promise<{ jobId: string }> }) {
-  const resolvedParams = await params;
-  const { jobId } = resolvedParams;
+  const routeParams = await params;
+  const { jobId } = routeParams;
   if (!jobId) {
     return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
   }
