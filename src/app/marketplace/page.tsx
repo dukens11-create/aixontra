@@ -1,11 +1,19 @@
 import { marketplaceItems } from '@/lib/platform/demoData';
+import Link from 'next/link';
+import { getTrendingVoices } from '@/lib/platform/voiceMarketplace';
+import { VoiceCard } from '@/components/voice-marketplace/VoiceCard';
 
 export default function MarketplacePage() {
+  const trendingVoices = getTrendingVoices(2);
+
   return (
     <div className="space-y-4 pb-6">
       <section className="card bg-white/5">
         <h1>Marketplace</h1>
         <p className="muted">Beats, AI songs, vocal packs, voice models, and license products with Stripe Connect-ready split architecture.</p>
+        <div className="row mt-3">
+          <Link href="/marketplace/voices" className="btn">Open AI Voice Marketplace</Link>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -23,6 +31,13 @@ export default function MarketplacePage() {
             </div>
           </article>
         ))}
+      </section>
+
+      <section className="space-y-2">
+        <h2>Trending AI voices</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {trendingVoices.map((voice) => <VoiceCard key={voice.id} voice={voice} />)}
+        </div>
       </section>
     </div>
   );

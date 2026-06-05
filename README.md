@@ -154,5 +154,6 @@ Enter admin password (min 8 characters): ********
 - `/feed` – vertical discovery feed with remix/comment/share controls
 - `/dashboard/creator` – creator analytics, management, payout placeholders
 - `/marketplace` – monetization listings with purchase placeholders
+- `/marketplace/voices` – AI voice marketplace (upload, licensing/pricing, moderation queue, creator royalties placeholders)
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
 - `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`
