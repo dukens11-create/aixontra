@@ -36,8 +36,11 @@ function extractKeywords(prompt: string): string[] {
 
 export function enhancePrompt(prompt: string, genre: string, mood: string, language: string): string {
   const trimmed = prompt.trim();
-  if (!trimmed) return prompt;
-  return `${trimmed} Focus on ${genre} production, ${mood.toLowerCase()} emotion, and natural ${language} phrasing with a clear hook and chorus.`;
+  if (!trimmed) return '';
+  const safeGenre = genre.trim() || 'contemporary';
+  const safeMood = mood.trim().toLowerCase() || 'balanced';
+  const safeLanguage = language.trim() || 'English';
+  return `${trimmed} Focus on ${safeGenre} production, ${safeMood} emotion, and natural ${safeLanguage} phrasing with a clear hook and chorus.`;
 }
 
 export function getGenreSuggestions(input: string): string[] {
@@ -76,7 +79,9 @@ export function generateChorusIdea(prompt: string): string {
 }
 
 export function getRhymeSuggestions(word: string): string[] {
-  const cleaned = word.toLowerCase().replace(/[^a-z]/g, '');
+  const normalized = word.toLowerCase().replace(/[^a-z'-]/g, '');
+  // For compounds/contractions we use the trailing segment (e.g. "mid-night" -> "night").
+  const cleaned = normalized.split(/['-]/g).filter(Boolean).at(-1) ?? '';
   if (!cleaned) return [];
   return RHYME_DICTIONARY[cleaned] ?? [];
 }

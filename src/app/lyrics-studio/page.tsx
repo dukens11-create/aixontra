@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LANGUAGES } from '@/lib/constants';
 import { rhymeEngine } from '@/lib/services/rhymeEngine';
 import { lyricAnalyzer } from '@/lib/services/lyricAnalyzer';
@@ -27,18 +27,26 @@ export default function LyricsStudioPage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [activeLine, setActiveLine] = useState(0);
 
+  const persistDraft = useCallback((nextTimestamp?: string) => {
+    const timestamp = nextTimestamp ?? new Date().toISOString();
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ prompt, lyrics, language, mood, genre, bpm, savedAt: timestamp }));
+    setSavedAt(timestamp);
+  }, [prompt, lyrics, language, mood, genre, bpm]);
+
   useEffect(() => {
     const rawDraft = localStorage.getItem(DRAFT_KEY);
     if (!rawDraft) return;
     try {
-      const parsed = JSON.parse(rawDraft) as { prompt?: string; lyrics?: string; language?: string; mood?: string; genre?: string; bpm?: number; savedAt?: string };
-      if (parsed.prompt) setPrompt(parsed.prompt);
-      if (parsed.lyrics) setLyrics(parsed.lyrics);
-      if (parsed.language) setLanguage(parsed.language);
-      if (parsed.mood) setMood(parsed.mood);
-      if (parsed.genre) setGenre(parsed.genre);
-      if (parsed.bpm) setBpm(parsed.bpm);
-      if (parsed.savedAt) setSavedAt(parsed.savedAt);
+      const parsed: unknown = JSON.parse(rawDraft);
+      if (!parsed || typeof parsed !== 'object') return;
+      const draft = parsed as Record<string, unknown>;
+      if (typeof draft.prompt === 'string') setPrompt(draft.prompt);
+      if (typeof draft.lyrics === 'string') setLyrics(draft.lyrics);
+      if (typeof draft.language === 'string') setLanguage(draft.language);
+      if (typeof draft.mood === 'string') setMood(draft.mood);
+      if (typeof draft.genre === 'string') setGenre(draft.genre);
+      if (typeof draft.bpm === 'number') setBpm(draft.bpm);
+      if (typeof draft.savedAt === 'string') setSavedAt(draft.savedAt);
     } catch {
       localStorage.removeItem(DRAFT_KEY);
     }
@@ -46,12 +54,10 @@ export default function LyricsStudioPage() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const timestamp = new Date().toISOString();
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ prompt, lyrics, language, mood, genre, bpm, savedAt: timestamp }));
-      setSavedAt(timestamp);
+      persistDraft();
     }, 600);
     return () => clearTimeout(timeout);
-  }, [prompt, lyrics, language, mood, genre, bpm]);
+  }, [persistDraft]);
 
   const flow = useMemo(() => rhymeEngine.analyzeFlow(lyrics, bpm), [lyrics, bpm]);
   const tone = useMemo(() => lyricAnalyzer.analyzeLyrics(lyrics), [lyrics]);
@@ -70,9 +76,10 @@ export default function LyricsStudioPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Generation failed');
-      setLyrics((current) => (mode === 'lyrics' ? data.lyrics : `${current.trim()}\n\n${data.lyrics}`.trim()));
-    } catch (generationError: any) {
-      setError(generationError.message ?? 'Failed to generate lyrics');
+      const shouldAppend = mode !== 'lyrics';
+      setLyrics((current) => (shouldAppend ? `${current.trim()}\n\n${data.lyrics}`.trim() : data.lyrics));
+    } catch (generationError: unknown) {
+      setError(generationError instanceof Error ? generationError.message : 'Failed to generate lyrics');
     } finally {
       setLoading(false);
     }
@@ -151,21 +158,26 @@ export default function LyricsStudioPage() {
           />
           <div className="rounded-xl border border-white/10 bg-black/40 p-3">
             <p className="mb-2 text-sm font-semibold">Line highlighting preview</p>
-            <div className="max-h-64 overflow-auto space-y-1 font-mono text-sm">
-              {lyrics.split('\n').map((line, index) => (
-                <p key={`${line}-${index}`} className={index === activeLine ? 'rounded bg-cyan-400/20 px-2 py-0.5 text-cyan-100' : 'px-2 py-0.5 text-slate-200'}>
-                  {line || ' '}
-                </p>
-              ))}
+            <div className="max-h-64 overflow-auto font-mono text-sm">
+              <div className="space-y-1">
+                {lyrics.split('\n').map((line, index) => (
+                  <p
+                    key={index}
+                    aria-label={index === activeLine ? `Active line ${index + 1}` : `Line ${index + 1}`}
+                    className={index === activeLine ? 'rounded border-l-2 border-cyan-300 bg-cyan-400/20 px-2 py-0.5 text-cyan-100' : 'px-2 py-0.5 text-slate-200'}
+                  >
+                    {index === activeLine ? '▶ ' : ''}
+                    {line || ' '}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
           <button
             type="button"
             className="btn secondary"
             onClick={() => {
-              const timestamp = new Date().toISOString();
-              localStorage.setItem(DRAFT_KEY, JSON.stringify({ prompt, lyrics, language, mood, genre, bpm, savedAt: timestamp }));
-              setSavedAt(timestamp);
+              persistDraft();
             }}
           >
             Save lyric draft
@@ -175,4 +187,3 @@ export default function LyricsStudioPage() {
     </div>
   );
 }
-

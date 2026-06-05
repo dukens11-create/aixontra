@@ -23,6 +23,7 @@ import {
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
+const DEFAULT_TEMPLATE_THEME = 'new beginnings';
 
 export default function GeneratePage() {
   const play = usePlayerStore((state) => state.play);
@@ -164,7 +165,7 @@ export default function GeneratePage() {
       .replace('{genre}', genre)
       .replace('{language}', language)
       .replace('{mood}', mood)
-      .replace('{theme}', prompt || 'new beginnings');
+      .replace('{theme}', prompt.trim() || DEFAULT_TEMPLATE_THEME);
     setPrompt((current) => (current.trim() ? `${current} ${themed}` : themed));
   };
 
@@ -360,7 +361,7 @@ export default function GeneratePage() {
               </button>
             </div>
           </div>
-          {assistantOutput && <pre className="max-h-36 overflow-auto rounded-xl border border-white/10 bg-black/50 p-2 text-xs whitespace-pre-wrap">{assistantOutput}</pre>}
+          {assistantOutput && <pre aria-label="AI prompt assistant suggestions" className="max-h-36 overflow-auto rounded-xl border border-white/10 bg-black/50 p-2 text-xs whitespace-pre-wrap">{assistantOutput}</pre>}
         </div>
       )}
     </div>
