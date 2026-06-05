@@ -1,14 +1,84 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
 import { PLAN_CAPABILITIES, SubscriptionPlan } from '@/lib/platform/subscriptions';
+import type { GenerationJobRecord } from '@/lib/queue/types';
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
+
+const POLL_INTERVAL_MS = 2000;
+
+function QueueStatusPanel({
+  job,
+  onCancel,
+}: {
+  job: GenerationJobRecord;
+  onCancel: () => void;
+}) {
+  const isActive = job.status === 'QUEUED' || job.status === 'PROCESSING';
+  const pct = job.progress;
+
+  return (
+    <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-4 space-y-3">
+      {/* Status badge row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isActive && (
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500" />
+            </span>
+          )}
+          <span className="text-sm font-semibold">
+            {job.status === 'QUEUED' && 'Waiting in queue…'}
+            {job.status === 'PROCESSING' && 'Generating…'}
+            {job.status === 'COMPLETE' && '✓ Generation complete'}
+            {job.status === 'FAILED' && '✗ Generation failed'}
+            {job.status === 'CANCELLED' && 'Cancelled'}
+          </span>
+        </div>
+        {job.status === 'QUEUED' && (
+          <button onClick={onCancel} className="text-xs text-red-400 hover:text-red-300 underline">
+            Cancel
+          </button>
+        )}
+      </div>
+
+      {/* Queue position + ETA */}
+      {job.status === 'QUEUED' && job.queuePosition !== null && (
+        <p className="text-xs text-cyan-200">
+          Position in queue: <strong>#{job.queuePosition}</strong>
+          {job.estimatedWaitSeconds !== null && (
+            <> · Est. wait: <strong>~{Math.ceil(job.estimatedWaitSeconds / 60)} min</strong></>
+          )}
+        </p>
+      )}
+
+      {/* Progress bar */}
+      {(job.status === 'QUEUED' || job.status === 'PROCESSING') && (
+        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+          <div
+            className="h-2 rounded-full bg-cyan-400 transition-all duration-500"
+            style={{ width: `${Math.max(pct, job.status === 'QUEUED' ? 5 : 10)}%` }}
+          />
+        </div>
+      )}
+      {(job.status === 'QUEUED' || job.status === 'PROCESSING') && (
+        <p className="text-xs text-cyan-300">{pct}% complete</p>
+      )}
+
+      {/* Error */}
+      {job.status === 'FAILED' && job.errorMessage && (
+        <p className="text-xs text-red-400">{job.errorMessage}</p>
+      )}
+    </div>
+  );
+}
 
 export default function GeneratePage() {
   const play = usePlayerStore((state) => state.play);
@@ -23,7 +93,6 @@ export default function GeneratePage() {
   const [vocalStyle, setVocalStyle] = useState(vocalStyles[0]);
   const [instrumentalOnly, setInstrumentalOnly] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string>(DEMO_AUDIO_URL);
   const [wavUrl, setWavUrl] = useState<string | null>(null);
   const [stemsUrls, setStemsUrls] = useState<Partial<Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>> | null>(null);
@@ -37,6 +106,62 @@ export default function GeneratePage() {
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [proofUrl, setProofUrl] = useState('');
 
+  // Queue job tracking state
+  const [currentJob, setCurrentJob] = useState<GenerationJobRecord | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const applyJobResult = useCallback(
+    (job: GenerationJobRecord) => {
+      if (!job.result) return;
+      setAudioUrl(job.result.audioUrl);
+      setWavUrl(job.result.wavUrl ?? null);
+      setStemsUrls((job.result.stemsUrls as any) ?? null);
+      setMasteredAudioUrl(job.result.masteredAudioUrl ?? null);
+      setDraftId(job.result.songDraftId ?? null);
+    },
+    [],
+  );
+
+  const startPolling = useCallback(
+    (jobId: string) => {
+      stopPolling();
+      pollRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/generate/${jobId}`);
+          if (!res.ok) { stopPolling(); return; }
+          const job: GenerationJobRecord = await res.json();
+          setCurrentJob(job);
+
+          if (job.status === 'COMPLETE') {
+            stopPolling();
+            applyJobResult(job);
+            setLoading(false);
+            toast.success('Generation complete!');
+          } else if (job.status === 'FAILED') {
+            stopPolling();
+            setLoading(false);
+            toast.error(job.errorMessage ?? 'Generation failed');
+          } else if (job.status === 'CANCELLED') {
+            stopPolling();
+            setLoading(false);
+          }
+        } catch {
+          // network error — keep polling
+        }
+      }, POLL_INTERVAL_MS);
+    },
+    [stopPolling, applyJobResult],
+  );
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
+
   const formPayload = useMemo(
     () => ({ userId: 'demo-user', prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset }),
     [prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset],
@@ -44,32 +169,46 @@ export default function GeneratePage() {
 
   const generate = async (mode: 'generate' | 'regenerate' | 'extend') => {
     setLoading(true);
-    setProgress(15);
+    setCurrentJob(null);
     try {
-      const response = await fetch('/api/generate/song', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formPayload, mode }),
       });
-      setProgress(65);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Failed to generate');
-      setAudioUrl(data.audioUrl);
-      setWavUrl(data.wavUrl ?? null);
-      setStemsUrls(data.stemsUrls ?? null);
-      setMasteredAudioUrl(data.masteredAudioUrl ?? null);
+      if (!response.ok) throw new Error(data.error ?? 'Failed to enqueue generation');
       setCreditBalance(data.creditBalance ?? creditBalance);
       setPlan(data.plan ?? plan);
-      setDraftId(data.songDraft.id);
-      setProgress(100);
-      toast.success(data.message ?? 'Generation complete');
+      // Seed an initial job record from the enqueue response
+      setCurrentJob({
+        jobId: data.jobId,
+        userId: formPayload.userId,
+        status: data.status,
+        progress: 0,
+        queuePosition: data.queuePosition,
+        estimatedWaitSeconds: data.estimatedWaitSeconds,
+        result: null,
+        errorMessage: null,
+        enqueuedAt: new Date().toISOString(),
+        startedAt: null,
+        completedAt: null,
+      });
+      startPolling(data.jobId);
     } catch (error: any) {
+      setLoading(false);
       toast.error(error.message ?? 'Something went wrong');
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-        setProgress(0);
-      }, 350);
+    }
+  };
+
+  const cancelCurrentJob = async () => {
+    if (!currentJob) return;
+    const res = await fetch(`/api/generate/${currentJob.jobId}/cancel`, { method: 'POST' });
+    if (res.ok) {
+      stopPolling();
+      setCurrentJob((prev) => prev ? { ...prev, status: 'CANCELLED' } : prev);
+      setLoading(false);
+      toast('Generation cancelled.');
     }
   };
 
@@ -203,8 +342,8 @@ export default function GeneratePage() {
           <option value="RADIO_READY">Radio-ready master</option>
         </select>
 
-        {loading && (
-          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm">Generating... {progress}%</div>
+        {currentJob && (loading || currentJob.status === 'COMPLETE' || currentJob.status === 'FAILED' || currentJob.status === 'CANCELLED') && (
+          <QueueStatusPanel job={currentJob} onCancel={cancelCurrentJob} />
         )}
 
         <div className="row">
