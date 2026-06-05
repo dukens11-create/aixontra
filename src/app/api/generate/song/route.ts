@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createGeneratedDraft, getCreditPacks, getUserGenerationContext, reserveGenerationCredits } from '@/lib/platform/platformStore';
-import { getMusicProvider } from '@/lib/platform/generationProvider';
+import { createGeneratedDraft, getCreditPacks, getUserGenerationContext, recordGenerationCost, reserveGenerationCredits } from '@/lib/platform/platformStore';
+import { generateWithFailover, getProviderHealth } from '@/lib/platform/generationProvider';
 
 export async function POST(request: Request) {
   const buildStemsPayload = (
@@ -36,8 +36,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const provider = getMusicProvider();
-  const generation = await provider.generate(body);
+  const generation = await generateWithFailover(body);
   const stemsPayload = buildStemsPayload(userContext.capabilities.stemsExport, generation.stemsUrls);
   const songDraft = createGeneratedDraft({
     prompt: body.prompt,
@@ -57,6 +56,13 @@ export async function POST(request: Request) {
     masteredAudioUrl: generation.masteredAudioUrl,
     generationStatus: generation.status,
   });
+  const providerHealth = await getProviderHealth();
+  const costLedgerEntry = recordGenerationCost({
+    userId,
+    provider: generation.provider,
+    amountUsd: generation.estimatedCostUsd ?? 0,
+    promptPreview: body.prompt.slice(0, 80),
+  });
 
   return NextResponse.json({
     success: true,
@@ -65,6 +71,10 @@ export async function POST(request: Request) {
     stemsUrls: stemsPayload ?? null,
     masteredAudioUrl: generation.masteredAudioUrl,
     provider: generation.provider,
+    providerHealth,
+    estimatedCostUsd: generation.estimatedCostUsd ?? 0,
+    generationCostEntryId: costLedgerEntry.id,
+    failoverAttempts: generation.failoverAttempts ?? 0,
     generationStatus: generation.status,
     plan: userContext.plan,
     creditBalance: debit.balance,

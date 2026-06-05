@@ -7,6 +7,8 @@ AIXONTRA is a curated AI music gallery where creators can share exceptional AI-g
 - 🚀 **AIXENTRA Platform Scaffolding**: Mobile-first generate/feed/marketplace/creator/admin experiences
 - 🎵 **Curated Music Gallery**: Browse and discover AI-generated music
 - ✨ **Create Song Feature**: Generate songs with AI-powered lyrics, voices, and music (NEW!)
+- 🖥️ **GPU Provider Architecture**: Provider abstraction with RunPod/Replicate/Modal/Lambda Labs placeholders, health checks, failover, timeout controls, and cost tracking
+- 🧠 **AI Prompt Assistant**: Floating helper with prompt enhancement, smart autocomplete, quick chips, and lyric/hook/chorus/rhyme helpers
 - 🎤 **AI Voice Generation**: Synthesize realistic vocals with state-of-the-art TTS (NEW!)
 - 📤 **Track Upload**: Upload your AI-generated tracks for review
 - 👥 **User Profiles**: Creator pages with tracks and stats

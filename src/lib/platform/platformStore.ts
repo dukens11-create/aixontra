@@ -48,6 +48,14 @@ type CreditTransaction = {
 };
 
 type CreditPack = { id: string; name: string; credits: number; priceUsd: number };
+type GenerationCostLedgerEntry = {
+  id: string;
+  userId: string;
+  provider: string;
+  amountUsd: number;
+  promptPreview: string;
+  createdAt: string;
+};
 
 type VerificationRequest = {
   id: string;
@@ -81,6 +89,7 @@ const verificationRequests: VerificationRequest[] = [];
 const voiceModels: VoiceModel[] = [];
 const reports: Array<{ id: string; songId: string; reason: string; createdAt: string }> = [];
 const dmcaClaims: Array<{ id: string; songId: string; claimant: string; createdAt: string }> = [];
+const generationCostLedger: GenerationCostLedgerEntry[] = [];
 const users = new Map<string, UserEntitlement>();
 
 const getCurrentMonthKey = () => new Date().toISOString().slice(0, 7);
@@ -308,7 +317,18 @@ export const fileDmcaClaim = (songId: string, claimant: string) => {
 export const getGeneratedDrafts = () => generatedDrafts;
 export const getNotifications = () => notifications;
 export const getCreditTransactions = () => creditTransactions;
+export const getGenerationCostLedger = () => generationCostLedger;
 export const getVerificationRequests = () => verificationRequests;
 export const getVoiceModels = () => voiceModels;
 export const getReports = () => reports;
 export const getDmcaClaims = () => dmcaClaims;
+
+export const recordGenerationCost = (entry: Omit<GenerationCostLedgerEntry, 'id' | 'createdAt'>) => {
+  const costEntry: GenerationCostLedgerEntry = {
+    id: `cost-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    ...entry,
+  };
+  generationCostLedger.unshift(costEntry);
+  return costEntry;
+};

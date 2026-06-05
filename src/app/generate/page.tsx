@@ -6,6 +6,18 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
 import { PLAN_CAPABILITIES, SubscriptionPlan } from '@/lib/platform/subscriptions';
+import {
+  PROMPT_TEMPLATES,
+  enhancePrompt,
+  generateChorus,
+  generateHook,
+  lyricHelper,
+  rewriteSuggestions,
+  rhymeHelper,
+  smartAutocomplete,
+  suggestGenres,
+  suggestMoods,
+} from '@/lib/platform/promptAssistant';
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
@@ -36,11 +48,20 @@ export default function GeneratePage() {
   const [voiceModelName, setVoiceModelName] = useState('My Voice Signature');
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [proofUrl, setProofUrl] = useState('');
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantSeedWord, setAssistantSeedWord] = useState('night');
+  const [assistantOutput, setAssistantOutput] = useState('');
+  const [templateIndex, setTemplateIndex] = useState(0);
 
   const formPayload = useMemo(
     () => ({ userId: 'demo-user', prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset }),
     [prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset],
   );
+  const quickPromptChips = useMemo(() => suggestGenres(prompt), [prompt]);
+  const moodSuggestions = useMemo(() => suggestMoods(prompt), [prompt]);
+  const rewrites = useMemo(() => rewriteSuggestions(prompt, genre, mood), [prompt, genre, mood]);
+  const autocompleteSuggestions = useMemo(() => smartAutocomplete(prompt), [prompt]);
+  const lyricTips = useMemo(() => lyricHelper(prompt), [prompt]);
 
   const generate = async (mode: 'generate' | 'regenerate' | 'extend') => {
     setLoading(true);
@@ -113,6 +134,14 @@ export default function GeneratePage() {
     generate('generate');
   };
 
+  const applyTemplate = () => {
+    const template = PROMPT_TEMPLATES[templateIndex % PROMPT_TEMPLATES.length]
+      .replace('[genre]', genre.toLowerCase())
+      .replace('[mood]', mood.toLowerCase());
+    setPrompt(template);
+    setTemplateIndex((value) => value + 1);
+  };
+
   const submitVoiceModel = async () => {
     const response = await fetch('/api/voice-models/submit', {
       method: 'POST',
@@ -155,8 +184,46 @@ export default function GeneratePage() {
       </div>
 
       <form onSubmit={onSubmit} className="card space-y-4 bg-white/5 backdrop-blur-sm">
-        <label className="block text-sm font-semibold">Prompt</label>
+        <div className="row items-center justify-between">
+          <label className="block text-sm font-semibold">Prompt</label>
+          <button type="button" className="badge" onClick={() => setPrompt(enhancePrompt(prompt, genre, mood))}>Improve Prompt</button>
+        </div>
         <textarea className="textarea min-h-28" value={prompt} onChange={(event) => setPrompt(event.target.value)} required />
+        <div className="row">
+          {quickPromptChips.map((chip) => (
+            <button key={chip} type="button" className="badge" onClick={() => setPrompt((value) => `${value}${value ? ' ' : ''}${chip}`)}>
+              {chip}
+            </button>
+          ))}
+          <button type="button" className="badge" onClick={applyTemplate}>Prompt template</button>
+        </div>
+        {rewrites.length > 0 && (
+          <div className="rounded-xl border border-white/10 p-3">
+            <p className="text-sm font-semibold">Rewrite suggestions</p>
+            <div className="mt-2 space-y-2">
+              {rewrites.map((rewrite, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className="block w-full rounded-lg border border-white/10 bg-white/5 p-2 text-left text-xs hover:bg-white/10"
+                  onClick={() => setPrompt(rewrite)}
+                >
+                  {rewrite}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="rounded-xl border border-white/10 p-3">
+          <p className="text-sm font-semibold">Smart autocomplete</p>
+          <div className="row mt-2">
+            {autocompleteSuggestions.map((suggestion) => (
+              <button key={suggestion} type="button" className="badge" onClick={() => setPrompt(suggestion)}>
+                {suggestion.slice(0, 36)}...
+              </button>
+            ))}
+          </div>
+        </div>
 
         <label className="block text-sm font-semibold">Lyrics</label>
         <textarea className="textarea min-h-24" value={lyrics} onChange={(event) => setLyrics(event.target.value)} />
@@ -258,6 +325,48 @@ export default function GeneratePage() {
           <button className="btn secondary" onClick={submitVoiceModel}>Submit voice model for review</button>
         </div>
       </div>
+
+      <button
+        type="button"
+        className="fixed bottom-6 right-6 z-20 rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-black shadow-lg"
+        onClick={() => setAssistantOpen((value) => !value)}
+      >
+        {assistantOpen ? 'Close AI Helper' : 'AI Helper'}
+      </button>
+      {assistantOpen && (
+        <div className="fixed bottom-24 right-6 z-20 w-[22rem] space-y-3 rounded-2xl border border-cyan-500/40 bg-slate-950/95 p-4 text-sm shadow-2xl">
+          <p className="font-semibold text-cyan-200">AIXENTRA Prompt Assistant</p>
+          <div className="row">
+            {quickPromptChips.map((entry) => (
+              <button key={entry} type="button" className="badge" onClick={() => setGenre(entry)}>{entry}</button>
+            ))}
+          </div>
+          <div className="row">
+            {moodSuggestions.map((entry) => (
+              <button key={entry} type="button" className="badge" onClick={() => setMood(entry)}>{entry}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className="btn secondary" onClick={() => setAssistantOutput(generateHook(prompt))}>Hook generator</button>
+            <button type="button" className="btn secondary" onClick={() => setAssistantOutput(generateChorus(prompt, mood))}>Chorus generator</button>
+            <button type="button" className="btn secondary" onClick={() => setAssistantOutput(lyricTips.join('\n'))}>Lyric helper</button>
+            <button type="button" className="btn secondary" onClick={() => setPrompt(enhancePrompt(prompt, genre, mood))}>Prompt enhancer</button>
+          </div>
+          <div className="row">
+            <input className="input" value={assistantSeedWord} onChange={(event) => setAssistantSeedWord(event.target.value)} placeholder="Rhyme seed" />
+            <button type="button" className="badge" onClick={() => setAssistantOutput(rhymeHelper(assistantSeedWord).join(', '))}>Rhyme helper</button>
+          </div>
+          {assistantOutput && (
+            <textarea className="textarea min-h-24 text-xs" value={assistantOutput} onChange={(event) => setAssistantOutput(event.target.value)} />
+          )}
+          {assistantOutput && (
+            <div className="row">
+              <button type="button" className="btn" onClick={() => setPrompt((value) => `${value}\n${assistantOutput}`)}>Append to prompt</button>
+              <button type="button" className="btn secondary" onClick={() => setLyrics((value) => `${value}\n${assistantOutput}`)}>Append to lyrics</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
