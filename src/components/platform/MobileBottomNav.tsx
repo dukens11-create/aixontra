@@ -8,7 +8,7 @@ const links = [
   { href: '/generate', label: 'Create' },
   { href: '/trending', label: 'Trend' },
   { href: '/marketplace', label: 'Shop' },
-  { href: '/dashboard/creator', label: 'Studio' },
+  { href: '/audio-studio', label: 'Studio' },
 ];
 
 export function MobileBottomNav() {
