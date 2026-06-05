@@ -72,6 +72,27 @@ const SCORE_WEIGHTS = {
   remixes: 6,
   watchTime: 0.75,
 };
+const RECENCY_BOOST_MULTIPLIER = 1.5;
+const MAX_LISTENING_HISTORY_SIZE = 100;
+const PERSONALIZATION_WEIGHTS = {
+  genre: 220,
+  creator: 180,
+  language: 120,
+  discovery: 60,
+};
+const SIMILAR_SONG_WEIGHTS = {
+  genre: 260,
+  mood: 180,
+  language: 120,
+  sameCreator: 60,
+  maxBpmAffinity: 80,
+};
+const SIMILAR_CREATOR_WEIGHTS = {
+  genreOverlap: 260,
+  audienceBaseline: 150,
+  followerDeltaDivider: 100,
+  listenerDeltaDivider: 250,
+};
 
 const MS_PER_HOUR = 1000 * 60 * 60;
 const CACHE_TTL_MS = 30_000;
@@ -131,7 +152,8 @@ const getHoursSinceRelease = (createdAt?: string) => {
   return Math.max(0, (Date.now() - new Date(createdAt).getTime()) / MS_PER_HOUR);
 };
 
-export const getRecencyBoost = (createdAt?: string) => Math.max(0, 72 - getHoursSinceRelease(createdAt)) * 1.5;
+export const getRecencyBoost = (createdAt?: string) =>
+  Math.max(0, 72 - getHoursSinceRelease(createdAt)) * RECENCY_BOOST_MULTIPLIER;
 
 export const calculateTrendingScore = (song: Song) => {
   const breakdown: TrendBreakdown = {
@@ -156,7 +178,7 @@ export const recordListeningHistory = (entry: Omit<ListeningHistoryEntry, 'playe
     playedAt: entry.playedAt ?? new Date().toISOString(),
   };
   const history = listeningHistoryStore.get(normalizedEntry.userId) ?? [];
-  listeningHistoryStore.set(normalizedEntry.userId, [normalizedEntry, ...history].slice(0, 100));
+  listeningHistoryStore.set(normalizedEntry.userId, [normalizedEntry, ...history].slice(0, MAX_LISTENING_HISTORY_SIZE));
   recommendationCache.clear();
   return normalizedEntry;
 };
@@ -208,10 +230,10 @@ const calculatePersonalizedScore = (song: Song, analysis: ListeningHistoryAnalys
   const { score: trendingScore } = calculateTrendingScore(song);
   let personalizedScore = trendingScore;
 
-  if (analysis.topGenres.includes(song.genre)) personalizedScore += 220;
-  if (analysis.topCreators.includes(song.creatorName)) personalizedScore += 180;
-  if (analysis.topLanguages.includes(song.language)) personalizedScore += 120;
-  if (!analysis.recentSongIds.includes(song.id)) personalizedScore += 60;
+  if (analysis.topGenres.includes(song.genre)) personalizedScore += PERSONALIZATION_WEIGHTS.genre;
+  if (analysis.topCreators.includes(song.creatorName)) personalizedScore += PERSONALIZATION_WEIGHTS.creator;
+  if (analysis.topLanguages.includes(song.language)) personalizedScore += PERSONALIZATION_WEIGHTS.language;
+  if (!analysis.recentSongIds.includes(song.id)) personalizedScore += PERSONALIZATION_WEIGHTS.discovery;
   personalizedScore += analysis.averageWatchTimeSeconds * 0.5;
 
   return personalizedScore;
@@ -255,20 +277,20 @@ export const getSimilarSongs = (songId: string, options?: { limit?: number; cata
         const reasons: string[] = [];
 
         if (song.genre === seedSong.genre) {
-          score += 260;
+          score += SIMILAR_SONG_WEIGHTS.genre;
           reasons.push(`Shared genre: ${song.genre}`);
         }
         if (song.mood === seedSong.mood) {
-          score += 180;
+          score += SIMILAR_SONG_WEIGHTS.mood;
           reasons.push(`Shared mood: ${song.mood}`);
         }
         if (song.language === seedSong.language) {
-          score += 120;
+          score += SIMILAR_SONG_WEIGHTS.language;
           reasons.push(`Shared language: ${song.language}`);
         }
 
-        score += Math.max(0, 80 - Math.abs(song.bpm - seedSong.bpm));
-        score += song.creatorId === seedSong.creatorId ? 60 : 0;
+        score += Math.max(0, SIMILAR_SONG_WEIGHTS.maxBpmAffinity - Math.abs(song.bpm - seedSong.bpm));
+        score += song.creatorId === seedSong.creatorId ? SIMILAR_SONG_WEIGHTS.sameCreator : 0;
         score += calculateTrendingScore(song).score * 0.01;
 
         return {
@@ -301,9 +323,9 @@ export const getSimilarCreators = (creatorId: string, options?: { limit?: number
         const followerDelta = Math.abs(seedCreator.followers - creator.followers);
         const listenerDelta = Math.abs(seedCreator.monthlyListeners - creator.monthlyListeners);
         const score =
-          relatedGenres.length * 260 +
-          Math.max(0, 150 - followerDelta / 100) +
-          Math.max(0, 150 - listenerDelta / 250);
+          relatedGenres.length * SIMILAR_CREATOR_WEIGHTS.genreOverlap +
+          Math.max(0, SIMILAR_CREATOR_WEIGHTS.audienceBaseline - followerDelta / SIMILAR_CREATOR_WEIGHTS.followerDeltaDivider) +
+          Math.max(0, SIMILAR_CREATOR_WEIGHTS.audienceBaseline - listenerDelta / SIMILAR_CREATOR_WEIGHTS.listenerDeltaDivider);
 
         return {
           ...creator,

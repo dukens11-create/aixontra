@@ -8,6 +8,8 @@ import { toTrack } from '@/lib/platform/toTrack';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEFAULT_RECOMMENDATION_USER_ID, getPersonalizedFeed } from '@/lib/platform/recommendationEngine';
 
+const DEFAULT_HISTORY_WATCH_TIME_SECONDS = 45;
+
 export default function FeedPage() {
   const [page, setPage] = useState(1);
   const play = usePlayerStore((state) => state.play);
@@ -28,7 +30,7 @@ export default function FeedPage() {
         body: JSON.stringify({
           userId: DEFAULT_RECOMMENDATION_USER_ID,
           songId,
-          watchTimeSeconds: 45,
+          watchTimeSeconds: DEFAULT_HISTORY_WATCH_TIME_SECONDS,
           completed: false,
         }),
       });
