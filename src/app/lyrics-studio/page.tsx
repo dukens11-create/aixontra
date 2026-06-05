@@ -2,17 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useI18n } from '@/components/providers/I18nProvider';
+import { getLyricLanguageName, SUPPORTED_AI_LANGUAGES } from '@/lib/i18n/config';
 import { lyricAnalyzer } from '@/lib/services/lyricAnalyzer';
 import { rhymeEngine } from '@/lib/services/rhymeEngine';
-import { LANGUAGES } from '@/lib/constants';
 import { SUPPORTED_GENRES } from '@/lib/platform/demoData';
 import {
-  PROMPT_TEMPLATES,
   SONG_STRUCTURE_TEMPLATES,
   applyStructureTemplate,
   createChorusBlock,
   createHookLine,
   enhancePrompt,
+  getPromptTemplates,
   getGenreSuggestions,
   getMoodSuggestions,
   getRewriteSuggestions,
@@ -30,25 +31,17 @@ const INITIAL_PROMPT = 'A bilingual anthem about hope after heartbreak.';
 const INITIAL_LYRICS = '[Verse 1]\nI carried storms inside my hands\nTill your voice taught me to stand';
 const INITIAL_GENRE = SUPPORTED_GENRES[0];
 const INITIAL_MOOD = moods[0];
-const INITIAL_LANGUAGE = LANGUAGES[0].name;
-
-function formatSaveTime() {
-  return new Date().toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-}
+const INITIAL_LANGUAGE = SUPPORTED_AI_LANGUAGES[0];
 
 export default function LyricsStudioPage() {
+  const { formatDateTime, formatNumber, locale, t } = useI18n();
   const [prompt, setPrompt] = useState(INITIAL_PROMPT);
   const [lyrics, setLyrics] = useState(INITIAL_LYRICS);
   const [genre, setGenre] = useState<string>(INITIAL_GENRE);
   const [mood, setMood] = useState<string>(INITIAL_MOOD);
   const [language, setLanguage] = useState<string>(INITIAL_LANGUAGE);
   const [loading, setLoading] = useState(false);
-  const [autoSaveLabel, setAutoSaveLabel] = useState('Not saved yet');
+  const [autoSaveLabel, setAutoSaveLabel] = useState(t('lyricsStudio.notSavedYet'));
   const [activeLine, setActiveLine] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState<StructureTemplate>('standard');
   const [rhymeWord, setRhymeWord] = useState('light');
@@ -56,11 +49,21 @@ export default function LyricsStudioPage() {
 
   const lyricScore = useMemo(() => lyricAnalyzer.analyzeLyrics(lyrics), [lyrics]);
   const flow = useMemo(() => rhymeEngine.analyzeFlow(lyrics, 110), [lyrics]);
-  const smartAutocomplete = useMemo(() => getSmartAutocomplete(prompt), [prompt]);
-  const rewriteSuggestions = useMemo(() => getRewriteSuggestions(prompt), [prompt]);
+  const promptTemplates = useMemo(() => getPromptTemplates(locale), [locale]);
+  const smartAutocomplete = useMemo(() => getSmartAutocomplete(prompt, locale), [prompt, locale]);
+  const rewriteSuggestions = useMemo(() => getRewriteSuggestions(prompt, locale), [prompt, locale]);
   const genreSuggestions = useMemo(() => getGenreSuggestions(prompt), [prompt]);
   const moodSuggestions = useMemo(() => getMoodSuggestions(prompt), [prompt]);
   const rhymeSuggestions = useMemo(() => getRhymeHelper(rhymeWord), [rhymeWord]);
+  const emptyLabel = useMemo(() => t('lyricsStudio.notSavedYet'), [t]);
+
+  useEffect(() => {
+    setAutoSaveLabel((current) => (current ? current : emptyLabel));
+  }, [emptyLabel]);
+
+  useEffect(() => {
+    setLanguage((current) => (current === INITIAL_LANGUAGE ? getLyricLanguageName(locale) : current));
+  }, [locale]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -79,12 +82,12 @@ export default function LyricsStudioPage() {
       setLyrics(draft.lyrics ?? INITIAL_LYRICS);
       setGenre(draft.genre ?? INITIAL_GENRE);
       setMood(draft.mood ?? INITIAL_MOOD);
-      setLanguage(draft.language ?? INITIAL_LANGUAGE);
-      setAutoSaveLabel('Draft restored');
+      setLanguage(draft.language ?? getLyricLanguageName(locale));
+      setAutoSaveLabel(t('lyricsStudio.draftRestored'));
     } catch {
-      setAutoSaveLabel('Could not restore draft');
+      setAutoSaveLabel(t('lyricsStudio.restoreFailed'));
     }
-  }, []);
+  }, [locale, t]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -93,11 +96,13 @@ export default function LyricsStudioPage() {
         AUTO_SAVE_KEY,
         JSON.stringify({ prompt, lyrics, genre, mood, language }),
       );
-      setAutoSaveLabel(`Auto-saved at ${formatSaveTime()}`);
+      setAutoSaveLabel(t('lyricsStudio.autoSavedAt', {
+       time: formatDateTime(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      }));
     }, 700);
 
     return () => window.clearTimeout(timeout);
-  }, [prompt, lyrics, genre, mood, language]);
+  }, [formatDateTime, genre, language, lyrics, mood, prompt, t]);
 
   const handleGenerateLyrics = async (section: 'full' | 'verse' | 'chorus') => {
     setLoading(true);
@@ -115,7 +120,7 @@ export default function LyricsStudioPage() {
         body: JSON.stringify({ prompt: sectionPrompt, genre, mood, language }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Failed to generate lyrics');
+      if (!response.ok) throw new Error(data.error ?? t('lyricsStudio.failedToGenerate'));
 
       if (section === 'full') {
         setLyrics(data.lyrics);
@@ -124,9 +129,9 @@ export default function LyricsStudioPage() {
         const updatedLyrics = [lyrics.trim(), `${heading}\n${data.lyrics}`].filter(Boolean).join('\n\n');
         setLyrics(updatedLyrics);
       }
-      toast.success('Lyrics generated');
+      toast.success(t('lyricsStudio.lyricsGenerated'));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Generation failed';
+      const message = error instanceof Error ? error.message : t('lyricsStudio.generationFailed');
       toast.error(message);
     } finally {
       setLoading(false);
@@ -140,18 +145,20 @@ export default function LyricsStudioPage() {
       .map(({ index, count }) => `Line ${index + 1}: ${count} syllables`);
 
     if (adjustmentHints.length === 0) {
-      toast.success('Syllables look balanced.');
+      toast.success(t('lyricsStudio.balanced'));
       return;
     }
 
-    toast(`Balance suggestions: ${adjustmentHints.slice(0, 3).join(' • ')}`, { icon: '🎯' });
+    toast(t('lyricsStudio.balanceSuggestions', { items: adjustmentHints.slice(0, 3).join(' • ') }), { icon: '🎯' });
   };
 
   const handleSaveDraft = () => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify({ prompt, lyrics, genre, mood, language }));
-    setAutoSaveLabel(`Saved at ${formatSaveTime()}`);
-    toast.success('Draft saved');
+    setAutoSaveLabel(t('lyricsStudio.savedAt', {
+      time: formatDateTime(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    }));
+    toast.success(t('lyricsStudio.draftSaved'));
   };
 
   const lines = lyrics.split('\n');
@@ -159,79 +166,79 @@ export default function LyricsStudioPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-4 pb-10 text-slate-100">
       <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 shadow-xl">
-        <h1 className="text-3xl font-black tracking-tight">AI Lyrics Studio</h1>
+        <h1 className="text-3xl font-black tracking-tight">{t('lyricsStudio.title')}</h1>
         <p className="mt-2 text-sm text-slate-300">
-          Split-editor songwriting workspace with generation, multilingual support, rhyme tools, tone analysis, and auto-save.
+          {t('lyricsStudio.description')}
         </p>
         <p className="mt-2 text-xs text-cyan-300">{autoSaveLabel}</p>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
         <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-          <label className="block text-sm font-semibold">Prompt</label>
+          <label className="block text-sm font-semibold">{t('lyricsStudio.prompt')}</label>
           <textarea className="textarea min-h-28 bg-black/40" value={prompt} onChange={(event) => setPrompt(event.target.value)} />
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn" onClick={() => setPrompt(enhancePrompt(prompt, genre, mood))}>Improve Prompt</button>
-            <button type="button" className="btn secondary" onClick={() => setLyrics((prev) => `${prev}\n\n[Hook]\n${createHookLine(prompt, mood)}`)}>Hook Generator</button>
-            <button type="button" className="btn secondary" onClick={() => setLyrics((prev) => `${prev}\n\n${createChorusBlock(prompt, mood)}`)}>Chorus Generator</button>
-            <button type="button" className="btn secondary" onClick={handleSaveDraft}>Save Draft</button>
+            <button type="button" className="btn" onClick={() => setPrompt(enhancePrompt(prompt, genre, mood, locale))}>{t('lyricsStudio.actions.improvePrompt')}</button>
+            <button type="button" className="btn secondary" onClick={() => setLyrics((prev) => `${prev}\n\n[Hook]\n${createHookLine(prompt, mood)}`)}>{t('lyricsStudio.actions.hookGenerator')}</button>
+            <button type="button" className="btn secondary" onClick={() => setLyrics((prev) => `${prev}\n\n${createChorusBlock(prompt, mood)}`)}>{t('lyricsStudio.actions.chorusGenerator')}</button>
+            <button type="button" className="btn secondary" onClick={handleSaveDraft}>{t('lyricsStudio.actions.saveDraft')}</button>
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <select className="select" value={genre} onChange={(event) => setGenre(event.target.value)}>
-              {SUPPORTED_GENRES.map((entry) => <option key={entry}>{entry}</option>)}
+              {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
             </select>
             <select className="select" value={mood} onChange={(event) => setMood(event.target.value)}>
-              {moods.map((entry) => <option key={entry}>{entry}</option>)}
+              {moods.map((entry) => <option key={entry} value={entry}>{t(`options.moods.${entry}`)}</option>)}
             </select>
             <select className="select" value={language} onChange={(event) => setLanguage(event.target.value)}>
-              {LANGUAGES.map((entry) => <option key={entry.code} value={entry.name}>{entry.name}</option>)}
+              {SUPPORTED_AI_LANGUAGES.map((entry) => <option key={entry} value={entry}>{t(`options.languages.${entry}`)}</option>)}
             </select>
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <button type="button" className="btn" onClick={() => handleGenerateLyrics('full')} disabled={loading}>{loading ? 'Generating...' : 'AI Lyric Generation'}</button>
-            <button type="button" className="btn secondary" onClick={() => handleGenerateLyrics('verse')} disabled={loading}>Verse Generation</button>
-            <button type="button" className="btn secondary" onClick={() => handleGenerateLyrics('chorus')} disabled={loading}>Chorus Generation</button>
+            <button type="button" className="btn" onClick={() => handleGenerateLyrics('full')} disabled={loading}>{loading ? t('lyricsStudio.actions.generating') : t('lyricsStudio.actions.generateFull')}</button>
+            <button type="button" className="btn secondary" onClick={() => handleGenerateLyrics('verse')} disabled={loading}>{t('lyricsStudio.actions.generateVerse')}</button>
+            <button type="button" className="btn secondary" onClick={() => handleGenerateLyrics('chorus')} disabled={loading}>{t('lyricsStudio.actions.generateChorus')}</button>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-black/30 p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-semibold">Song Structure Templates</span>
-              <button type="button" className="badge" onClick={() => setLyrics((prev) => `${applyStructureTemplate(selectedTemplate)}\n\n${prev}`)}>Insert Template</button>
+              <span className="text-sm font-semibold">{t('lyricsStudio.templateTitle')}</span>
+              <button type="button" className="badge" onClick={() => setLyrics((prev) => `${applyStructureTemplate(selectedTemplate)}\n\n${prev}`)}>{t('lyricsStudio.insertTemplate')}</button>
             </div>
             <select className="select" value={selectedTemplate} onChange={(event) => setSelectedTemplate(event.target.value as StructureTemplate)}>
-              <option value="standard">Standard</option>
-              <option value="pop">Pop</option>
-              <option value="storytelling">Storytelling</option>
+              <option value="standard">{t('lyricsStudio.templates.standard')}</option>
+              <option value="pop">{t('lyricsStudio.templates.pop')}</option>
+              <option value="storytelling">{t('lyricsStudio.templates.storytelling')}</option>
             </select>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-sm">
-            <p className="font-semibold">Rhyme Engine + Syllable Balancing</p>
+            <p className="font-semibold">{t('lyricsStudio.rhymeTitle')}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input className="input max-w-[180px] bg-black/40" value={rhymeWord} onChange={(event) => setRhymeWord(event.target.value)} placeholder="Rhyme helper" />
+              <input className="input max-w-[180px] bg-black/40" value={rhymeWord} onChange={(event) => setRhymeWord(event.target.value)} placeholder={t('lyricsStudio.rhymePlaceholder')} />
               {rhymeSuggestions.map((item) => <button key={item} type="button" className="badge">{item}</button>)}
             </div>
-            <p className="mt-2 text-xs text-slate-300">Rhyme scheme: {flow.rhymeScheme || 'N/A'} • Avg syllables/line: {flow.averageSyllablesPerLine}</p>
-            <button type="button" className="btn secondary mt-2" onClick={handleSyllableBalance}>Syllable Balancing</button>
+            <p className="mt-2 text-xs text-slate-300">{t('lyricsStudio.rhymeScheme')}: {flow.rhymeScheme || t('lyricsStudio.notAvailable')} • {t('lyricsStudio.avgSyllables')}: {formatNumber(flow.averageSyllablesPerLine)}</p>
+            <button type="button" className="btn secondary mt-2" onClick={handleSyllableBalance}>{t('lyricsStudio.syllableBalancing')}</button>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-black/30 p-3 text-sm">
-            <p className="font-semibold">Emotional Tone Analysis</p>
-            <p className="mt-2">Overall: <span className="text-cyan-300">{lyricScore.overall}</span> • Emotion: {lyricScore.emotion} • Imagery: {lyricScore.imagery}</p>
+            <p className="font-semibold">{t('lyricsStudio.toneAnalysis')}</p>
+            <p className="mt-2">{t('lyricsStudio.overall')}: <span className="text-cyan-300">{lyricScore.overall}</span> • {t('lyricsStudio.emotion')}: {lyricScore.emotion} • {t('lyricsStudio.imagery')}: {lyricScore.imagery}</p>
             {lyricScore.poeticDevices.length > 0 && (
-              <p className="mt-1 text-xs text-slate-300">Devices: {lyricScore.poeticDevices.join(', ')}</p>
+              <p className="mt-1 text-xs text-slate-300">{t('lyricsStudio.devices')}: {lyricScore.poeticDevices.join(', ')}</p>
             )}
           </div>
         </section>
 
         <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-          <h2 className="text-lg font-bold">Lyrics Editor</h2>
+          <h2 className="text-lg font-bold">{t('lyricsStudio.editorTitle')}</h2>
           <textarea className="textarea min-h-[360px] bg-black/50 font-mono text-sm leading-7" value={lyrics} onChange={(event) => setLyrics(event.target.value)} />
           <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-            <p className="mb-2 text-sm font-semibold">Line Highlighting Preview</p>
+            <p className="mb-2 text-sm font-semibold">{t('lyricsStudio.lineHighlightingPreview')}</p>
             <div className="max-h-56 space-y-1 overflow-y-auto text-xs">
               {lines.map((line, index) => (
                 <button
@@ -253,17 +260,17 @@ export default function LyricsStudioPage() {
         onClick={() => setIsAssistantOpen((open) => !open)}
         className="fixed bottom-24 right-4 z-50 rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg"
       >
-        {isAssistantOpen ? 'Hide AI Helper' : 'AI Helper'}
+        {isAssistantOpen ? t('lyricsStudio.hideAiHelper') : t('lyricsStudio.showAiHelper')}
       </button>
 
       {isAssistantOpen && (
         <aside className="fixed bottom-40 right-4 z-50 w-[320px] space-y-3 rounded-2xl border border-cyan-400/30 bg-slate-950/95 p-4 shadow-2xl">
-          <p className="text-sm font-bold text-cyan-200">Floating AI Prompt Assistant</p>
+          <p className="text-sm font-bold text-cyan-200">{t('lyricsStudio.helperTitle')}</p>
 
           <div>
-            <p className="text-xs text-slate-400">Quick prompt chips</p>
+            <p className="text-xs text-slate-400">{t('lyricsStudio.quickPromptChips')}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {PROMPT_TEMPLATES.map((template) => (
+              {promptTemplates.map((template) => (
                 <button key={template} type="button" className="badge" onClick={() => setPrompt(template)}>
                   {template.slice(0, MAX_TEMPLATE_PREVIEW_LENGTH)}...
                 </button>
@@ -272,13 +279,13 @@ export default function LyricsStudioPage() {
           </div>
 
           <div>
-            <p className="text-xs text-slate-400">Genre + mood suggestions</p>
-            <p className="mt-1 text-xs">Genres: {genreSuggestions.join(', ')}</p>
-            <p className="text-xs">Moods: {moodSuggestions.join(', ')}</p>
+            <p className="text-xs text-slate-400">{t('lyricsStudio.genreMoodSuggestions')}</p>
+            <p className="mt-1 text-xs">{t('lyricsStudio.genres')}: {genreSuggestions.join(', ')}</p>
+            <p className="text-xs">{t('lyricsStudio.moods')}: {moodSuggestions.map((entry) => t(`options.moods.${entry}`)).join(', ')}</p>
           </div>
 
           <div>
-            <p className="text-xs text-slate-400">Smart autocomplete</p>
+            <p className="text-xs text-slate-400">{t('lyricsStudio.smartAutocomplete')}</p>
             <div className="mt-1 space-y-1">
               {smartAutocomplete.map((entry) => (
                 <button key={entry} type="button" className="block w-full rounded bg-white/5 px-2 py-1 text-left text-xs" onClick={() => setPrompt(entry)}>
@@ -289,7 +296,7 @@ export default function LyricsStudioPage() {
           </div>
 
           <div>
-            <p className="text-xs text-slate-400">Rewrite suggestions</p>
+            <p className="text-xs text-slate-400">{t('lyricsStudio.rewriteSuggestions')}</p>
             <div className="mt-1 space-y-1">
               {rewriteSuggestions.map((entry) => (
                 <button key={entry} type="button" className="block w-full rounded bg-white/5 px-2 py-1 text-left text-xs" onClick={() => setPrompt(entry)}>

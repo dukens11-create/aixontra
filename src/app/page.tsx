@@ -1,28 +1,25 @@
+'use client';
+
 import Link from 'next/link';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { songs } from '@/lib/platform/demoData';
 
-const sections = [
-  'AI song generation',
-  'Viral feed',
-  'Creator monetization',
-  'Remix community',
-  'Marketplace',
-  'AI video tools',
-];
-
 export default function HomePage() {
+  const { t, tm } = useI18n();
+  const sections = tm('home.sections') as string[];
+
   return (
     <div className="space-y-10 pb-8">
       <section className="hero-section">
         <div className="hero-content">
-          <p className="badge">The Future of Sound Starts Here.</p>
-          <h1 className="hero-title">Create, Stream, Remix, and Monetize AI Music.</h1>
+          <p className="badge">{t('home.badge')}</p>
+          <h1 className="hero-title">{t('home.title')}</h1>
           <p className="hero-description">
-            AIXENTRA is the next-generation AI music platform for creators, fans, and the future of sound.
+            {t('home.description')}
           </p>
           <div className="hero-actions">
-            <Link href="/generate" className="btn">Start Creating</Link>
-            <Link href="/feed" className="btn secondary">Explore Music</Link>
+            <Link href="/generate" className="btn">{t('home.startCreating')}</Link>
+            <Link href="/feed" className="btn secondary">{t('home.exploreMusic')}</Link>
           </div>
         </div>
       </section>
@@ -31,15 +28,15 @@ export default function HomePage() {
         {sections.map((section) => (
           <article key={section} className="card bg-white/5 backdrop-blur-sm">
             <h3>{section}</h3>
-            <p className="muted mt-2">Production-ready scaffolding with reusable UI and backend placeholders.</p>
+            <p className="muted mt-2">{t('home.sectionDescription')}</p>
           </article>
         ))}
       </section>
 
       <section className="card bg-white/5 backdrop-blur-sm">
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h2>Now trending</h2>
-          <Link href="/trending" className="badge">View all</Link>
+          <h2>{t('home.nowTrending')}</h2>
+          <Link href="/trending" className="badge">{t('home.viewAll')}</Link>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           {songs.slice(0, 3).map((song) => (

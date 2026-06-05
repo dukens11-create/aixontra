@@ -1,9 +1,19 @@
-export const PROMPT_TEMPLATES = [
-  'Write a heartfelt song about long-distance love with vivid imagery.',
-  'Create a high-energy anthem for late-night city drives.',
-  'Craft a reflective song about resilience after failure.',
-  'Build a celebratory chorus for a summer festival hit.',
-] as const;
+import { DEFAULT_LOCALE, type SupportedLocale } from '@/lib/i18n/config';
+import { getMessageValue } from '@/lib/i18n/messages';
+
+function getText(locale: SupportedLocale, key: string) {
+  const value = getMessageValue(locale, key);
+  return typeof value === 'string' ? value : '';
+}
+
+function getList(locale: SupportedLocale, key: string) {
+  const value = getMessageValue(locale, key);
+  return Array.isArray(value) ? value.map((entry) => String(entry)) : [];
+}
+
+export function getPromptTemplates(locale: SupportedLocale = DEFAULT_LOCALE) {
+  return getList(locale, 'lyricsStudio.promptTemplates');
+}
 
 export const SONG_STRUCTURE_TEMPLATES = {
   standard: '[Verse 1]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Verse 2]\n\n[Bridge]\n\n[Chorus]\n\n[Outro]',
@@ -57,12 +67,17 @@ function titleCase(text: string) {
     .join(' ');
 }
 
-export function enhancePrompt(prompt: string, genre: string, mood: string) {
+export function enhancePrompt(prompt: string, genre: string, mood: string, locale: SupportedLocale = DEFAULT_LOCALE) {
   const basePrompt = sanitizePrompt(prompt);
   if (!basePrompt) {
-    return `Write a ${mood.toLowerCase()} ${genre} song with a memorable hook and clear verse-to-chorus progression.`;
+    return getText(locale, 'lyricsStudio.promptEnhancer.empty')
+      .replace('{mood}', mood.toLowerCase())
+      .replace('{genre}', genre);
   }
-  return `${basePrompt} Write it as a ${genre} track with a ${mood.toLowerCase()} tone, include a standout hook, and keep the lines singable.`;
+  return getText(locale, 'lyricsStudio.promptEnhancer.append')
+    .replace('{prompt}', basePrompt)
+    .replace('{genre}', genre)
+    .replace('{mood}', mood.toLowerCase());
 }
 
 export function getGenreSuggestions(prompt: string) {
@@ -99,14 +114,10 @@ export function getMoodSuggestions(prompt: string) {
   return Array.from(picks).slice(0, 3);
 }
 
-export function getSmartAutocomplete(prompt: string) {
+export function getSmartAutocomplete(prompt: string, locale: SupportedLocale = DEFAULT_LOCALE) {
   const trimmed = sanitizePrompt(prompt);
   if (!trimmed) {
-    return [
-      'A cinematic anthem about rising above fear',
-      'A soulful love song with bilingual lyrics',
-      'An energetic club record with crowd chants',
-    ];
+    return getList(locale, 'lyricsStudio.emptyAutocompleteSuggestions');
   }
 
   const parts = trimmed.split(' ');
@@ -116,19 +127,16 @@ export function getSmartAutocomplete(prompt: string) {
   return options.slice(0, 3).map((option) => `${trimmed} ${option}`);
 }
 
-export function getRewriteSuggestions(prompt: string) {
+export function getRewriteSuggestions(prompt: string, locale: SupportedLocale = DEFAULT_LOCALE) {
   const base = sanitizePrompt(prompt);
   if (!base) {
-    return [
-      'Write an emotionally rich radio-ready pop record with vivid imagery.',
-      'Create a bilingual anthem with a clear hook and call-and-response chorus.',
-    ];
+    return getList(locale, 'lyricsStudio.rewriteDefaults');
   }
 
   return [
-    `${base} Focus on vivid sensory details and concise lines.`,
-    `${base} Add a stronger emotional arc from verse to chorus.`,
-    `${base} Keep rhyme endings tighter for better memorability.`,
+    `${base} ${getText(locale, 'lyricsStudio.rewriteAppend.vivid')}`,
+    `${base} ${getText(locale, 'lyricsStudio.rewriteAppend.emotional')}`,
+    `${base} ${getText(locale, 'lyricsStudio.rewriteAppend.rhyme')}`,
   ];
 }
 

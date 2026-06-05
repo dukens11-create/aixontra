@@ -1,0 +1,234 @@
+{
+  "common": {
+    "language": "Idioma",
+    "loadingTranslations": "Carregando traduções…",
+    "fallbackNotice": "Usando o inglês como fallback.",
+    "dismiss": "Fechar",
+    "buy": "Comprar",
+    "by": "por",
+    "plays": "reproduções",
+    "likes": "curtidas"
+  },
+  "nav": {
+    "tagline": "O futuro do som começa aqui.",
+    "generate": "Gerar",
+    "lyricsStudio": "Estúdio de letras",
+    "feed": "Feed",
+    "marketplace": "Marketplace",
+    "trending": "Tendências",
+    "search": "Buscar",
+    "library": "Biblioteca",
+    "notifications": "Notificações",
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "creatorHub": "Hub do criador",
+    "admin": "Admin",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "signout": "Sair"
+  },
+  "mobileNav": {
+    "feed": "Feed",
+    "create": "Criar",
+    "lyrics": "Letras",
+    "trend": "Trend",
+    "shop": "Loja",
+    "studio": "Studio"
+  },
+  "installPrompt": {
+    "title": "Instalar AIXENTRA",
+    "body": "Espaço reservado para o prompt de instalação PWA. Os hooks de instalação nativa podem ser ligados aqui.",
+    "dismiss": "Fechar"
+  },
+  "home": {
+    "badge": "O futuro do som começa aqui.",
+    "title": "Crie, transmita, remixe e monetize música com IA.",
+    "description": "AIXENTRA é a plataforma musical com IA da próxima geração para criadores, fãs e o futuro do som.",
+    "startCreating": "Começar a criar",
+    "exploreMusic": "Explorar música",
+    "sectionDescription": "Base pronta para produção com UI reutilizável e placeholders de backend.",
+    "sections": [
+      "Geração de músicas com IA",
+      "Feed viral",
+      "Monetização de criadores",
+      "Comunidade de remix",
+      "Marketplace",
+      "Ferramentas de vídeo com IA"
+    ],
+    "nowTrending": "Em alta agora",
+    "viewAll": "Ver tudo"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "description": "Beats, músicas com IA, pacotes vocais, modelos de voz e produtos de licença com arquitetura de divisão pronta para Stripe Connect.",
+    "buy": "Comprar"
+  },
+  "generate": {
+    "title": "Gerador AIXENTRA",
+    "description": "Geração musical orientada por prompt com abstração de provedor para futuras trocas Suno/MusicGen.",
+    "ownership": "Você é dono das suas gerações de acordo com seu plano e licença.",
+    "plan": "Plano",
+    "credits": "Créditos",
+    "prompt": "Prompt",
+    "lyrics": "Letras",
+    "bpm": "BPM",
+    "instrumentalOnly": "Somente instrumental",
+    "length": "Duração (segundos)",
+    "masteringPreset": "Preset de masterização",
+    "preset": {
+      "LOUDNESS_NORMALIZATION": "Normalização de volume",
+      "CLEAN_MIX": "Mix limpo",
+      "RADIO_READY": "Master pronto para rádio"
+    },
+    "queue": {
+      "waiting": "Aguardando na fila…",
+      "generating": "Gerando…",
+      "complete": "✓ Geração concluída",
+      "failed": "✗ Falha na geração",
+      "cancelled": "Cancelada",
+      "cancel": "Cancelar",
+      "position": "Posição na fila: #{position}",
+      "estimatedWait": "Espera estimada: ~{minutes} min",
+      "completePercent": "{percent}% concluído"
+    },
+    "actions": {
+      "generate": "Gerar",
+      "regenerate": "Gerar novamente",
+      "extend": "Estender",
+      "downloadMp3": "Baixar MP3",
+      "downloadWav": "Baixar WAV",
+      "publish": "Publicar",
+      "secureCoverUpload": "URL segura para upload de capa",
+      "secureVideoUpload": "URL segura para upload de vídeo",
+      "playInGlobalPlayer": "Tocar no player global",
+      "submitVoiceModel": "Enviar modelo de voz"
+    },
+    "preview": "Prévia",
+    "masteredOutput": "Saída masterizada",
+    "stemsExport": "Exportação de stems",
+    "stemsFallback": "Os stems ficam disponíveis nos planos com exportação de stems habilitada.",
+    "voiceCloningConsent": "Consentimento para clonagem de voz",
+    "consentDescription": "Consentimento e prova são obrigatórios. Os modelos de voz ficam privados até a aprovação do admin.",
+    "voiceModelName": "Nome do modelo de voz",
+    "proofUrl": "URL de prova ou permissão",
+    "consentConfirm": "Confirmo que esta voz é minha ou que tenho permissão explícita.",
+    "messages": {
+      "statusError": "Não foi possível recuperar o status da geração. Atualize e tente novamente.",
+      "lostConnection": "A conexão com o serviço de geração foi perdida. Atualize e tente novamente.",
+      "generationComplete": "Geração concluída!",
+      "generationFailed": "Falha na geração",
+      "generationCancelled": "Geração cancelada.",
+      "voiceModelSubmissionFailed": "Falha ao enviar o modelo de voz",
+      "voiceModelSubmitted": "Modelo de voz enviado",
+      "uploadUrlRequestFailed": "Falha ao solicitar a URL de upload",
+      "secureUploadGenerated": "A URL segura para {kind} foi gerada e copiada",
+      "generateFirst": "Gere uma faixa primeiro.",
+      "publishFailed": "Falha ao publicar",
+      "publishedToFeed": "Publicado no feed.",
+      "somethingWentWrong": "Algo deu errado"
+    }
+  },
+  "lyricsStudio": {
+    "title": "Estúdio de letras com IA",
+    "description": "Espaço de composição com editor dividido, geração, suporte multilíngue, ferramentas de rima, análise de tom e salvamento automático.",
+    "notSavedYet": "Ainda não salvo",
+    "draftRestored": "Rascunho restaurado",
+    "restoreFailed": "Não foi possível restaurar o rascunho",
+    "autoSavedAt": "Salvo automaticamente às {time}",
+    "savedAt": "Salvo às {time}",
+    "draftSaved": "Rascunho salvo",
+    "prompt": "Prompt",
+    "actions": {
+      "improvePrompt": "Melhorar prompt",
+      "hookGenerator": "Gerador de hook",
+      "chorusGenerator": "Gerador de refrão",
+      "saveDraft": "Salvar rascunho",
+      "generateFull": "Geração de letras IA",
+      "generateVerse": "Gerar verso",
+      "generateChorus": "Gerar refrão",
+      "generating": "Gerando..."
+    },
+    "templateTitle": "Modelos de estrutura de música",
+    "insertTemplate": "Inserir modelo",
+    "templates": {
+      "standard": "Padrão",
+      "pop": "Pop",
+      "storytelling": "Narrativo"
+    },
+    "rhymeTitle": "Motor de rimas + balanceamento de sílabas",
+    "rhymePlaceholder": "Ajuda de rima",
+    "rhymeScheme": "Esquema de rima",
+    "avgSyllables": "Média de sílabas/linha",
+    "notAvailable": "N/D",
+    "syllableBalancing": "Balancear sílabas",
+    "balanced": "As sílabas parecem equilibradas.",
+    "balanceSuggestions": "Sugestões de balanceamento: {items}",
+    "toneAnalysis": "Análise de tom emocional",
+    "overall": "Geral",
+    "emotion": "Emoção",
+    "imagery": "Imagética",
+    "devices": "Recursos",
+    "editorTitle": "Editor de letras",
+    "lineHighlightingPreview": "Prévia de destaque de linhas",
+    "hideAiHelper": "Ocultar assistente IA",
+    "showAiHelper": "Assistente IA",
+    "helperTitle": "Assistente flutuante de prompts IA",
+    "quickPromptChips": "Prompts rápidos",
+    "genreMoodSuggestions": "Sugestões de gênero + humor",
+    "genres": "Gêneros",
+    "moods": "Humores",
+    "smartAutocomplete": "Autocompletar inteligente",
+    "rewriteSuggestions": "Sugestões de reescrita",
+    "lyricsGenerated": "Letras geradas",
+    "failedToGenerate": "Falha ao gerar letras",
+    "generationFailed": "Falha na geração",
+    "promptTemplates": [
+      "Escreva uma música comovente sobre amor à distância com imagens vívidas.",
+      "Crie um hino cheio de energia para viagens noturnas pela cidade.",
+      "Crie uma música reflexiva sobre resiliência após o fracasso.",
+      "Monte um refrão festivo para um hit de festival de verão."
+    ],
+    "emptyAutocompleteSuggestions": [
+      "Um hino cinematográfico sobre superar o medo",
+      "Uma canção de amor soul com letras bilíngues",
+      "Uma faixa de clube energética com cantos da multidão"
+    ],
+    "rewriteDefaults": [
+      "Escreva uma faixa pop emocionalmente rica, pronta para rádio, com imagens vívidas.",
+      "Crie um hino bilíngue com um hook claro e um refrão de chamada e resposta."
+    ],
+    "promptEnhancer": {
+      "empty": "Escreva uma música de {genre} com tom {mood} e um hook memorável com progressão clara de verso para refrão.",
+      "append": "{prompt} Escreva como uma faixa de {genre} com tom {mood}, inclua um hook marcante e mantenha as linhas fáceis de cantar."
+    },
+    "rewriteAppend": {
+      "vivid": "Foque em detalhes sensoriais vívidos e linhas concisas.",
+      "emotional": "Adicione um arco emocional mais forte do verso ao refrão.",
+      "rhyme": "Aperte mais as terminações de rima para melhorar a memorização."
+    }
+  },
+  "options": {
+    "languages": {
+      "English": "Inglês",
+      "Haitian Creole": "Crioulo haitiano",
+      "French": "Francês",
+      "Spanish": "Espanhol",
+      "Portuguese": "Português"
+    },
+    "moods": {
+      "Cinematic": "Cinematográfico",
+      "Romantic": "Romântico",
+      "Dark": "Sombrio",
+      "Energetic": "Energético",
+      "Uplifting": "Inspirador",
+      "Melancholic": "Melancólico"
+    },
+    "voiceStyles": {
+      "Female": "Feminina",
+      "Male": "Masculina",
+      "Duo": "Dueto",
+      "Choir": "Coral",
+      "Robotic": "Robótica"
+    }
+  }
+}

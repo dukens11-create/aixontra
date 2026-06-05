@@ -66,6 +66,7 @@ export const AI_TOOLS = [
 // Languages
 export const LANGUAGES = [
   { code: "en", name: "English" },
+  { code: "ht", name: "Haitian Creole" },
   { code: "es", name: "Spanish" },
   { code: "fr", name: "French" },
   { code: "de", name: "German" },

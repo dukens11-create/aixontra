@@ -1,0 +1,234 @@
+{
+  "common": {
+    "language": "Lang",
+    "loadingTranslations": "Ap chaje tradiksyon yo…",
+    "fallbackNotice": "N ap itilize vèsyon anglè a kòm sekou.",
+    "dismiss": "Fèmen",
+    "buy": "Achte",
+    "by": "pa",
+    "plays": "lektur",
+    "likes": "renmen"
+  },
+  "nav": {
+    "tagline": "Lavni son an kòmanse isit la.",
+    "generate": "Jenere",
+    "lyricsStudio": "Estidyo Pawòl",
+    "feed": "Fil",
+    "marketplace": "Mache",
+    "trending": "Tandans",
+    "search": "Chèche",
+    "library": "Bibliyotèk",
+    "notifications": "Notifikasyon",
+    "terms": "Kondisyon",
+    "privacy": "Konfidansyalite",
+    "creatorHub": "Sant Kreyatè",
+    "admin": "Admin",
+    "login": "Konekte",
+    "signup": "Enskri",
+    "signout": "Dekonekte"
+  },
+  "mobileNav": {
+    "feed": "Fil",
+    "create": "Kreye",
+    "lyrics": "Pawòl",
+    "trend": "Tandans",
+    "shop": "Boutik",
+    "studio": "Estidyo"
+  },
+  "installPrompt": {
+    "title": "Enstale AIXENTRA",
+    "body": "Sa a se yon plas pou envitasyon enstalasyon PWA a. Ou ka konekte enstalasyon natif la isit la.",
+    "dismiss": "Fèmen"
+  },
+  "home": {
+    "badge": "Lavni son an kòmanse isit la.",
+    "title": "Kreye, difize, remixe, epi monetize mizik AI.",
+    "description": "AIXENTRA se platfòm mizik AI jenerasyon kap vini an pou kreyatè, fanatik, ak lavni son an.",
+    "startCreating": "Kòmanse Kreye",
+    "exploreMusic": "Eksplore Mizik",
+    "sectionDescription": "Fondasyon pare pou pwodiksyon ak UI ki ka reyitilize ansanm ak plas pou backend.",
+    "sections": [
+      "Jenere chante AI",
+      "Fil viral",
+      "Monetizasyon kreyatè",
+      "Kominote remix",
+      "Mache",
+      "Zouti videyo AI"
+    ],
+    "nowTrending": "Sa k ap fè tandans",
+    "viewAll": "Gade tout"
+  },
+  "marketplace": {
+    "title": "Mache",
+    "description": "Beat, chante AI, pak vwa, modèl vwa, ak pwodwi lisans ak achitekti divizyon Stripe Connect pare.",
+    "buy": "Achte"
+  },
+  "generate": {
+    "title": "Jeneratè AIXENTRA",
+    "description": "Jenerasyon mizik ki baze sou prompt ak abstraksyon founisè pou chanjman Suno/MusicGen pita.",
+    "ownership": "Ou posede jenerasyon ou yo selon plan ak lisans ou.",
+    "plan": "Plan",
+    "credits": "Kredi",
+    "prompt": "Prompt",
+    "lyrics": "Pawòl",
+    "bpm": "BPM",
+    "instrumentalOnly": "Enstrimantal sèlman",
+    "length": "Longè (segonn)",
+    "masteringPreset": "Préréglaj mastering",
+    "preset": {
+      "LOUDNESS_NORMALIZATION": "Nòmalizasyon volim",
+      "CLEAN_MIX": "Miks pwòp",
+      "RADIO_READY": "Master pare pou radyo"
+    },
+    "queue": {
+      "waiting": "Ap tann nan keu a…",
+      "generating": "Ap jenere…",
+      "complete": "✓ Jenerasyon fini",
+      "failed": "✗ Jenerasyon echwe",
+      "cancelled": "Anile",
+      "cancel": "Anile",
+      "position": "Pozisyon nan keu a: #{position}",
+      "estimatedWait": "Tan atant: anviwon {minutes} min",
+      "completePercent": "{percent}% fini"
+    },
+    "actions": {
+      "generate": "Jenere",
+      "regenerate": "Rejenere",
+      "extend": "Pwolonje",
+      "downloadMp3": "Telechaje MP3",
+      "downloadWav": "Telechaje WAV",
+      "publish": "Pibliye",
+      "secureCoverUpload": "URL sekirize pou telechaje cover",
+      "secureVideoUpload": "URL sekirize pou telechaje videyo",
+      "playInGlobalPlayer": "Jwe nan lektè global la",
+      "submitVoiceModel": "Soumèt modèl vwa pou revizyon"
+    },
+    "preview": "Apèsi",
+    "masteredOutput": "Sòti mastered",
+    "stemsExport": "Ekspòtasyon stems",
+    "stemsFallback": "Stems yo disponib sou plan ki gen ekspòtasyon stems aktive.",
+    "voiceCloningConsent": "Konsantman pou klonaj vwa",
+    "consentDescription": "Konsantman ak prèv obligatwa. Modèl vwa yo rete prive jiskaske admin apwouve yo.",
+    "voiceModelName": "Non modèl vwa",
+    "proofUrl": "URL prèv oswa pèmisyon",
+    "consentConfirm": "Mwen konfime vwa sa a se pou mwen oswa mwen gen pèmisyon klè.",
+    "messages": {
+      "statusError": "Pa t kapab pran estati jenerasyon an. Tanpri rafrechi epi eseye ankò.",
+      "lostConnection": "Koneksyon ak sèvis jenerasyon an pèdi. Tanpri rafrechi epi eseye ankò.",
+      "generationComplete": "Jenerasyon fini!",
+      "generationFailed": "Jenerasyon echwe",
+      "generationCancelled": "Jenerasyon anile.",
+      "voiceModelSubmissionFailed": "Soumisyon modèl vwa a echwe",
+      "voiceModelSubmitted": "Modèl vwa a soumèt",
+      "uploadUrlRequestFailed": "Demann URL telechajman an echwe",
+      "secureUploadGenerated": "URL sekirize pou telechaje {kind} la kreye epi kopye",
+      "generateFirst": "Jenere yon track anvan.",
+      "publishFailed": "Piblikasyon an echwe",
+      "publishedToFeed": "Pibliye nan fil la.",
+      "somethingWentWrong": "Gen yon bagay ki mal pase"
+    }
+  },
+  "lyricsStudio": {
+    "title": "Estidyo Pawòl AI",
+    "description": "Espas ekriti chante ak editè separe, jenerasyon, sipò plizyè lang, zouti rim, analiz ton, ak sove otomatik.",
+    "notSavedYet": "Poko sove",
+    "draftRestored": "Bouyon an retounen",
+    "restoreFailed": "Pa t kapab retabli bouyon an",
+    "autoSavedAt": "Sove otomatikman a {time}",
+    "savedAt": "Sove a {time}",
+    "draftSaved": "Bouyon sove",
+    "prompt": "Prompt",
+    "actions": {
+      "improvePrompt": "Amelyore Prompt la",
+      "hookGenerator": "Jeneratè Hook",
+      "chorusGenerator": "Jeneratè Refren",
+      "saveDraft": "Sove Bouyon",
+      "generateFull": "Jenerasyon Pawòl AI",
+      "generateVerse": "Jenere Kouplè",
+      "generateChorus": "Jenere Refren",
+      "generating": "Ap jenere..."
+    },
+    "templateTitle": "Modèl Estrikti Chante",
+    "insertTemplate": "Mete Modèl la",
+    "templates": {
+      "standard": "Estanda",
+      "pop": "Pop",
+      "storytelling": "Rakonte istwa"
+    },
+    "rhymeTitle": "Motè Rim + Balans Silab",
+    "rhymePlaceholder": "Asistan rim",
+    "rhymeScheme": "Plan rim",
+    "avgSyllables": "Mwayèn silab/liy",
+    "notAvailable": "Pa disponib",
+    "syllableBalancing": "Balans Silab",
+    "balanced": "Silab yo sanble byen balanse.",
+    "balanceSuggestions": "Sijesyon balans: {items}",
+    "toneAnalysis": "Analiz Ton Emosyonèl",
+    "overall": "An jeneral",
+    "emotion": "Emosyon",
+    "imagery": "Imaj",
+    "devices": "Teknik",
+    "editorTitle": "Editè Pawòl",
+    "lineHighlightingPreview": "Apèsi sou liy make yo",
+    "hideAiHelper": "Kache Asistan AI",
+    "showAiHelper": "Asistan AI",
+    "helperTitle": "Asistan Prompt AI Flotan",
+    "quickPromptChips": "Ti prompt rapid",
+    "genreMoodSuggestions": "Sijesyon jan + atitid",
+    "genres": "Jan",
+    "moods": "Atitid",
+    "smartAutocomplete": "Autocomplétion entelijan",
+    "rewriteSuggestions": "Sijesyon pou re-ekri",
+    "lyricsGenerated": "Pawòl yo jenere",
+    "failedToGenerate": "Pa t kapab jenere pawòl yo",
+    "generationFailed": "Jenerasyon an echwe",
+    "promptTemplates": [
+      "Ekri yon chante sensè sou lanmou a distans ak imaj vivan.",
+      "Kreye yon im nève pou vwayaj lannuit nan vil la.",
+      "Fè yon chante reflechi sou rezistans apre echèk.",
+      "Bati yon refren selebrasyon pou yon hit festival ete."
+    ],
+    "emptyAutocompleteSuggestions": [
+      "Yon im sinematik sou leve apre laperèz",
+      "Yon chante lanmou soul ak pawòl bileng",
+      "Yon dosye klib enèjik ak chant foul la"
+    ],
+    "rewriteDefaults": [
+      "Ekri yon mizik pop rich emosyonèlman ki pare pou radyo ak imaj vivan.",
+      "Kreye yon im bileng ak yon hook klè ak yon refren repons-apèl."
+    ],
+    "promptEnhancer": {
+      "empty": "Ekri yon chante {genre} ki {mood} ak yon hook memorab ak yon pwogresyon klè soti nan kouplè rive nan refren.",
+      "append": "{prompt} Ekri li tankou yon track {genre} ak yon ton {mood}, mete yon hook ki frape, epi kenbe liy yo fasil pou chante."
+    },
+    "rewriteAppend": {
+      "vivid": "Konsantre sou detay sansoryèl ki vivan ak liy kout.",
+      "emotional": "Ajoute yon arc emosyonèl ki pi fò soti nan kouplè rive nan refren.",
+      "rhyme": "Kenbe fen rim yo pi sere pou plis memorabilite."
+    }
+  },
+  "options": {
+    "languages": {
+      "English": "Anglè",
+      "Haitian Creole": "Kreyòl Ayisyen",
+      "French": "Franse",
+      "Spanish": "Panyòl",
+      "Portuguese": "Pòtigè"
+    },
+    "moods": {
+      "Cinematic": "Sinematik",
+      "Romantic": "Amoure",
+      "Dark": "Fènwa",
+      "Energetic": "Enèjik",
+      "Uplifting": "Ki leve lespri",
+      "Melancholic": "Melankolik"
+    },
+    "voiceStyles": {
+      "Female": "Fi",
+      "Male": "Gason",
+      "Duo": "Duo",
+      "Choir": "Koral",
+      "Robotic": "Robotik"
+    }
+  }
+}
