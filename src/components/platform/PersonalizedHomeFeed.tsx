@@ -36,7 +36,7 @@ export default function PersonalizedHomeFeed() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadFeed(controller.signal);
+    loadFeed(controller.signal);
     return () => controller.abort();
   }, [loadFeed]);
 

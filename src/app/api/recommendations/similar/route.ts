@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { songs } from '@/lib/platform/demoData';
 import { getSimilarCreators, getSimilarSongs } from '@/lib/platform/recommendationEngine';
+import { normalizeRecommendationLimit } from '../utils';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const songId = searchParams.get('songId');
   const creatorId = searchParams.get('creatorId');
-  const limit = Number(searchParams.get('limit') || '4');
-  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(limit, 12)) : 4;
+  const safeLimit = normalizeRecommendationLimit(searchParams.get('limit'), 4, 12);
 
   if (!songId && !creatorId) {
     return NextResponse.json({ error: 'songId or creatorId is required' }, { status: 400 });

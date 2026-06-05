@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as {
+  let body: {
     userId?: string;
     songId?: string;
     watchTimeSeconds?: number;
@@ -27,6 +27,12 @@ export async function POST(request: Request) {
     shared?: boolean;
     remixed?: boolean;
   };
+
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+  }
 
   if (!body.songId) {
     return NextResponse.json({ error: 'songId is required' }, { status: 400 });

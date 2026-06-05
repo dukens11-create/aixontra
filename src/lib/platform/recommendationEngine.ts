@@ -72,6 +72,8 @@ const SCORE_WEIGHTS = {
   remixes: 6,
   watchTime: 0.75,
 };
+const MS_PER_MINUTE = 60 * 1000;
+const MS_PER_HOUR = MS_PER_MINUTE * 60;
 const RECENCY_WINDOW_HOURS = 72;
 const RECENCY_BOOST_MULTIPLIER = 1.5;
 const MAX_LISTENING_HISTORY_SIZE = 100;
@@ -96,8 +98,7 @@ const SIMILAR_CREATOR_WEIGHTS = {
   listenerDeltaDivider: 250,
 };
 
-const MS_PER_HOUR = 1000 * 60 * 60;
-const CACHE_TTL_MS = 30_000;
+const CACHE_TTL_MS = Number(process.env.RECOMMENDATION_CACHE_TTL_MS ?? '30000');
 
 const recommendationCache = new Map<string, { expiresAt: number; value: unknown }>();
 
