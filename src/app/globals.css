@@ -72,8 +72,9 @@
   }
   
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased pb-20;
     color-scheme: dark;
+    background-image: radial-gradient(circle at top, rgba(76, 29, 149, 0.35), transparent 42%);
   }
 
   h1 {
