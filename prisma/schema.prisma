@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  CREATOR
+  ADMIN
+  MODERATOR
+}
+
+enum SongStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  FLAGGED
+}
+
+enum VocalStyle {
+  MALE
+  FEMALE
+  DUO
+  CHOIR
+  ROBOTIC
+}
+
+enum MarketplaceItemType {
+  BEAT
+  AI_SONG
+  VOCAL_PACK
+  VOICE_MODEL
+  EXCLUSIVE_LICENSE
+  COMMERCIAL_LICENSE
+}
+
+enum PurchaseStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum CollaborationStatus {
+  DRAFT
+  IN_PROGRESS
+  PUBLISHED
+}
+
+enum CollaborationRole {
+  OWNER
+  PRODUCER
+  WRITER
+  VOCALIST
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  SONG_LIKE
+  SONG_COMMENT
+  SONG_REMIX
+  PURCHASE
+  PAYOUT_UPDATE
+  COLLAB_INVITE
+}
+
+model User {
+  id                   String                @id @default(cuid())
+  name                 String?
+  email                String?               @unique
+  image                String?
+  role                 UserRole              @default(USER)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+
+  creatorProfile       CreatorProfile?
+  songs                Song[]
+  likes                Like[]
+  comments             Comment[]
+  followers            Follow[]              @relation("followedCreator")
+  following            Follow[]              @relation("followerUser")
+  playlists            Playlist[]
+  remixes              Remix[]
+  marketplaceItems     MarketplaceItem[]     @relation("sellerItems")
+  purchasesAsBuyer     Purchase[]            @relation("buyerPurchases")
+  purchasesAsSeller    Purchase[]            @relation("sellerPurchases")
+  ownedCollabRooms     CollaborationRoom[]   @relation("roomOwner")
+  collaborationMembers CollaborationMember[]
+  notifications        Notification[]
+
+  @@index([role])
+}
+
+model CreatorProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  stageName        String
+  bio              String?
+  avatarUrl        String?
+  bannerUrl        String?
+  verified         Boolean  @default(false)
+  followersCount   Int      @default(0)
+  monthlyListeners Int      @default(0)
+  totalPlays       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([verified])
+}
+
+model Song {
+  id             String      @id @default(cuid())
+  creatorId      String
+  title          String
+  prompt         String
+  lyrics         String?
+  genre          String
+  mood           String
+  language       String
+  bpm            Int?
+  vocalStyle     VocalStyle?
+  audioUrl       String
+  coverUrl       String?
+  duration       Int?
+  isPublic       Boolean     @default(false)
+  isInstrumental Boolean     @default(false)
+  status         SongStatus  @default(DRAFT)
+  playsCount     Int         @default(0)
+  likesCount     Int         @default(0)
+  commentsCount  Int         @default(0)
+  remixesCount   Int         @default(0)
+  isFlagged      Boolean     @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  creator       User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  likes         Like[]
+  comments      Comment[]
+  playlistSongs PlaylistSong[]
+  sourceRemixes Remix[]         @relation("sourceSong")
+  childRemixes  Remix[]         @relation("remixSong")
+
+  @@index([creatorId, createdAt])
+  @@index([status, isPublic])
+  @@index([genre, mood, language])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+  @@index([songId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId, createdAt])
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  creatorId  String
+  createdAt  DateTime @default(now())
+
+  follower User @relation("followerUser", fields: [followerId], references: [id], onDelete: Cascade)
+  creator  User @relation("followedCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, creatorId])
+  @@index([creatorId])
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songs PlaylistSong[]
+
+  @@index([userId, createdAt])
+}
+
+model PlaylistSong {
+  id         String   @id @default(cuid())
+  playlistId String
+  songId     String
+  createdAt  DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song     Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, songId])
+  @@index([songId])
+}
+
+model Remix {
+  id             String   @id @default(cuid())
+  originalSongId String
+  remixSongId    String   @unique
+  creatorId      String
+  createdAt      DateTime @default(now())
+
+  originalSong Song @relation("sourceSong", fields: [originalSongId], references: [id], onDelete: Cascade)
+  remixSong    Song @relation("remixSong", fields: [remixSongId], references: [id], onDelete: Cascade)
+  creator      User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([originalSongId])
+  @@index([creatorId])
+}
+
+model MarketplaceItem {
+  id              String              @id @default(cuid())
+  sellerId        String
+  title           String
+  type            MarketplaceItemType
+  price           Decimal             @db.Decimal(10, 2)
+  licenseType     String
+  previewAudioUrl String?
+  description     String?
+  coverUrl        String?
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  seller    User       @relation("sellerItems", fields: [sellerId], references: [id], onDelete: Cascade)
+  purchases Purchase[]
+
+  @@index([type, isActive])
+}
+
+model Purchase {
+  id                    String         @id @default(cuid())
+  buyerId               String
+  sellerId              String
+  marketplaceItemId     String
+  amount                Decimal        @db.Decimal(10, 2)
+  platformFee           Decimal        @db.Decimal(10, 2)
+  stripePaymentIntentId String?
+  status                PurchaseStatus @default(PENDING)
+  createdAt             DateTime       @default(now())
+
+  buyer           User            @relation("buyerPurchases", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller          User            @relation("sellerPurchases", fields: [sellerId], references: [id], onDelete: Cascade)
+  marketplaceItem MarketplaceItem @relation(fields: [marketplaceItemId], references: [id], onDelete: Cascade)
+
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
+}
+
+model CollaborationRoom {
+  id          String              @id @default(cuid())
+  ownerId     String
+  title       String
+  description String?
+  status      CollaborationStatus @default(DRAFT)
+  lyrics      String?
+  ideaBoard   String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  owner   User                  @relation("roomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members CollaborationMember[]
+
+  @@index([ownerId, status])
+}
+
+model CollaborationMember {
+  id            String            @id @default(cuid())
+  roomId        String
+  userId        String
+  role          CollaborationRole
+  royaltyPercent Float
+  createdAt     DateTime          @default(now())
+
+  room CollaborationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}

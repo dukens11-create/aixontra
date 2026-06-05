@@ -4,6 +4,7 @@ AIXONTRA is a curated AI music gallery where creators can share exceptional AI-g
 
 ## Features
 
+- 🚀 **AIXENTRA Platform Scaffolding**: Mobile-first generate/feed/marketplace/creator/admin experiences
 - 🎵 **Curated Music Gallery**: Browse and discover AI-generated music
 - ✨ **Create Song Feature**: Generate songs with AI-powered lyrics, voices, and music (NEW!)
 - 🎤 **AI Voice Generation**: Synthesize realistic vocals with state-of-the-art TTS (NEW!)
@@ -148,3 +149,9 @@ Enter admin password (min 8 characters): ********
 **Error: "Password must be at least 8 characters"**
 - Use a longer password
 - Consider using a password manager for strong, unique passwords
+## Core platform routes
+- `/generate` – AI music generation workflow (prompt + metadata + publish placeholder)
+- `/feed` – vertical discovery feed with remix/comment/share controls
+- `/dashboard/creator` – creator analytics, management, payout placeholders
+- `/marketplace` – monetization listings with purchase placeholders
+- `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`

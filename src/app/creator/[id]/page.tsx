@@ -1,74 +1,54 @@
-import { supabaseBrowser } from "@/lib/supabase/browser";
-import TrackCard from "@/components/TrackCard";
+import Link from 'next/link';
+import { creators, songs } from '@/lib/platform/demoData';
 
-export const dynamic = "force-dynamic";
-
-export default async function CreatorPage({ params }: { params: { id: string } }) {
-  const supabase = supabaseBrowser();
-  const { data: creator } = await supabase.from("profiles").select("*").eq("id", params.id).maybeSingle();
-
-  if (!creator) return <div className="card">Creator not found.</div>;
-
-  const { data: tracks } = await supabase
-    .from("tracks")
-    .select("*")
-    .eq("creator_id", params.id)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
-
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const coverUrl = (path: string | null) => (path ? `${base}/storage/v1/object/public/covers/${path}` : null);
+export default function CreatorPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const creator = creators.find((entry) => entry.id === id) ?? creators[0];
+  const creatorSongs = songs.filter((song) => song.creatorId === creator.id);
 
   return (
-    <div>
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div className="row" style={{ gap: '1.5rem', alignItems: 'flex-start' }}>
-          {creator.avatar_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src={creator.avatar_url} 
-              alt={creator.display_name || creator.username || "Creator"}
-              style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: '50%', 
-                objectFit: 'cover',
-                border: '2px solid hsl(var(--border))'
-              }}
-            />
-          )}
-          <div style={{ flex: 1 }}>
-            <h1 style={{ marginBottom: '0.5rem' }}>{creator.display_name || creator.username || "Creator"}</h1>
-            {creator.username && creator.display_name && (
-              <p className="muted" style={{ marginBottom: '0.5rem' }}>@{creator.username}</p>
-            )}
-            {creator.bio && <p style={{ lineHeight: '1.6', marginTop: '0.75rem' }}>{creator.bio}</p>}
-            <div className="row" style={{ marginTop: '1rem' }}>
-              <span className="badge">Creator</span>
-              <span className="badge">{(tracks ?? []).length} tracks</span>
-            </div>
+    <div className="space-y-4 pb-6">
+      <section className="card overflow-hidden bg-white/5 backdrop-blur-sm">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={creator.bannerUrl} alt={creator.stageName} className="h-40 w-full rounded-xl object-cover" />
+        <div className="-mt-10 row px-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={creator.avatarUrl} alt={creator.stageName} className="h-20 w-20 rounded-full border-4 border-slate-950 object-cover" />
+          <div>
+            <h1>{creator.stageName} {creator.verified ? '✔' : ''}</h1>
+            <p className="muted">{creator.bio}</p>
           </div>
         </div>
-      </div>
-
-      <h2 style={{ marginBottom: '1rem' }}>Approved Tracks</h2>
-      {(tracks ?? []).length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p className="muted">No approved tracks yet</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-xl border border-white/10 p-2"><p className="text-lg font-semibold">{creator.followers.toLocaleString()}</p><p className="muted">Followers</p></div>
+          <div className="rounded-xl border border-white/10 p-2"><p className="text-lg font-semibold">{creator.monthlyListeners.toLocaleString()}</p><p className="muted">Monthly listeners</p></div>
+          <div className="rounded-xl border border-white/10 p-2"><p className="text-lg font-semibold">{creator.totalPlays.toLocaleString()}</p><p className="muted">Total plays</p></div>
         </div>
-      ) : (
-        <div className="grid">
-          {(tracks ?? []).map((t: any) => (
-            <TrackCard
-              key={t.id}
-              track={t}
-              coverUrl={coverUrl(t.cover_path)}
-              creatorName={creator.display_name || creator.username || "Creator"}
-              creatorAvatar={creator.avatar_url}
-            />
+        <div className="row mt-4">
+          <button className="btn">Follow</button>
+          <button className="btn secondary">Tip / Support</button>
+        </div>
+      </section>
+
+      <section className="card bg-white/5 backdrop-blur-sm">
+        <h2>Songs</h2>
+        <div className="mt-3 space-y-2">
+          {creatorSongs.map((song) => (
+            <div key={song.id} className="row justify-between rounded-xl border border-white/10 p-3">
+              <div>
+                <p className="font-semibold">{song.title}</p>
+                <p className="muted">{song.genre} · {song.mood}</p>
+              </div>
+              <Link href={`/remix/${song.id}`} className="badge">Remix</Link>
+            </div>
           ))}
         </div>
-      )}
+      </section>
+
+      <section className="card bg-white/5 backdrop-blur-sm">
+        <h2>Remix lineage</h2>
+        <p className="muted mt-2">{creatorSongs[0]?.title} → Midnight Kompa Signals (Club Edit) → Neon Sunrise Festival Mix</p>
+      </section>
     </div>
   );
 }

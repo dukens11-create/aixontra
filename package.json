@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "vitest",
     "test:e2e": "playwright test",
     "create-admin": "node scripts/create-admin.js"
@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^0.344.0",
     "music-metadata-browser": "^2.5.10",
     "next": "^16.1.6",

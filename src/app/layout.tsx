@@ -1,9 +1,11 @@
 import "./globals.css";
 import Nav from "@/components/Nav";
+import { GlobalPlayer } from "@/components/platform/GlobalPlayer";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
-  title: "AIXONTRA - Curated AI Music Gallery",
-  description: "Discover and share exceptional AI-generated music. AIXONTRA curates the best AI music from creators worldwide.",
+  title: "AIXENTRA - AI Music Platform",
+  description: "Create, stream, remix, and monetize AI music with a premium mobile-first experience.",
   icons: {
     icon: '/favicon.svg',
   },
@@ -12,9 +14,11 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-background">
         <Nav />
         <main className="container">{children}</main>
+        <GlobalPlayer />
+        <Toaster position="top-right" />
       </body>
     </html>
   );

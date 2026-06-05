@@ -25,16 +25,19 @@ export default function Nav() {
     <div style={{ borderBottom: "1px solid #242436" }}>
       <div className="container row" style={{ justifyContent: "space-between", paddingTop: '1rem', paddingBottom: '1rem' }}>
         <div className="row">
-          <Link href="/" style={{ fontWeight: 900, letterSpacing: 1 }}>AIXONTRA</Link>
-          <span className="badge">AI Music Gallery</span>
+          <Link href="/" style={{ fontWeight: 900, letterSpacing: 1 }}>AIXENTRA</Link>
+          <span className="badge">AI Music Platform</span>
         </div>
         <div className="row">
-          <Link href="/about" className="badge">About</Link>
-          <Link href="/faq" className="badge">FAQ</Link>
-          <Link href="/create" className="badge">Create</Link>
-          <Link href="/upload" className="badge">Upload</Link>
-          {email && <Link href="/profile" className="badge">My Music</Link>}
-          <Link href="/admin/review" className="badge">Admin</Link>
+          <Link href="/generate" className="badge">Generate</Link>
+          <Link href="/feed" className="badge">Feed</Link>
+          <Link href="/marketplace" className="badge">Marketplace</Link>
+          <Link href="/trending" className="badge">Trending</Link>
+          <Link href="/search" className="badge">Search</Link>
+          <Link href="/library" className="badge">Library</Link>
+          <Link href="/notifications" className="badge">Notifications</Link>
+          {email && <Link href="/dashboard/creator" className="badge">Creator Hub</Link>}
+          <Link href="/admin" className="badge">Admin</Link>
           {!email ? (
             <>
               <Link href="/login" className="badge">Login</Link>
