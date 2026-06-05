@@ -98,7 +98,6 @@ enum VerificationStatus {
 }
 
 enum VoiceModelStatus {
-  DRAFT
   PENDING
   APPROVED
   REJECTED
@@ -525,7 +524,7 @@ model RoyaltySplit {
   songId     String?
   roomId     String?
   userId     String
-  percentage Float
+  percentage Decimal @db.Decimal(5, 2)
   createdAt  DateTime @default(now())
 
   song Song?               @relation(fields: [songId], references: [id], onDelete: Cascade)

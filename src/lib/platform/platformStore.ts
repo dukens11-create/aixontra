@@ -83,7 +83,7 @@ const reports: Array<{ id: string; songId: string; reason: string; createdAt: st
 const dmcaClaims: Array<{ id: string; songId: string; claimant: string; createdAt: string }> = [];
 const users = new Map<string, UserEntitlement>();
 
-const monthKey = () => new Date().toISOString().slice(0, 7);
+const getCurrentMonthKey = () => new Date().toISOString().slice(0, 7);
 
 const creditPacks: CreditPack[] = [
   { id: 'pack-creator', name: 'Creator Boost', credits: 100, priceUsd: 9.99 },
@@ -99,14 +99,14 @@ const ensureUser = (userId = 'demo-user') => {
     plan: 'FREE',
     creditBalance: getPlanCapabilities('FREE').monthlyCredits,
     monthlyFreeCredits: getPlanCapabilities('FREE').monthlyCredits,
-    lastGrantMonth: monthKey(),
+    lastGrantMonth: getCurrentMonthKey(),
   };
   users.set(userId, created);
   return created;
 };
 
 const grantMonthlyCreditsIfNeeded = (account: UserEntitlement) => {
-  const currentMonth = monthKey();
+  const currentMonth = getCurrentMonthKey();
   if (account.lastGrantMonth === currentMonth) return account;
   const planCapabilities = getPlanCapabilities(account.plan);
   account.monthlyFreeCredits = planCapabilities.monthlyCredits;
@@ -225,9 +225,13 @@ export const createPurchase = (marketplaceItemId: string, amount: number) => ({
   stripePaymentIntentId: `pi_placeholder_${Date.now()}`,
 });
 
+/**
+ * Floating-point operations can introduce tiny rounding errors.
+ * We use a narrow epsilon to treat totals like 99.999999 as valid 100%.
+ */
 export const validateRoyaltySplitTotal = (splits: number[]) => {
-  const total = Number(splits.reduce((sum, value) => sum + value, 0).toFixed(2));
-  return total === 100;
+  const total = splits.reduce((sum, value) => sum + value, 0);
+  return Math.abs(total - 100) < 0.01;
 };
 
 export const createCollabRoom = (title: string, splits: number[] = [100]) => ({

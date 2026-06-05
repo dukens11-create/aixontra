@@ -68,7 +68,7 @@ export default function CreatorDashboardPage() {
         <form className="mt-3 space-y-2" onSubmit={requestVerification}>
           <input className="input" placeholder="Legal name" value={legalName} onChange={(event) => setLegalName(event.target.value)} required />
           <input className="input" placeholder="Stage name" value={stageName} onChange={(event) => setStageName(event.target.value)} required />
-          <input className="input" placeholder="ID upload placeholder URL" defaultValue="https://example.com/id-proof" />
+          <input className="input" type="file" aria-label="ID upload placeholder" />
           <textarea className="textarea" placeholder="Reason for verification" value={reason} onChange={(event) => setReason(event.target.value)} required />
           <button type="submit" className="btn secondary">Submit verification request</button>
         </form>

@@ -38,7 +38,7 @@ export default function GeneratePage() {
   const [proofUrl, setProofUrl] = useState('');
 
   const formPayload = useMemo(
-    () => ({ prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset }),
+    () => ({ userId: 'demo-user', prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset }),
     [prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset],
   );
 
@@ -138,8 +138,8 @@ export default function GeneratePage() {
       toast.error(data.error ?? 'Upload URL request failed');
       return;
     }
-    toast.success(`Secure ${kind} upload URL generated`);
-    window.open(data.upload.uploadUrl, '_blank', 'noopener,noreferrer');
+    navigator.clipboard.writeText(data.upload.uploadUrl).catch(() => undefined);
+    toast.success(`Secure ${kind} upload URL generated and copied`);
   };
 
   return (

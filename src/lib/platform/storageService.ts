@@ -1,5 +1,6 @@
 export type StorageProvider = 'cloudinary' | 's3' | 'supabase';
 export type MediaAssetKind = 'mp3' | 'wav' | 'stem' | 'cover' | 'video';
+const UPLOAD_URL_EXPIRY_MS = 10 * 60 * 1000;
 
 const detectProvider = (): StorageProvider => {
   const configured = (process.env.MEDIA_STORAGE_PROVIDER ?? '').toLowerCase();
@@ -25,8 +26,9 @@ export const createSecureUploadUrl = (input: { userId: string; kind: MediaAssetK
     provider: storageProvider,
     path,
     uploadUrl: `/api/media/upload-url?provider=${storageProvider}&path=${encodeURIComponent(path)}`,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + UPLOAD_URL_EXPIRY_MS).toISOString(),
   };
 };
 
-export const toPublicMediaUrl = (path: string) => `https://media.aixentra.app/${storageProvider}/${path}`;
+const MEDIA_CDN_URL = process.env.MEDIA_CDN_URL ?? 'https://media.aixentra.app';
+export const toPublicMediaUrl = (path: string) => `${MEDIA_CDN_URL}/${storageProvider}/${path}`;

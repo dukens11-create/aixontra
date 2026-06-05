@@ -14,7 +14,8 @@ export default function FeedPage() {
   const play = usePlayerStore((state) => state.play);
   const addToQueue = usePlayerStore((state) => state.addToQueue);
 
-  const feedSongs = useMemo(() => Array.from({ length: page }).flatMap(() => rankSongs(songs)), [page]);
+  const rankedSongs = useMemo(() => rankSongs(songs), []);
+  const feedSongs = useMemo(() => Array.from({ length: page }).flatMap(() => rankedSongs), [page, rankedSongs]);
 
   const action = (message: string) => toast.success(message);
 
@@ -25,7 +26,7 @@ export default function FeedPage() {
         <p className="muted">Vertical, mobile-first discovery optimized for fast swipe/scroll sessions. Ranking score = plays + likes*3 + comments*4 + remixes*5 + recentBoost.</p>
       </div>
 
-      {feedSongs.length === 0 ? <div className="card bg-black/30">No tracks yet. Follow creators or generate your first song.</div> : <div className="space-y-4">
+      {rankedSongs.length === 0 ? <div className="card bg-black/30">No tracks yet. Follow creators or generate your first song.</div> : <div className="space-y-4">
         {feedSongs.map((song, index) => (
           <motion.article
             key={`${song.id}-${index}`}

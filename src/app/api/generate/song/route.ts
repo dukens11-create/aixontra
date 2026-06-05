@@ -3,12 +3,20 @@ import { createGeneratedDraft, getCreditPacks, getUserGenerationContext, reserve
 import { getMusicProvider } from '@/lib/platform/generationProvider';
 
 export async function POST(request: Request) {
+  const buildStemsPayload = (
+    canExportStems: boolean,
+    stemsUrls: Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>,
+  ) => (canExportStems ? stemsUrls : undefined);
+
   const body = await request.json();
   if (!body.prompt?.trim()) {
     return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
   }
 
-  const userId = typeof body.userId === 'string' && body.userId.trim() ? body.userId : 'demo-user';
+  if (typeof body.userId !== 'string' || !body.userId.trim()) {
+    return NextResponse.json({ error: 'Authentication required: userId is missing.' }, { status: 401 });
+  }
+  const userId = body.userId.trim();
   const requestedDuration = typeof body.targetDurationSeconds === 'number' ? body.targetDurationSeconds : 120;
   const userContext = getUserGenerationContext(userId);
   if (requestedDuration > userContext.capabilities.maxSongLengthSeconds) {
@@ -30,6 +38,7 @@ export async function POST(request: Request) {
 
   const provider = getMusicProvider();
   const generation = await provider.generate(body);
+  const stemsPayload = buildStemsPayload(userContext.capabilities.stemsExport, generation.stemsUrls);
   const songDraft = createGeneratedDraft({
     prompt: body.prompt,
     lyrics: body.lyrics,
@@ -42,7 +51,7 @@ export async function POST(request: Request) {
     originalSongId: body.originalSongId,
     audioUrl: generation.audioUrl,
     wavUrl: generation.wavUrl,
-    stemsUrls: userContext.capabilities.stemsExport ? generation.stemsUrls : undefined,
+    stemsUrls: stemsPayload,
     coverUrl: generation.coverUrl,
     videoUrl: generation.videoUrl,
     masteredAudioUrl: generation.masteredAudioUrl,
@@ -53,7 +62,7 @@ export async function POST(request: Request) {
     success: true,
     audioUrl: generation.audioUrl,
     wavUrl: generation.wavUrl,
-    stemsUrls: userContext.capabilities.stemsExport ? generation.stemsUrls : null,
+    stemsUrls: stemsPayload ?? null,
     masteredAudioUrl: generation.masteredAudioUrl,
     provider: generation.provider,
     generationStatus: generation.status,
