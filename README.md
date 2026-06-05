@@ -155,3 +155,4 @@ Enter admin password (min 8 characters): ********
 - `/dashboard/creator` – creator analytics, management, payout placeholders
 - `/marketplace` – monetization listings with purchase placeholders
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
+- `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`

@@ -7,8 +7,10 @@ describe('getMusicProvider', () => {
     const result = await provider.generate({ prompt: 'test prompt' });
 
     expect(provider.name).toBe('demo-provider');
-    expect(result.status).toBe('complete');
+    expect(result.status).toBe('COMPLETE');
     expect(result.message).toBe('Generation complete');
     expect(result.audioUrl).toContain('http');
+    expect(result.wavUrl).toContain('http');
+    expect(result.stemsUrls.vocals).toContain('http');
   });
 });

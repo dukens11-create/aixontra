@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
+import { PLAN_CAPABILITIES, SubscriptionPlan } from '@/lib/platform/subscriptions';
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
@@ -24,11 +25,21 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string>(DEMO_AUDIO_URL);
+  const [wavUrl, setWavUrl] = useState<string | null>(null);
+  const [stemsUrls, setStemsUrls] = useState<Partial<Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>> | null>(null);
+  const [masteredAudioUrl, setMasteredAudioUrl] = useState<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number>(PLAN_CAPABILITIES.FREE.monthlyCredits);
+  const [plan, setPlan] = useState<SubscriptionPlan>('FREE');
+  const [targetDurationSeconds, setTargetDurationSeconds] = useState<number>(120);
+  const [masteringPreset, setMasteringPreset] = useState<'LOUDNESS_NORMALIZATION' | 'CLEAN_MIX' | 'RADIO_READY'>('LOUDNESS_NORMALIZATION');
+  const [voiceModelName, setVoiceModelName] = useState('My Voice Signature');
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
+  const [proofUrl, setProofUrl] = useState('');
 
   const formPayload = useMemo(
-    () => ({ prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly }),
-    [prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly],
+    () => ({ userId: 'demo-user', prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset }),
+    [prompt, lyrics, genre, mood, language, bpm, vocalStyle, instrumentalOnly, targetDurationSeconds, masteringPreset],
   );
 
   const generate = async (mode: 'generate' | 'regenerate' | 'extend') => {
@@ -44,6 +55,11 @@ export default function GeneratePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Failed to generate');
       setAudioUrl(data.audioUrl);
+      setWavUrl(data.wavUrl ?? null);
+      setStemsUrls(data.stemsUrls ?? null);
+      setMasteredAudioUrl(data.masteredAudioUrl ?? null);
+      setCreditBalance(data.creditBalance ?? creditBalance);
+      setPlan(data.plan ?? plan);
       setDraftId(data.songDraft.id);
       setProgress(100);
       toast.success(data.message ?? 'Generation complete');
@@ -97,11 +113,45 @@ export default function GeneratePage() {
     generate('generate');
   };
 
+  const submitVoiceModel = async () => {
+    const response = await fetch('/api/voice-models/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'demo-user', name: voiceModelName, consentConfirmed, proofUrl }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      toast.error(data.error ?? 'Voice model submission failed');
+      return;
+    }
+    toast.success(data.message ?? 'Voice model submitted');
+  };
+
+  const requestUploadUrl = async (kind: 'cover' | 'video') => {
+    const response = await fetch('/api/media/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'demo-user', kind, songId: draftId ?? undefined }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      toast.error(data.error ?? 'Upload URL request failed');
+      return;
+    }
+    navigator.clipboard.writeText(data.upload.uploadUrl).catch(() => undefined);
+    toast.success(`Secure ${kind} upload URL generated and copied`);
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-6">
       <div className="card bg-white/5 backdrop-blur-sm">
         <h1 className="hero-title text-left text-3xl">AIXENTRA Generator</h1>
         <p className="muted mt-2">Prompt-driven music generation with provider abstraction for future Suno/MusicGen swaps.</p>
+        <p className="mt-3 text-sm text-cyan-200">You own your generations depending on your plan and license.</p>
+        <div className="row mt-3">
+          <span className="badge">Plan: {plan}</span>
+          <span className="badge">Credits: {creditBalance}</span>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} className="card space-y-4 bg-white/5 backdrop-blur-sm">
@@ -134,7 +184,24 @@ export default function GeneratePage() {
             Instrumental only
             <input type="checkbox" checked={instrumentalOnly} onChange={(event) => setInstrumentalOnly(event.target.checked)} />
           </label>
+          <label className="block text-sm">Length (seconds): {targetDurationSeconds}
+            <input
+              type="range"
+              min={30}
+              max={480}
+              value={targetDurationSeconds}
+              onChange={(event) => setTargetDurationSeconds(Number(event.target.value))}
+              className="mt-2 w-full"
+            />
+          </label>
         </div>
+
+        <label className="block text-sm font-semibold">Mastering preset</label>
+        <select className="select" value={masteringPreset} onChange={(event) => setMasteringPreset(event.target.value as typeof masteringPreset)}>
+          <option value="LOUDNESS_NORMALIZATION">Loudness normalization</option>
+          <option value="CLEAN_MIX">Clean mix</option>
+          <option value="RADIO_READY">Radio-ready master</option>
+        </select>
 
         {loading && (
           <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm">Generating... {progress}%</div>
@@ -145,6 +212,7 @@ export default function GeneratePage() {
           <button type="button" className="btn secondary" onClick={() => generate('regenerate')} disabled={loading}>Regenerate</button>
           <button type="button" className="btn secondary" onClick={() => generate('extend')} disabled={loading}>Extend</button>
           <button type="button" className="btn secondary" onClick={() => window.open(audioUrl, '_blank', 'noopener,noreferrer')}>Download MP3</button>
+          {wavUrl && <button type="button" className="btn secondary" onClick={() => window.open(wavUrl, '_blank', 'noopener,noreferrer')}>Download WAV</button>}
           <button type="button" className="btn" onClick={publishSong}>Publish</button>
         </div>
       </form>
@@ -152,7 +220,43 @@ export default function GeneratePage() {
       <div className="card bg-black/30">
         <h2>Preview</h2>
         <audio controls src={audioUrl} className="mt-3 w-full" />
+        {masteredAudioUrl && (
+          <div className="mt-3">
+            <p className="muted">Mastered output</p>
+            <audio controls src={masteredAudioUrl} className="mt-2 w-full" />
+          </div>
+        )}
+        <div className="mt-3">
+          <p className="text-sm font-semibold">Stems export</p>
+          {stemsUrls ? (
+            <div className="row mt-2">
+              {Object.entries(stemsUrls).map(([key, value]) => (
+                value ? <button key={key} className="badge" onClick={() => window.open(value, '_blank', 'noopener,noreferrer')}>{key}</button> : null
+              ))}
+            </div>
+          ) : (
+            <p className="muted mt-2">Stems become available on plans with stems export enabled.</p>
+          )}
+        </div>
+        <div className="row mt-3">
+          <button className="badge" onClick={() => requestUploadUrl('cover')}>Secure cover upload URL</button>
+          <button className="badge" onClick={() => requestUploadUrl('video')}>Secure video upload URL</button>
+        </div>
         <button className="btn mt-3" onClick={playPreview}>Play in global player</button>
+      </div>
+
+      <div className="card bg-black/30">
+        <h2>Voice cloning consent</h2>
+        <p className="muted mt-2">Consent + proof are required. Voice models remain private until admin approval.</p>
+        <div className="mt-3 space-y-2">
+          <input className="input" value={voiceModelName} onChange={(event) => setVoiceModelName(event.target.value)} placeholder="Voice model name" />
+          <input className="input" value={proofUrl} onChange={(event) => setProofUrl(event.target.value)} placeholder="Proof or permission URL" />
+          <label className="row text-sm">
+            <input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} />
+            I confirm I own this voice or have explicit permission.
+          </label>
+          <button className="btn secondary" onClick={submitVoiceModel}>Submit voice model for review</button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AI_CONFIG } from '@/lib/aiConfig';
+import { getRegisteredProviders } from '@/lib/platform/generationProvider';
 
 /**
  * POST /api/generate/music
@@ -133,6 +134,8 @@ export async function GET() {
   
   return NextResponse.json({
     providers: providers.length > 0 ? providers : [{ name: 'Demo', status: 'active' }],
+    registry: getRegisteredProviders(),
+    generationStatuses: ['QUEUED', 'PROCESSING', 'COMPLETE', 'FAILED'],
     demoMode: providers.length === 0,
     availableInstruments: AI_CONFIG.demo.sampleTracks.map(t => t.instrument),
   });

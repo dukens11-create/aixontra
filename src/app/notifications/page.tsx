@@ -6,6 +6,7 @@ const notifications = [
   'Purchase: Afrobeat Heatwave Kit sold for $79.',
   'Payout update: Stripe payout scheduled for Friday.',
   'Collaboration invite: Join Neon Camp Session room.',
+  'Verification update: Your artist verification is pending admin review.',
 ];
 
 export default function NotificationsPage() {
