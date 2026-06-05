@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AI_CONFIG } from '@/lib/aiConfig';
-import { LANGUAGES } from '@/lib/constants';
+import { SUPPORTED_AI_LANGUAGES } from '@/lib/i18n/config';
 import { enhanceLyricPromptWithGenre } from '@/lib/services/genreRules';
 
 /**
@@ -44,8 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate language parameter
-    const supportedLanguages = LANGUAGES.map(l => l.name);
-    const isLanguageSupported = supportedLanguages.includes(language) || language === 'English';
+    const isLanguageSupported = SUPPORTED_AI_LANGUAGES.includes(language) || language === 'English';
     
     if (!isLanguageSupported) {
       console.warn(`Unsupported language requested: ${language}, using English as fallback`);
@@ -211,6 +210,38 @@ function generateDemoLyrics(
   
   // Language-specific demo lyrics
   const demoLyricsByLanguage: Record<string, string> = {
+    'Haitian Creole': `[MÒD DEMO - Ranplase OPENAI_API_KEY nan .env pou jenerasyon reyèl]
+
+[Vèsè 1]
+${promptPreview}${prompt.length > MAX_PROMPT_PREVIEW_LENGTH ? '...' : ''}
+Sa a se yon track demo, ki fèt san IA
+${genreText}${moodText} vib ki ap sikile${styleText}
+Egzanp pawòl sèlman pou ou
+
+[Refren]
+Sa a se mòd demo, mòd demo
+Konfigire API ou pou louvri kòd la
+Pawòl kreyatif yo pral pran lavi
+Lè ou ajoute kle OpenAI ou
+
+[Vèsè 2]
+Ajoute kle ou nan fichye .env lan
+OPENAI_API_KEY ak pwofil ou
+Relanse sèvè a epi eseye ankò
+Pawòl IA reyèl, se sa n ap chèche
+
+[Pon]
+Track demo yo la pou montre
+Kijan fonksyon an kòmanse koule
+Men vrè maji a rive lè
+Ou konfigire API ou, zanmi mwen
+
+[Refren]
+Sa a se mòd demo, mòd demo
+Konfigire API ou pou louvri kòd la
+Pawòl kreyatif yo pral pran lavi
+Lè ou ajoute kle OpenAI ou`,
+
     'Spanish': `[MODO DEMO - Reemplaza OPENAI_API_KEY en .env para generación real]
 
 [Verso 1]

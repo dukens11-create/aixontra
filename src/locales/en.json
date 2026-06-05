@@ -1,0 +1,234 @@
+{
+  "common": {
+    "language": "Language",
+    "loadingTranslations": "Loading translations…",
+    "fallbackNotice": "Using English fallback.",
+    "dismiss": "Dismiss",
+    "buy": "Buy",
+    "by": "by",
+    "plays": "plays",
+    "likes": "likes"
+  },
+  "nav": {
+    "tagline": "The Future of Sound Starts Here.",
+    "generate": "Generate",
+    "lyricsStudio": "Lyrics Studio",
+    "feed": "Feed",
+    "marketplace": "Marketplace",
+    "trending": "Trending",
+    "search": "Search",
+    "library": "Library",
+    "notifications": "Notifications",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "creatorHub": "Creator Hub",
+    "admin": "Admin",
+    "login": "Login",
+    "signup": "Sign up",
+    "signout": "Sign out"
+  },
+  "mobileNav": {
+    "feed": "Feed",
+    "create": "Create",
+    "lyrics": "Lyrics",
+    "trend": "Trend",
+    "shop": "Shop",
+    "studio": "Studio"
+  },
+  "installPrompt": {
+    "title": "Install AIXENTRA",
+    "body": "PWA install prompt placeholder. Native install hooks can be wired here.",
+    "dismiss": "Dismiss"
+  },
+  "home": {
+    "badge": "The Future of Sound Starts Here.",
+    "title": "Create, Stream, Remix, and Monetize AI Music.",
+    "description": "AIXENTRA is the next-generation AI music platform for creators, fans, and the future of sound.",
+    "startCreating": "Start Creating",
+    "exploreMusic": "Explore Music",
+    "sectionDescription": "Production-ready scaffolding with reusable UI and backend placeholders.",
+    "sections": [
+      "AI song generation",
+      "Viral feed",
+      "Creator monetization",
+      "Remix community",
+      "Marketplace",
+      "AI video tools"
+    ],
+    "nowTrending": "Now trending",
+    "viewAll": "View all"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "description": "Beats, AI songs, vocal packs, voice models, and license products with Stripe Connect-ready split architecture.",
+    "buy": "Buy"
+  },
+  "generate": {
+    "title": "AIXENTRA Generator",
+    "description": "Prompt-driven music generation with provider abstraction for future Suno/MusicGen swaps.",
+    "ownership": "You own your generations depending on your plan and license.",
+    "plan": "Plan",
+    "credits": "Credits",
+    "prompt": "Prompt",
+    "lyrics": "Lyrics",
+    "bpm": "BPM",
+    "instrumentalOnly": "Instrumental only",
+    "length": "Length (seconds)",
+    "masteringPreset": "Mastering preset",
+    "preset": {
+      "LOUDNESS_NORMALIZATION": "Loudness normalization",
+      "CLEAN_MIX": "Clean mix",
+      "RADIO_READY": "Radio-ready master"
+    },
+    "queue": {
+      "waiting": "Waiting in queue…",
+      "generating": "Generating…",
+      "complete": "✓ Generation complete",
+      "failed": "✗ Generation failed",
+      "cancelled": "Cancelled",
+      "cancel": "Cancel",
+      "position": "Position in queue: #{position}",
+      "estimatedWait": "Est. wait: ~{minutes} min",
+      "completePercent": "{percent}% complete"
+    },
+    "actions": {
+      "generate": "Generate",
+      "regenerate": "Regenerate",
+      "extend": "Extend",
+      "downloadMp3": "Download MP3",
+      "downloadWav": "Download WAV",
+      "publish": "Publish",
+      "secureCoverUpload": "Secure cover upload URL",
+      "secureVideoUpload": "Secure video upload URL",
+      "playInGlobalPlayer": "Play in global player",
+      "submitVoiceModel": "Submit voice model for review"
+    },
+    "preview": "Preview",
+    "masteredOutput": "Mastered output",
+    "stemsExport": "Stems export",
+    "stemsFallback": "Stems become available on plans with stems export enabled.",
+    "voiceCloningConsent": "Voice cloning consent",
+    "consentDescription": "Consent + proof are required. Voice models remain private until admin approval.",
+    "voiceModelName": "Voice model name",
+    "proofUrl": "Proof or permission URL",
+    "consentConfirm": "I confirm I own this voice or have explicit permission.",
+    "messages": {
+      "statusError": "Failed to retrieve generation status. Please refresh and try again.",
+      "lostConnection": "Lost connection to the generation service. Please refresh and try again.",
+      "generationComplete": "Generation complete!",
+      "generationFailed": "Generation failed",
+      "generationCancelled": "Generation cancelled.",
+      "voiceModelSubmissionFailed": "Voice model submission failed",
+      "voiceModelSubmitted": "Voice model submitted",
+      "uploadUrlRequestFailed": "Upload URL request failed",
+      "secureUploadGenerated": "Secure {kind} upload URL generated and copied",
+      "generateFirst": "Generate a track first.",
+      "publishFailed": "Publish failed",
+      "publishedToFeed": "Published to feed.",
+      "somethingWentWrong": "Something went wrong"
+    }
+  },
+  "lyricsStudio": {
+    "title": "AI Lyrics Studio",
+    "description": "Split-editor songwriting workspace with generation, multilingual support, rhyme tools, tone analysis, and auto-save.",
+    "notSavedYet": "Not saved yet",
+    "draftRestored": "Draft restored",
+    "restoreFailed": "Could not restore draft",
+    "autoSavedAt": "Auto-saved at {time}",
+    "savedAt": "Saved at {time}",
+    "draftSaved": "Draft saved",
+    "prompt": "Prompt",
+    "actions": {
+      "improvePrompt": "Improve Prompt",
+      "hookGenerator": "Hook Generator",
+      "chorusGenerator": "Chorus Generator",
+      "saveDraft": "Save Draft",
+      "generateFull": "AI Lyric Generation",
+      "generateVerse": "Verse Generation",
+      "generateChorus": "Chorus Generation",
+      "generating": "Generating..."
+    },
+    "templateTitle": "Song Structure Templates",
+    "insertTemplate": "Insert Template",
+    "templates": {
+      "standard": "Standard",
+      "pop": "Pop",
+      "storytelling": "Storytelling"
+    },
+    "rhymeTitle": "Rhyme Engine + Syllable Balancing",
+    "rhymePlaceholder": "Rhyme helper",
+    "rhymeScheme": "Rhyme scheme",
+    "avgSyllables": "Avg syllables/line",
+    "notAvailable": "N/A",
+    "syllableBalancing": "Syllable Balancing",
+    "balanced": "Syllables look balanced.",
+    "balanceSuggestions": "Balance suggestions: {items}",
+    "toneAnalysis": "Emotional Tone Analysis",
+    "overall": "Overall",
+    "emotion": "Emotion",
+    "imagery": "Imagery",
+    "devices": "Devices",
+    "editorTitle": "Lyrics Editor",
+    "lineHighlightingPreview": "Line Highlighting Preview",
+    "hideAiHelper": "Hide AI Helper",
+    "showAiHelper": "AI Helper",
+    "helperTitle": "Floating AI Prompt Assistant",
+    "quickPromptChips": "Quick prompt chips",
+    "genreMoodSuggestions": "Genre + mood suggestions",
+    "genres": "Genres",
+    "moods": "Moods",
+    "smartAutocomplete": "Smart autocomplete",
+    "rewriteSuggestions": "Rewrite suggestions",
+    "lyricsGenerated": "Lyrics generated",
+    "failedToGenerate": "Failed to generate lyrics",
+    "generationFailed": "Generation failed",
+    "promptTemplates": [
+      "Write a heartfelt song about long-distance love with vivid imagery.",
+      "Create a high-energy anthem for late-night city drives.",
+      "Craft a reflective song about resilience after failure.",
+      "Build a celebratory chorus for a summer festival hit."
+    ],
+    "emptyAutocompleteSuggestions": [
+      "A cinematic anthem about rising above fear",
+      "A soulful love song with bilingual lyrics",
+      "An energetic club record with crowd chants"
+    ],
+    "rewriteDefaults": [
+      "Write an emotionally rich radio-ready pop record with vivid imagery.",
+      "Create a bilingual anthem with a clear hook and call-and-response chorus."
+    ],
+    "promptEnhancer": {
+      "empty": "Write a {mood} {genre} song with a memorable hook and clear verse-to-chorus progression.",
+      "append": "{prompt} Write it as a {genre} track with a {mood} tone, include a standout hook, and keep the lines singable."
+    },
+    "rewriteAppend": {
+      "vivid": "Focus on vivid sensory details and concise lines.",
+      "emotional": "Add a stronger emotional arc from verse to chorus.",
+      "rhyme": "Keep rhyme endings tighter for better memorability."
+    }
+  },
+  "options": {
+    "languages": {
+      "English": "English",
+      "Haitian Creole": "Haitian Creole",
+      "French": "French",
+      "Spanish": "Spanish",
+      "Portuguese": "Portuguese"
+    },
+    "moods": {
+      "Cinematic": "Cinematic",
+      "Romantic": "Romantic",
+      "Dark": "Dark",
+      "Energetic": "Energetic",
+      "Uplifting": "Uplifting",
+      "Melancholic": "Melancholic"
+    },
+    "voiceStyles": {
+      "Female": "Female",
+      "Male": "Male",
+      "Duo": "Duo",
+      "Choir": "Choir",
+      "Robotic": "Robotic"
+    }
+  }
+}

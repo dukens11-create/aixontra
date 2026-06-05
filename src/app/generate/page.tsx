@@ -2,6 +2,8 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useI18n } from '@/components/providers/I18nProvider';
+import { getLyricLanguageName } from '@/lib/i18n/config';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
@@ -19,9 +21,13 @@ const MIN_PROCESSING_PROGRESS = 10;
 function QueueStatusPanel({
   job,
   onCancel,
+  t,
+  formatNumber,
 }: {
   job: GenerationJobRecord;
   onCancel: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+  formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string;
 }) {
   const isActive = job.status === 'QUEUED' || job.status === 'PROCESSING';
   const pct = job.progress;
@@ -38,16 +44,16 @@ function QueueStatusPanel({
             </span>
           )}
           <span className="text-sm font-semibold">
-            {job.status === 'QUEUED' && 'Waiting in queue…'}
-            {job.status === 'PROCESSING' && 'Generating…'}
-            {job.status === 'COMPLETE' && '✓ Generation complete'}
-            {job.status === 'FAILED' && '✗ Generation failed'}
-            {job.status === 'CANCELLED' && 'Cancelled'}
+            {job.status === 'QUEUED' && t('generate.queue.waiting')}
+            {job.status === 'PROCESSING' && t('generate.queue.generating')}
+            {job.status === 'COMPLETE' && t('generate.queue.complete')}
+            {job.status === 'FAILED' && t('generate.queue.failed')}
+            {job.status === 'CANCELLED' && t('generate.queue.cancelled')}
           </span>
         </div>
         {job.status === 'QUEUED' && (
           <button onClick={onCancel} className="text-xs text-red-400 hover:text-red-300 underline">
-            Cancel
+            {t('generate.queue.cancel')}
           </button>
         )}
       </div>
@@ -55,9 +61,9 @@ function QueueStatusPanel({
       {/* Queue position + ETA */}
       {job.status === 'QUEUED' && job.queuePosition !== null && (
         <p className="text-xs text-cyan-200">
-          Position in queue: <strong>#{job.queuePosition}</strong>
+          {t('generate.queue.position', { position: formatNumber(job.queuePosition) })}
           {job.estimatedWaitSeconds !== null && (
-            <> · Est. wait: <strong>~{Math.ceil(job.estimatedWaitSeconds / 60)} min</strong></>
+            <> · {t('generate.queue.estimatedWait', { minutes: formatNumber(Math.ceil(job.estimatedWaitSeconds / 60)) })}</>
           )}
         </p>
       )}
@@ -72,7 +78,7 @@ function QueueStatusPanel({
         </div>
       )}
       {(job.status === 'QUEUED' || job.status === 'PROCESSING') && (
-        <p className="text-xs text-cyan-300">{pct}% complete</p>
+        <p className="text-xs text-cyan-300">{t('generate.queue.completePercent', { percent: formatNumber(pct) })}</p>
       )}
 
       {/* Error */}
@@ -84,6 +90,7 @@ function QueueStatusPanel({
 }
 
 export default function GeneratePage() {
+  const { formatNumber, locale, t } = useI18n();
   const play = usePlayerStore((state) => state.play);
   const addToQueue = usePlayerStore((state) => state.addToQueue);
 
@@ -112,6 +119,10 @@ export default function GeneratePage() {
   // Queue job tracking state
   const [currentJob, setCurrentJob] = useState<GenerationJobRecord | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    setLanguage((current) => (current === SUPPORTED_LANGUAGES[0] ? getLyricLanguageName(locale) : current));
+  }, [locale]);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -142,7 +153,7 @@ export default function GeneratePage() {
           if (!res.ok) {
             stopPolling();
             setLoading(false);
-            toast.error('Failed to retrieve generation status. Please refresh and try again.');
+            toast.error(t('generate.messages.statusError'));
             return;
           }
           const job: GenerationJobRecord = await res.json();
@@ -153,11 +164,11 @@ export default function GeneratePage() {
             stopPolling();
             applyJobResult(job);
             setLoading(false);
-            toast.success('Generation complete!');
+            toast.success(t('generate.messages.generationComplete'));
           } else if (job.status === 'FAILED') {
             stopPolling();
             setLoading(false);
-            toast.error(job.errorMessage ?? 'Generation failed');
+            toast.error(job.errorMessage ?? t('generate.messages.generationFailed'));
           } else if (job.status === 'CANCELLED') {
             stopPolling();
             setLoading(false);
@@ -167,12 +178,12 @@ export default function GeneratePage() {
           if (consecutiveErrors >= MAX_POLL_ERRORS) {
             stopPolling();
             setLoading(false);
-            toast.error('Lost connection to the generation service. Please refresh and try again.');
+            toast.error(t('generate.messages.lostConnection'));
           }
         }
       }, POLL_INTERVAL_MS);
     },
-    [stopPolling, applyJobResult],
+    [stopPolling, applyJobResult, t],
   );
 
   useEffect(() => () => stopPolling(), [stopPolling]);
@@ -212,7 +223,7 @@ export default function GeneratePage() {
       startPolling(data.jobId);
     } catch (error: unknown) {
       setLoading(false);
-      const message = error instanceof Error ? error.message : 'Something went wrong';
+      const message = error instanceof Error ? error.message : t('generate.messages.somethingWentWrong');
       toast.error(message);
     }
   };
@@ -224,13 +235,13 @@ export default function GeneratePage() {
       stopPolling();
       setCurrentJob((prev) => prev ? { ...prev, status: 'CANCELLED' } : prev);
       setLoading(false);
-      toast('Generation cancelled.');
+      toast(t('generate.messages.generationCancelled'));
     }
   };
 
   const publishSong = async () => {
     if (!draftId) {
-      toast.error('Generate a track first.');
+      toast.error(t('generate.messages.generateFirst'));
       return;
     }
     const response = await fetch('/api/songs/publish', {
@@ -240,10 +251,10 @@ export default function GeneratePage() {
     });
     const data = await response.json();
     if (!response.ok) {
-      toast.error(data.error ?? 'Publish failed');
+      toast.error(data.error ?? t('generate.messages.publishFailed'));
       return;
     }
-    toast.success('Published to feed.');
+    toast.success(t('generate.messages.publishedToFeed'));
   };
 
   const playPreview = () => {
@@ -276,10 +287,10 @@ export default function GeneratePage() {
     });
     const data = await response.json();
     if (!response.ok) {
-      toast.error(data.error ?? 'Voice model submission failed');
+      toast.error(data.error ?? t('generate.messages.voiceModelSubmissionFailed'));
       return;
     }
-    toast.success(data.message ?? 'Voice model submitted');
+    toast.success(data.message ?? t('generate.messages.voiceModelSubmitted'));
   };
 
   const requestUploadUrl = async (kind: 'cover' | 'video') => {
@@ -290,56 +301,56 @@ export default function GeneratePage() {
     });
     const data = await response.json();
     if (!response.ok) {
-      toast.error(data.error ?? 'Upload URL request failed');
+      toast.error(data.error ?? t('generate.messages.uploadUrlRequestFailed'));
       return;
     }
     navigator.clipboard.writeText(data.upload.uploadUrl).catch(() => undefined);
-    toast.success(`Secure ${kind} upload URL generated and copied`);
+    toast.success(t('generate.messages.secureUploadGenerated', { kind }));
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-6">
       <div className="card bg-white/5 backdrop-blur-sm">
-        <h1 className="hero-title text-left text-3xl">AIXENTRA Generator</h1>
-        <p className="muted mt-2">Prompt-driven music generation with provider abstraction for future Suno/MusicGen swaps.</p>
-        <p className="mt-3 text-sm text-cyan-200">You own your generations depending on your plan and license.</p>
+        <h1 className="hero-title text-left text-3xl">{t('generate.title')}</h1>
+        <p className="muted mt-2">{t('generate.description')}</p>
+        <p className="mt-3 text-sm text-cyan-200">{t('generate.ownership')}</p>
         <div className="row mt-3">
-          <span className="badge">Plan: {plan}</span>
-          <span className="badge">Credits: {creditBalance}</span>
+          <span className="badge">{t('generate.plan')}: {plan}</span>
+          <span className="badge">{t('generate.credits')}: {formatNumber(creditBalance)}</span>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="card space-y-4 bg-white/5 backdrop-blur-sm">
-        <label className="block text-sm font-semibold">Prompt</label>
+        <label className="block text-sm font-semibold">{t('generate.prompt')}</label>
         <textarea className="textarea min-h-28" value={prompt} onChange={(event) => setPrompt(event.target.value)} required />
 
-        <label className="block text-sm font-semibold">Lyrics</label>
+        <label className="block text-sm font-semibold">{t('generate.lyrics')}</label>
         <textarea className="textarea min-h-24" value={lyrics} onChange={(event) => setLyrics(event.target.value)} />
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <select className="select" value={genre} onChange={(event) => setGenre(event.target.value)}>
-            {SUPPORTED_GENRES.map((entry) => <option key={entry}>{entry}</option>)}
+            {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
           </select>
           <select className="select" value={mood} onChange={(event) => setMood(event.target.value)}>
-            {moods.map((entry) => <option key={entry}>{entry}</option>)}
+            {moods.map((entry) => <option key={entry} value={entry}>{t(`options.moods.${entry}`)}</option>)}
           </select>
           <select className="select" value={language} onChange={(event) => setLanguage(event.target.value)}>
-            {SUPPORTED_LANGUAGES.map((entry) => <option key={entry}>{entry}</option>)}
+            {SUPPORTED_LANGUAGES.map((entry) => <option key={entry} value={entry}>{t(`options.languages.${entry}`)}</option>)}
           </select>
           <select className="select" value={vocalStyle} onChange={(event) => setVocalStyle(event.target.value)}>
-            {vocalStyles.map((entry) => <option key={entry}>{entry}</option>)}
+            {vocalStyles.map((entry) => <option key={entry} value={entry}>{t(`options.voiceStyles.${entry}`)}</option>)}
           </select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-sm">BPM: {bpm}
+          <label className="block text-sm">{t('generate.bpm')}: {formatNumber(bpm)}
             <input type="range" min={70} max={180} value={bpm} onChange={(event) => setBpm(Number(event.target.value))} className="mt-2 w-full" />
           </label>
           <label className="row justify-between rounded-xl border border-white/10 px-3 py-2 text-sm">
-            Instrumental only
+            {t('generate.instrumentalOnly')}
             <input type="checkbox" checked={instrumentalOnly} onChange={(event) => setInstrumentalOnly(event.target.checked)} />
           </label>
-          <label className="block text-sm">Length (seconds): {targetDurationSeconds}
+          <label className="block text-sm">{t('generate.length')}: {formatNumber(targetDurationSeconds)}
             <input
               type="range"
               min={30}
@@ -351,38 +362,38 @@ export default function GeneratePage() {
           </label>
         </div>
 
-        <label className="block text-sm font-semibold">Mastering preset</label>
+        <label className="block text-sm font-semibold">{t('generate.masteringPreset')}</label>
         <select className="select" value={masteringPreset} onChange={(event) => setMasteringPreset(event.target.value as typeof masteringPreset)}>
-          <option value="LOUDNESS_NORMALIZATION">Loudness normalization</option>
-          <option value="CLEAN_MIX">Clean mix</option>
-          <option value="RADIO_READY">Radio-ready master</option>
+          <option value="LOUDNESS_NORMALIZATION">{t('generate.preset.LOUDNESS_NORMALIZATION')}</option>
+          <option value="CLEAN_MIX">{t('generate.preset.CLEAN_MIX')}</option>
+          <option value="RADIO_READY">{t('generate.preset.RADIO_READY')}</option>
         </select>
 
         {currentJob && (loading || currentJob.status === 'COMPLETE' || currentJob.status === 'FAILED' || currentJob.status === 'CANCELLED') && (
-          <QueueStatusPanel job={currentJob} onCancel={cancelCurrentJob} />
+          <QueueStatusPanel job={currentJob} onCancel={cancelCurrentJob} t={t} formatNumber={formatNumber} />
         )}
 
         <div className="row">
-          <button type="submit" className="btn" disabled={loading}>Generate</button>
-          <button type="button" className="btn secondary" onClick={() => generate('regenerate')} disabled={loading}>Regenerate</button>
-          <button type="button" className="btn secondary" onClick={() => generate('extend')} disabled={loading}>Extend</button>
-          <button type="button" className="btn secondary" onClick={() => window.open(audioUrl, '_blank', 'noopener,noreferrer')}>Download MP3</button>
-          {wavUrl && <button type="button" className="btn secondary" onClick={() => window.open(wavUrl, '_blank', 'noopener,noreferrer')}>Download WAV</button>}
-          <button type="button" className="btn" onClick={publishSong}>Publish</button>
+          <button type="submit" className="btn" disabled={loading}>{t('generate.actions.generate')}</button>
+          <button type="button" className="btn secondary" onClick={() => generate('regenerate')} disabled={loading}>{t('generate.actions.regenerate')}</button>
+          <button type="button" className="btn secondary" onClick={() => generate('extend')} disabled={loading}>{t('generate.actions.extend')}</button>
+          <button type="button" className="btn secondary" onClick={() => window.open(audioUrl, '_blank', 'noopener,noreferrer')}>{t('generate.actions.downloadMp3')}</button>
+          {wavUrl && <button type="button" className="btn secondary" onClick={() => window.open(wavUrl, '_blank', 'noopener,noreferrer')}>{t('generate.actions.downloadWav')}</button>}
+          <button type="button" className="btn" onClick={publishSong}>{t('generate.actions.publish')}</button>
         </div>
       </form>
 
       <div className="card bg-black/30">
-        <h2>Preview</h2>
+        <h2>{t('generate.preview')}</h2>
         <audio controls src={audioUrl} className="mt-3 w-full" />
         {masteredAudioUrl && (
           <div className="mt-3">
-            <p className="muted">Mastered output</p>
+            <p className="muted">{t('generate.masteredOutput')}</p>
             <audio controls src={masteredAudioUrl} className="mt-2 w-full" />
           </div>
         )}
         <div className="mt-3">
-          <p className="text-sm font-semibold">Stems export</p>
+          <p className="text-sm font-semibold">{t('generate.stemsExport')}</p>
           {stemsUrls ? (
             <div className="row mt-2">
               {Object.entries(stemsUrls).map(([key, value]) => (
@@ -390,27 +401,27 @@ export default function GeneratePage() {
               ))}
             </div>
           ) : (
-            <p className="muted mt-2">Stems become available on plans with stems export enabled.</p>
+            <p className="muted mt-2">{t('generate.stemsFallback')}</p>
           )}
         </div>
         <div className="row mt-3">
-          <button className="badge" onClick={() => requestUploadUrl('cover')}>Secure cover upload URL</button>
-          <button className="badge" onClick={() => requestUploadUrl('video')}>Secure video upload URL</button>
+          <button className="badge" onClick={() => requestUploadUrl('cover')}>{t('generate.actions.secureCoverUpload')}</button>
+          <button className="badge" onClick={() => requestUploadUrl('video')}>{t('generate.actions.secureVideoUpload')}</button>
         </div>
-        <button className="btn mt-3" onClick={playPreview}>Play in global player</button>
+        <button className="btn mt-3" onClick={playPreview}>{t('generate.actions.playInGlobalPlayer')}</button>
       </div>
 
       <div className="card bg-black/30">
-        <h2>Voice cloning consent</h2>
-        <p className="muted mt-2">Consent + proof are required. Voice models remain private until admin approval.</p>
+        <h2>{t('generate.voiceCloningConsent')}</h2>
+        <p className="muted mt-2">{t('generate.consentDescription')}</p>
         <div className="mt-3 space-y-2">
-          <input className="input" value={voiceModelName} onChange={(event) => setVoiceModelName(event.target.value)} placeholder="Voice model name" />
-          <input className="input" value={proofUrl} onChange={(event) => setProofUrl(event.target.value)} placeholder="Proof or permission URL" />
+          <input className="input" value={voiceModelName} onChange={(event) => setVoiceModelName(event.target.value)} placeholder={t('generate.voiceModelName')} />
+          <input className="input" value={proofUrl} onChange={(event) => setProofUrl(event.target.value)} placeholder={t('generate.proofUrl')} />
           <label className="row text-sm">
             <input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} />
-            I confirm I own this voice or have explicit permission.
+            {t('generate.consentConfirm')}
           </label>
-          <button className="btn secondary" onClick={submitVoiceModel}>Submit voice model for review</button>
+          <button className="btn secondary" onClick={submitVoiceModel}>{t('generate.actions.submitVoiceModel')}</button>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ AIXONTRA is a curated AI music gallery where creators can share exceptional AI-g
 ## Features
 
 - 🚀 **AIXENTRA Platform Scaffolding**: Mobile-first generate/feed/marketplace/creator/admin experiences
+- 🌍 **Multilingual UI**: English, Haitian Creole, French, Spanish, and Portuguese with persistent language switching
 - 🎵 **Curated Music Gallery**: Browse and discover AI-generated music
 - ✨ **Create Song Feature**: Generate songs with AI-powered lyrics, voices, and music (NEW!)
 - 🎤 **AI Voice Generation**: Synthesize realistic vocals with state-of-the-art TTS (NEW!)
@@ -17,6 +18,13 @@ AIXONTRA is a curated AI music gallery where creators can share exceptional AI-g
 ## Quick Start
 
 [Existing quick start instructions here]
+
+## Localization
+
+- Supported locales: English (`en`), Haitian Creole (`ht`), French (`fr`), Spanish (`es`), and Portuguese (`pt`)
+- App-wide locale state lives in `src/components/providers/I18nProvider.tsx`
+- Translation files live in `src/locales/*.json`
+- `npm run build` now validates translation completeness before running the Next.js production build
 
 ## Create Song Feature (UPDATED!)
 

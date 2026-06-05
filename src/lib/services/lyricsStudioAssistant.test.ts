@@ -3,10 +3,12 @@ import {
   applyStructureTemplate,
   createChorusBlock,
   enhancePrompt,
+  getPromptTemplates,
   getGenreSuggestions,
   getMoodSuggestions,
   getRhymeHelper,
   getSmartAutocomplete,
+  getRewriteSuggestions,
 } from './lyricsStudioAssistant';
 
 describe('lyricsStudioAssistant', () => {
@@ -31,6 +33,11 @@ describe('lyricsStudioAssistant', () => {
     expect(suggestions.length).toBeGreaterThan(0);
   });
 
+  it('returns locale-aware prompt helpers', () => {
+    expect(getPromptTemplates('fr')[0]).toContain('Écris');
+    expect(getRewriteSuggestions('', 'es')[0]).toContain('Escribe');
+  });
+
   it('creates chorus blocks', () => {
     const chorus = createChorusBlock('city lights forever', 'Energetic');
     expect(chorus).toContain('[Chorus]');
@@ -42,5 +49,10 @@ describe('lyricsStudioAssistant', () => {
 
   it('returns rhyme helper matches', () => {
     expect(getRhymeHelper('night')).toEqual(['light', 'night', 'fight', 'flight']);
+  });
+
+  it('enhances prompts in the active locale', () => {
+    expect(enhancePrompt('', 'Pop', 'Romantic', 'ht')).toContain('Pop');
+    expect(enhancePrompt('Canción sobre esperanza', 'Pop', 'Romantic', 'es')).toContain('Pop');
   });
 });
