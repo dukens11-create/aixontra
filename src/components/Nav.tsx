@@ -31,6 +31,7 @@ export default function Nav() {
         <div className="row">
           <Link href="/generate" className="badge">Generate</Link>
           <Link href="/feed" className="badge">Feed</Link>
+          <Link href="/live" className="badge" style={{ color: '#f87171', borderColor: '#f87171' }}>🔴 Live</Link>
           <Link href="/marketplace" className="badge">Marketplace</Link>
           <Link href="/trending" className="badge">Trending</Link>
           <Link href="/search" className="badge">Search</Link>
