@@ -599,7 +599,7 @@ export default function DistributionPage() {
             <li>Implement Apple Music / iTunes Connect aggregator API.</li>
             <li>Implement TikTok for Artists partner API submission.</li>
             <li>Implement YouTube Music / Content ID asset delivery API.</li>
-            <li>Add artwork validation (dimensions, DPI, colour-space).</li>
+            <li>Add artwork validation (dimensions, DPI, color-space).</li>
             <li>Persist release data in Supabase / Prisma instead of in-memory store.</li>
             <li>Add multi-track form for album and EP releases.</li>
             <li>Build release calendar with drag-and-drop scheduling.</li>

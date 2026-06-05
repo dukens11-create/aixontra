@@ -183,7 +183,7 @@ The distribution system at `/distribution` and `src/lib/platform/distributionSer
 - Implement Apple Music / iTunes Connect aggregator API.
 - Implement TikTok for Artists partner API submission.
 - Implement YouTube Music / Content ID asset delivery API.
-- Add artwork validation (dimensions ≥3000×3000 px, DPI, colour-space).
+- Add artwork validation (dimensions ≥3000×3000 px, DPI, color-space).
 - Persist release data in Supabase / Prisma instead of in-memory store.
 - Add multi-track form for album and EP releases.
 - Build release calendar with drag-and-drop scheduling.

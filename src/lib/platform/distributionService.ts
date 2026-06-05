@@ -149,7 +149,7 @@ export const validateReleaseMetadata = (release: ReleaseMetadata): ValidationRes
 // Distributor-ready export formatters
 // ---------------------------------------------------------------------------
 
-/** Spotify / Spotify for Artists DDEXsupported metadata object. */
+/** Spotify / Spotify for Artists DDEX-supported metadata object. */
 export const formatForSpotify = (release: ReleaseMetadata) => ({
   release_title: release.title,
   primary_artist: release.artistName,
