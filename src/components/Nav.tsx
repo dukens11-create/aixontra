@@ -30,6 +30,7 @@ export default function Nav() {
         </div>
         <div className="row">
           <Link href="/generate" className="badge">Generate</Link>
+          <Link href="/lyrics-studio" className="badge">Lyrics Studio</Link>
           <Link href="/feed" className="badge">Feed</Link>
           <Link href="/marketplace" className="badge">Marketplace</Link>
           <Link href="/trending" className="badge">Trending</Link>
