@@ -3,21 +3,25 @@ import { reportSong } from '@/lib/platform/platformStore';
 import { enforceRateLimit } from '@/lib/moderation/rateLimitMiddleware';
 import { createUserReport, runModerationPipeline } from '@/lib/moderation/moderationService';
 
+const VALID_REPORT_TARGET_TYPES = ['song', 'comment', 'voice_model', 'user'] as const;
+
 export async function POST(request: Request) {
   const body = await request.json();
   const rateLimit = await enforceRateLimit(request, 'moderationReport');
   if (rateLimit.response) return rateLimit.response;
   const userId = `anon:${rateLimit.identifier}`;
 
-  const targetId = typeof body.songId === 'string' ? body.songId : typeof body.targetId === 'string' ? body.targetId : '';
+  let targetId = '';
+  if (typeof body.targetId === 'string') {
+    targetId = body.targetId;
+  } else if (typeof body.songId === 'string') {
+    targetId = body.songId;
+  }
   if (!targetId || !body.reason) {
     return NextResponse.json({ error: 'targetId/songId and reason are required' }, { status: 400 });
   }
 
-  const targetType =
-    body.targetType === 'song' || body.targetType === 'comment' || body.targetType === 'voice_model' || body.targetType === 'user'
-      ? body.targetType
-      : 'song';
+  const targetType = VALID_REPORT_TARGET_TYPES.includes(body.targetType) ? body.targetType : 'song';
   const report = createUserReport({
     targetId,
     targetType,

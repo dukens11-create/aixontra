@@ -312,6 +312,12 @@ export const createUserReport = (input: {
 const actionForStrike = (strikeCount: number): WarningAction =>
   strikeCount >= 3 ? 'PERMANENT_BAN' : strikeCount >= 2 ? 'TEMP_BAN' : 'WARNING';
 
+const actionLogTypeForWarning = (action: WarningAction): ModerationActionLog['action'] => {
+  if (action === 'WARNING') return 'WARNING_ISSUED';
+  if (action === 'TEMP_BAN') return 'TEMP_BAN_ISSUED';
+  return 'PERMANENT_BAN_ISSUED';
+};
+
 export const issueAutomatedWarning = (input: { userId: string; reason: string; cooldownMs?: number }) => {
   const now = Date.now();
   const cooldownMs = input.cooldownMs ?? 0;
@@ -335,7 +341,7 @@ export const issueAutomatedWarning = (input: { userId: string; reason: string; c
   };
   warnings.unshift(warning);
   logModerationAction({
-    action: action === 'WARNING' ? 'WARNING_ISSUED' : action === 'TEMP_BAN' ? 'TEMP_BAN_ISSUED' : 'PERMANENT_BAN_ISSUED',
+    action: actionLogTypeForWarning(action),
     actorId: 'system',
     targetId: input.userId,
     metadata: { warningId: warning.id, reason: input.reason, strikeCount: nextStrike },
