@@ -47,7 +47,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const sourceValue = storedLocale ?? browserLocale;
     const resolvedLocale = resolveLocale(sourceValue);
     const normalizedSource = sourceValue?.toLowerCase() ?? '';
-    const isDirectMatch = normalizedSource === resolvedLocale || normalizedSource.startsWith(`${resolvedLocale}-`);
+    const isDirectMatch = SUPPORTED_UI_LOCALES.some((entry) => {
+      const normalizedIntlLocale = entry.intlLocale.toLowerCase();
+      return normalizedSource === entry.code || normalizedSource === normalizedIntlLocale;
+    });
 
     setLocale(resolvedLocale);
     setStatus(sourceValue && !isDirectMatch ? 'fallback' : 'ready');

@@ -229,6 +229,20 @@
       "Duo": "Duo",
       "Choir": "Koral",
       "Robotic": "Robotik"
+    },
+    "genres": {
+      "Rap": "Rap",
+      "Trap": "Trap",
+      "Afrobeat": "Afrobeat",
+      "Kompa": "Konpa",
+      "Drill": "Drill",
+      "Reggaeton": "Reggaeton",
+      "Gospel": "Levanjil",
+      "EDM": "EDM",
+      "R&B": "R&B",
+      "Lo-fi": "Lo-fi",
+      "Pop": "Pop",
+      "Rock": "Wòk"
     }
   }
 }

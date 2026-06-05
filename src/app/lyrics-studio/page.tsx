@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { getLyricLanguageName, SUPPORTED_AI_LANGUAGES } from '@/lib/i18n/config';
+import { useSyncedLyricLanguage } from '@/lib/i18n/useSyncedLyricLanguage';
 import { lyricAnalyzer } from '@/lib/services/lyricAnalyzer';
 import { rhymeEngine } from '@/lib/services/rhymeEngine';
 import { SUPPORTED_GENRES } from '@/lib/platform/demoData';
@@ -61,9 +62,7 @@ export default function LyricsStudioPage() {
     setAutoSaveLabel((current) => (current ? current : emptyLabel));
   }, [emptyLabel]);
 
-  useEffect(() => {
-    setLanguage((current) => (current === INITIAL_LANGUAGE ? getLyricLanguageName(locale) : current));
-  }, [locale]);
+  useSyncedLyricLanguage(locale, INITIAL_LANGUAGE, setLanguage);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -187,7 +186,7 @@ export default function LyricsStudioPage() {
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <select className="select" value={genre} onChange={(event) => setGenre(event.target.value)}>
-              {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+              {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{t(`options.genres.${entry}`)}</option>)}
             </select>
             <select className="select" value={mood} onChange={(event) => setMood(event.target.value)}>
               {moods.map((entry) => <option key={entry} value={entry}>{t(`options.moods.${entry}`)}</option>)}

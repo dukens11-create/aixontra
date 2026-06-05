@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { getLyricLanguageName } from '@/lib/i18n/config';
+import { useSyncedLyricLanguage } from '@/lib/i18n/useSyncedLyricLanguage';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEMO_AUDIO_URL, SUPPORTED_GENRES, SUPPORTED_LANGUAGES, songs } from '@/lib/platform/demoData';
 import { toTrack } from '@/lib/platform/toTrack';
@@ -17,6 +17,7 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ERRORS = 5;
 const MIN_QUEUED_PROGRESS = 5;
 const MIN_PROCESSING_PROGRESS = 10;
+const INITIAL_LANGUAGE = SUPPORTED_LANGUAGES[0];
 
 function QueueStatusPanel({
   job,
@@ -98,7 +99,7 @@ export default function GeneratePage() {
   const [lyrics, setLyrics] = useState('Nan lannwit la nou leve, limyè neon nan syèl la...');
   const [genre, setGenre] = useState<string>(SUPPORTED_GENRES[0]);
   const [mood, setMood] = useState(moods[0]);
-  const [language, setLanguage] = useState<string>(SUPPORTED_LANGUAGES[0]);
+  const [language, setLanguage] = useState<string>(INITIAL_LANGUAGE);
   const [bpm, setBpm] = useState(110);
   const [vocalStyle, setVocalStyle] = useState(vocalStyles[0]);
   const [instrumentalOnly, setInstrumentalOnly] = useState(false);
@@ -120,9 +121,7 @@ export default function GeneratePage() {
   const [currentJob, setCurrentJob] = useState<GenerationJobRecord | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    setLanguage((current) => (current === SUPPORTED_LANGUAGES[0] ? getLyricLanguageName(locale) : current));
-  }, [locale]);
+  useSyncedLyricLanguage(locale, INITIAL_LANGUAGE, setLanguage);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -329,7 +328,7 @@ export default function GeneratePage() {
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <select className="select" value={genre} onChange={(event) => setGenre(event.target.value)}>
-            {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+            {SUPPORTED_GENRES.map((entry) => <option key={entry} value={entry}>{t(`options.genres.${entry}`)}</option>)}
           </select>
           <select className="select" value={mood} onChange={(event) => setMood(event.target.value)}>
             {moods.map((entry) => <option key={entry} value={entry}>{t(`options.moods.${entry}`)}</option>)}

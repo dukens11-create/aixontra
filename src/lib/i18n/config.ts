@@ -39,7 +39,7 @@ export const SUPPORTED_UI_LOCALES = [
 export type SupportedLocale = (typeof SUPPORTED_UI_LOCALES)[number]['code'];
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en';
-export const LOCALE_STORAGE_KEY = 'aixontra:locale';
+export const LOCALE_STORAGE_KEY = 'aixentra:locale';
 export const SUPPORTED_AI_LANGUAGES = SUPPORTED_UI_LOCALES.map((entry) => entry.lyricLanguage);
 
 export function isSupportedLocale(value: string): value is SupportedLocale {
