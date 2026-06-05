@@ -151,6 +151,7 @@ Enter admin password (min 8 characters): ********
 - Consider using a password manager for strong, unique passwords
 ## Core platform routes
 - `/generate` – AI music generation workflow (prompt + metadata + publish placeholder)
+- `/lyrics-studio` – split editor for AI lyric writing, tone analysis, rhyme/syllable tools, and draft autosave
 - `/feed` – vertical discovery feed with remix/comment/share controls
 - `/dashboard/creator` – creator analytics, management, payout placeholders
 - `/marketplace` – monetization listings with purchase placeholders
