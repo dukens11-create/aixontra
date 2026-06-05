@@ -4,12 +4,17 @@ import { getMusicProvider } from '@/lib/platform/generationProvider';
 import { getGenerationQueue } from './client';
 import type { GenerationJobData, GenerationJobRecord, GenerationJobResult, GenerationJobStatus } from './types';
 
-/** Seconds per estimated queue slot when Redis queue is active. */
+/**
+ * Estimated processing time (in seconds) per job position in the queue.
+ * Based on the demo provider's ~400ms generation time; tune this constant
+ * when real AI providers are connected (typical range: 10–60 seconds).
+ */
 const SECONDS_PER_SLOT = 15;
 
 // ---------------------------------------------------------------------------
 // In-memory job history (survives within a single server process lifetime).
 // Replace with a database-backed store for multi-instance deployments.
+// Note: This map grows unbounded — add TTL cleanup or size limits in production.
 // ---------------------------------------------------------------------------
 const jobHistory = new Map<string, GenerationJobRecord>();
 

@@ -12,6 +12,9 @@ const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melan
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
 
 const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ERRORS = 5;
+const MIN_QUEUED_PROGRESS = 5;
+const MIN_PROCESSING_PROGRESS = 10;
 
 function QueueStatusPanel({
   job,
@@ -64,7 +67,7 @@ function QueueStatusPanel({
         <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
           <div
             className="h-2 rounded-full bg-cyan-400 transition-all duration-500"
-            style={{ width: `${Math.max(pct, job.status === 'QUEUED' ? 5 : 10)}%` }}
+            style={{ width: `${Math.max(pct, job.status === 'QUEUED' ? MIN_QUEUED_PROGRESS : MIN_PROCESSING_PROGRESS)}%` }}
           />
         </div>
       )}
@@ -136,7 +139,12 @@ export default function GeneratePage() {
       pollRef.current = setInterval(async () => {
         try {
           const res = await fetch(`/api/generate/${jobId}`);
-          if (!res.ok) { stopPolling(); return; }
+          if (!res.ok) {
+            stopPolling();
+            setLoading(false);
+            toast.error('Failed to retrieve generation status. Please refresh and try again.');
+            return;
+          }
           const job: GenerationJobRecord = await res.json();
           consecutiveErrors = 0;
           setCurrentJob(job);
@@ -156,7 +164,7 @@ export default function GeneratePage() {
           }
         } catch {
           consecutiveErrors += 1;
-          if (consecutiveErrors >= 5) {
+          if (consecutiveErrors >= MAX_POLL_ERRORS) {
             stopPolling();
             setLoading(false);
             toast.error('Lost connection to the generation service. Please refresh and try again.');
