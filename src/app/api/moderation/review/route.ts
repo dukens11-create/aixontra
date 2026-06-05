@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { issueAutomatedWarning, reviewModerationFlag } from '@/lib/moderation/moderationService';
+import { ensureAdminRequest } from '@/lib/moderation/adminAuth';
 
 export async function POST(request: Request) {
+  const authError = ensureAdminRequest(request);
+  if (authError) return authError;
+
   const body = await request.json();
   if (!body.flagId || !body.reviewerId || !body.resolution) {
     return NextResponse.json({ error: 'flagId, reviewerId, and resolution are required' }, { status: 400 });

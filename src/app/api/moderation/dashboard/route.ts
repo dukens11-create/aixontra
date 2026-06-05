@@ -6,8 +6,11 @@ import {
   getUserReports,
   getWarnings,
 } from '@/lib/moderation/moderationService';
+import { ensureAdminRequest } from '@/lib/moderation/adminAuth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = ensureAdminRequest(request);
+  if (authError) return authError;
   return NextResponse.json({
     moderationQueue: getModerationQueue(),
     userReports: getUserReports(),

@@ -5,9 +5,9 @@ import { createUserReport, runModerationPipeline } from '@/lib/moderation/modera
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const userId = typeof body.reporterId === 'string' ? body.reporterId : 'anonymous-reporter';
-  const rateLimit = await enforceRateLimit(request, 'moderationReport', userId);
+  const rateLimit = await enforceRateLimit(request, 'moderationReport');
   if (rateLimit.response) return rateLimit.response;
+  const userId = `anon:${rateLimit.identifier}`;
 
   const targetId = typeof body.songId === 'string' ? body.songId : typeof body.targetId === 'string' ? body.targetId : '';
   if (!targetId || !body.reason) {

@@ -90,6 +90,10 @@ const playEventsByKey = new Map<string, number[]>();
 const requestsByIdentifier = new Map<string, number[]>();
 const knownContentHashes = new Map<string, string>();
 const recentUserText = new Map<string, string>();
+const SPAM_KEYWORDS = ['free money', 'click here', 'buy followers', 'promo code'];
+const MAX_PLAYS_PER_MINUTE = 20;
+const CRITICAL_PLAYS_PER_MINUTE = 40;
+const MAX_REQUESTS_PER_MINUTE = 60;
 
 const nowIso = () => new Date().toISOString();
 
@@ -134,20 +138,20 @@ const detectSpam = (context: ModerationContext): DetectionResult => {
   }
 
   const repeatedChars = /(.)\1{6,}/.test(text);
-  const spamKeywords = ['free money', 'click here', 'buy followers', 'promo code'];
-  const keywordHit = spamKeywords.some((word) => text.includes(word));
+  const repeatedWords = /\b(\w+)\b(?:\s+\1\b){2,}/.test(text);
+  const keywordHit = SPAM_KEYWORDS.some((word) => text.includes(word));
   const previous = context.userId ? recentUserText.get(context.userId) : undefined;
   if (context.userId) recentUserText.set(context.userId, text);
   const duplicateMessage = Boolean(previous && previous === text);
 
-  const flagged = repeatedChars || keywordHit || duplicateMessage;
+  const flagged = repeatedChars || repeatedWords || keywordHit || duplicateMessage;
   return {
     type: 'SPAM',
     flagged,
     severity: keywordHit ? 'HIGH' : duplicateMessage ? 'MEDIUM' : 'LOW',
     confidence: flagged ? 0.8 : 0.2,
     reason: flagged ? 'Spam-like text pattern detected' : 'No spam signals detected',
-    details: { repeatedChars, keywordHit, duplicateMessage },
+    details: { repeatedChars, repeatedWords, keywordHit, duplicateMessage },
   };
 };
 
@@ -162,11 +166,11 @@ const detectFakePlay = (context: ModerationContext): DetectionResult => {
   events.push(currentTs);
   playEventsByKey.set(key, events);
 
-  const flagged = events.length > 20;
+  const flagged = events.length > MAX_PLAYS_PER_MINUTE;
   return {
     type: 'FAKE_PLAY',
     flagged,
-    severity: events.length > 40 ? 'CRITICAL' : 'HIGH',
+    severity: events.length > CRITICAL_PLAYS_PER_MINUTE ? 'CRITICAL' : 'HIGH',
     confidence: flagged ? 0.9 : 0.25,
     reason: flagged ? 'Unnatural repeated plays detected for this track' : 'Play pattern appears normal',
     details: { playsInLastMinute: events.length },
@@ -183,7 +187,7 @@ const detectBotPattern = (context: ModerationContext): DetectionResult => {
 
   const agent = (context.userAgent ?? '').toLowerCase();
   const suspiciousAgent = !agent || /(bot|crawler|spider|curl|python-requests)/.test(agent);
-  const burstTraffic = events.length > 60;
+  const burstTraffic = events.length > MAX_REQUESTS_PER_MINUTE;
   const flagged = suspiciousAgent || burstTraffic;
 
   return {

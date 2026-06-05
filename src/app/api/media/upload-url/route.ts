@@ -8,9 +8,9 @@ export async function POST(request: Request) {
   if (!body.userId || !body.kind) {
     return NextResponse.json({ error: 'userId and kind are required' }, { status: 400 });
   }
-  const upload = createSecureUploadUrl({ userId: body.userId, kind: body.kind, songId: body.songId });
   const rateLimit = await enforceRateLimit(request, 'upload', body.userId);
   if (rateLimit.response) return rateLimit.response;
+  const upload = createSecureUploadUrl({ userId: body.userId, kind: body.kind, songId: body.songId });
 
   const moderation = runModerationPipeline(
     {

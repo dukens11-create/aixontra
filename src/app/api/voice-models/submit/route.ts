@@ -5,9 +5,9 @@ import { runModerationPipeline } from '@/lib/moderation/moderationService';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const userId = body.userId ?? 'demo-user';
-  const rateLimit = await enforceRateLimit(request, 'voiceModelSubmit', userId);
+  const rateLimit = await enforceRateLimit(request, 'voiceModelSubmit');
   if (rateLimit.response) return rateLimit.response;
+  const userId = `anon:${rateLimit.identifier}`;
 
   const moderation = runModerationPipeline(
     {
