@@ -91,17 +91,19 @@ const fallbackCreator: VoiceCreator = {
   stageName: 'AIXENTRA Voice Lab',
   avatarUrl: creators[0]?.avatarUrl ?? '',
   bio: 'AI voice design collective.',
-  payoutWalletHint: 'wallet_aixontra_demo',
+  payoutWalletHint: 'wallet_aixentra_demo',
   totalRoyaltyEarningsUsd: 0,
 };
 
 const getWaveformPoints = (seed: string) =>
   Array.from({ length: 40 }, (_, index) => {
-    const base = 22 + ((seed.charCodeAt(index % seed.length) + index * 3) % 38);
+    const normalizedSeed = seed.length > 0 ? seed : 'voice';
+    const base = 22 + ((normalizedSeed.charCodeAt(index % normalizedSeed.length) + index * 3) % 38);
     return Math.max(8, Math.min(88, base));
   });
 
-const createdAt = () => new Date().toISOString();
+const generateCreatedAt = () => new Date().toISOString();
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 const voiceModels: VoiceModel[] = [
   {
@@ -124,7 +126,7 @@ const voiceModels: VoiceModel[] = [
     settlementStatus: 'PENDING_IMPLEMENTATION',
     trendingScore: 96,
     plays: 12340,
-    createdAt: createdAt(),
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     creator: voiceCreators[0] ?? fallbackCreator,
   },
   {
@@ -147,7 +149,7 @@ const voiceModels: VoiceModel[] = [
     settlementStatus: 'PENDING_IMPLEMENTATION',
     trendingScore: 83,
     plays: 7920,
-    createdAt: createdAt(),
+    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
     creator: voiceCreators[1] ?? fallbackCreator,
   },
 ];
@@ -162,8 +164,11 @@ export const getVoiceCategories = () => Array.from(new Set(voiceModels.map((voic
 
 export const getTrendingVoices = (limit = 3) =>
   [...voiceModels]
-    .sort((a, b) => b.trendingScore - a.trendingScore || b.plays - a.plays)
-    .slice(0, Math.max(limit, 1));
+    .sort((a, b) => {
+      const trendingDelta = b.trendingScore - a.trendingScore;
+      return trendingDelta !== 0 ? trendingDelta : b.plays - a.plays;
+    })
+    .slice(0, Math.max(0, Number.isFinite(limit) ? limit : 3));
 
 export const filterVoiceModels = (query: string, category: string, trendingOnly: boolean) => {
   const normalizedQuery = query.trim().toLowerCase();
@@ -179,25 +184,27 @@ export const filterVoiceModels = (query: string, category: string, trendingOnly:
 };
 
 export const createVoiceModel = (input: VoiceUploadInput) => {
+  const trimmedTitle = input.title.trim();
+  const trimmedCategory = input.category.trim();
   if (!input.consentVerified || !input.consentProofUrl.trim()) {
     return { error: 'Consent verification and proof URL are required.' } as const;
   }
-  if (!input.title.trim() || !input.category.trim()) {
+  if (!trimmedTitle || !trimmedCategory) {
     return { error: 'Voice title and category are required.' } as const;
   }
   const creator = getVoiceCreatorById(input.creatorId) ?? fallbackCreator;
   const created: VoiceModel = {
     id: `voice-model-${Date.now()}`,
-    title: input.title.trim(),
+    title: trimmedTitle,
     description: input.description.trim() || 'Voice model listing',
-    category: input.category.trim(),
+    category: trimmedCategory,
     tags: input.tags.filter(Boolean),
     previewAudioUrl: input.previewAudioUrl?.trim() || DEMO_AUDIO_URL,
     waveformPoints: getWaveformPoints(`${input.title}-${input.creatorId}`),
     licenseType: input.licenseType,
     priceUsd: Math.max(0, Number(input.priceUsd) || 0),
     commercialUseEnabled: Boolean(input.commercialUseEnabled),
-    royaltyPercent: Math.max(0, Math.min(100, Number(input.royaltyPercent) || 0)),
+    royaltyPercent: clamp(Number(input.royaltyPercent) || 0, 0, 100),
     moderationStatus: 'PENDING',
     consentVerified: true,
     consentProofUrl: input.consentProofUrl.trim(),
@@ -206,7 +213,7 @@ export const createVoiceModel = (input: VoiceUploadInput) => {
     settlementStatus: 'PENDING_IMPLEMENTATION',
     trendingScore: 25,
     plays: 0,
-    createdAt: createdAt(),
+    createdAt: generateCreatedAt(),
     creator,
   };
   voiceModels.unshift(created);

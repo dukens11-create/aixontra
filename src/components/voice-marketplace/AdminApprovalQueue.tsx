@@ -9,18 +9,23 @@ export function AdminApprovalQueue({ initialQueue }: { initialQueue: VoiceModel[
 
   const review = async (voiceId: string, action: 'approve' | 'reject') => {
     setMessage(null);
-    const response = await fetch(`/api/voice-marketplace/moderation/${voiceId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error ?? 'Could not update moderation queue.');
-      return;
+    try {
+      const response = await fetch(`/api/voice-marketplace/moderation/${voiceId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.error ?? 'Could not update moderation queue.');
+        return;
+      }
+      const actionLabel = action === 'approve' ? 'approved' : 'rejected';
+      setQueue((current) => current.filter((voice) => voice.id !== voiceId));
+      setMessage(`${data.model.title} ${actionLabel}.`);
+    } catch {
+      setMessage('Network error while updating moderation queue.');
     }
-    setQueue((current) => current.filter((voice) => voice.id !== voiceId));
-    setMessage(`${data.model.title} ${action}d.`);
   };
 
   return (

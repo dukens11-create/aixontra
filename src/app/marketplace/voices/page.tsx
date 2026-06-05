@@ -55,7 +55,7 @@ export default function VoiceMarketplacePage({ searchParams }: PageProps) {
       <section className="card bg-white/5">
         <h2>Trending voices</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {trendingVoices.map((voice) => <VoiceCard key={`trending-${voice.id}`} voice={voice} />)}
+          {trendingVoices.map((voice) => <VoiceCard key={voice.id} voice={voice} />)}
         </div>
       </section>
 

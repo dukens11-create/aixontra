@@ -4,6 +4,7 @@ import { VoicePreviewPlayer } from './VoicePreviewPlayer';
 
 export function VoiceDetailView({ voice }: { voice: VoiceModel }) {
   const settlementPreview = estimateRoyaltySettlement(voice, voice.priceUsd);
+  const formatUsd = (amount: number) => amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="space-y-4 pb-6">
@@ -44,8 +45,8 @@ export function VoiceDetailView({ voice }: { voice: VoiceModel }) {
         <h2>Royalty settlement preview</h2>
         <p className="muted mt-2">{settlementPreview.note}</p>
         <div className="row mt-2">
-          <span className="badge">Creator ${settlementPreview.creatorRoyaltyUsd.toFixed(2)}</span>
-          <span className="badge">Platform ${settlementPreview.platformNetUsd.toFixed(2)}</span>
+          <span className="badge">Creator ${formatUsd(settlementPreview.creatorRoyaltyUsd)}</span>
+          <span className="badge">Platform ${formatUsd(settlementPreview.platformNetUsd)}</span>
           <span className="badge">{settlementPreview.settlementStatus}</span>
         </div>
       </section>

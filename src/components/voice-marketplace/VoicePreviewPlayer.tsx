@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+// 128 bins gives a smooth low-cost spectrum for compact card previews.
+const FREQUENCY_BUFFER_SIZE = 128;
+
 type Props = {
   audioUrl: string;
   waveformPoints: number[];
@@ -40,7 +43,7 @@ export function VoicePreviewPlayer({ audioUrl, waveformPoints, title }: Props) {
     let animationContext: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
     let source: MediaElementAudioSourceNode | null = null;
-    const buffer = new Uint8Array(128);
+    const buffer = new Uint8Array(FREQUENCY_BUFFER_SIZE);
 
     const drawAnimated = () => {
       if (!analyser) return;
@@ -67,7 +70,8 @@ export function VoicePreviewPlayer({ audioUrl, waveformPoints, title }: Props) {
         }
         if (animationContext.state === 'suspended') await animationContext.resume();
         drawAnimated();
-      } catch {
+      } catch (error) {
+        console.error('Voice waveform analyzer failed:', error);
         setError('Waveform analyzer unavailable for this preview source.');
       }
     };
@@ -82,23 +86,32 @@ export function VoicePreviewPlayer({ audioUrl, waveformPoints, title }: Props) {
       drawStatic();
     };
     const onEnded = onPause;
+    const onError = () => {
+      setError('Audio preview failed to load. Ensure the source allows CORS for waveform analysis.');
+    };
 
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
 
     return () => {
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (animationContext) void animationContext.close();
+      if (animationContext) {
+        void animationContext.close().catch((cleanupError) => {
+          console.error('Audio context cleanup failed:', cleanupError);
+        });
+      }
     };
   }, [waveformBars]);
 
   return (
     <div className="space-y-2">
-      <audio ref={audioRef} controls preload="none" src={audioUrl} crossOrigin="anonymous" className="w-full">
+      <audio ref={audioRef} controls preload="none" src={audioUrl} crossOrigin="anonymous" className="w-full" aria-label={`${title} audio preview`}>
         Your browser does not support the audio element.
       </audio>
       <canvas ref={canvasRef} width={560} height={92} className="h-20 w-full rounded-xl border border-white/10 bg-black/30" aria-label={`${title} waveform preview`} />
