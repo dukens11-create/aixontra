@@ -8,12 +8,12 @@ export async function POST(req: Request) {
   if (!trackId) return NextResponse.json({ error: "trackId required" }, { status: 400 });
   const limiter = await enforceRateLimit(req, "play");
   if (limiter.response) return limiter.response;
-  const actorId = `anon:${limiter.identifier}`;
+  const anonymousUserId = `anon:${limiter.identifier}`;
 
   const moderation = runModerationPipeline(
     {
       identifier: limiter.identifier,
-      userId: actorId,
+      userId: anonymousUserId,
       targetId: trackId,
       requestPath: "/api/play",
       userAgent: req.headers.get("user-agent") ?? undefined,

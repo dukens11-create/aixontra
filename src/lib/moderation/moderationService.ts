@@ -10,6 +10,8 @@ type ModerationFlagType =
 type ModerationFlagStatus = 'PENDING' | 'REVIEWED' | 'DISMISSED';
 type WarningAction = 'WARNING' | 'TEMP_BAN' | 'PERMANENT_BAN';
 type ReportCategory = 'SPAM' | 'ABUSE' | 'COPYRIGHT' | 'IMPERSONATION' | 'EXPLICIT' | 'OTHER';
+export const REPORT_TARGET_TYPES = ['song', 'comment', 'voice_model', 'user'] as const;
+export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 type ModerationContext = {
   identifier: string;
@@ -48,7 +50,7 @@ type ModerationFlag = {
 type UserReport = {
   id: string;
   targetId: string;
-  targetType: 'song' | 'comment' | 'voice_model' | 'user';
+  targetType: ReportTargetType;
   reporterId: string;
   reason: string;
   description?: string;
@@ -90,13 +92,42 @@ const lastWarningAtByUser = new Map<string, number>();
 const playEventsByKey = new Map<string, number[]>();
 const requestsByIdentifier = new Map<string, number[]>();
 const knownContentHashes = new Map<string, string>();
-const recentUserText = new Map<string, string>();
+const recentUserText = new Map<string, { text: string; updatedAt: number }>();
 const SPAM_KEYWORDS = ['free money', 'click here', 'buy followers', 'promo code'];
 const MAX_PLAYS_PER_MINUTE = 20;
 const CRITICAL_PLAYS_PER_MINUTE = 40;
 const MAX_REQUESTS_PER_MINUTE = 60;
 
 const nowIso = () => new Date().toISOString();
+
+const pruneTimestampMap = (map: Map<string, number[]>, thresholdMs: number, maxEntries: number) => {
+  if (map.size <= maxEntries) return;
+  const cutoff = Date.now() - thresholdMs;
+  for (const [key, values] of map.entries()) {
+    const filtered = values.filter((ts) => ts >= cutoff);
+    if (filtered.length === 0) {
+      map.delete(key);
+    } else {
+      map.set(key, filtered);
+    }
+  }
+};
+
+const pruneRecentTextMap = () => {
+  if (recentUserText.size <= 5000) return;
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for (const [key, value] of recentUserText.entries()) {
+    if (value.updatedAt < cutoff) recentUserText.delete(key);
+  }
+};
+
+const pruneWarningMap = () => {
+  if (lastWarningAtByUser.size <= 5000) return;
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  for (const [key, value] of lastWarningAtByUser.entries()) {
+    if (value < cutoff) lastWarningAtByUser.delete(key);
+  }
+};
 
 const createFlag = (result: DetectionResult, context: ModerationContext) => {
   if (!result.flagged) return null;
@@ -142,8 +173,11 @@ const detectSpam = (context: ModerationContext): DetectionResult => {
   const repeatedWords = /\b(\w+)\b(?:\s+\1\b){2,}/.test(text);
   const keywordHit = SPAM_KEYWORDS.some((word) => text.includes(word));
   const previous = context.userId ? recentUserText.get(context.userId) : undefined;
-  if (context.userId) recentUserText.set(context.userId, text);
-  const duplicateMessage = Boolean(previous && previous === text);
+  if (context.userId) {
+    recentUserText.set(context.userId, { text, updatedAt: Date.now() });
+    pruneRecentTextMap();
+  }
+  const duplicateMessage = Boolean(previous && previous.text === text);
 
   const flagged = repeatedChars || repeatedWords || keywordHit || duplicateMessage;
   return {
@@ -166,6 +200,7 @@ const detectFakePlay = (context: ModerationContext): DetectionResult => {
   const events = (playEventsByKey.get(key) ?? []).filter((ts) => ts >= oneMinuteAgo);
   events.push(currentTs);
   playEventsByKey.set(key, events);
+  pruneTimestampMap(playEventsByKey, 60_000, 5000);
 
   const flagged = events.length > MAX_PLAYS_PER_MINUTE;
   return {
@@ -185,6 +220,7 @@ const detectBotPattern = (context: ModerationContext): DetectionResult => {
   const events = (requestsByIdentifier.get(key) ?? []).filter((ts) => ts >= oneMinuteAgo);
   events.push(now);
   requestsByIdentifier.set(key, events);
+  pruneTimestampMap(requestsByIdentifier, 60_000, 5000);
 
   const agent = (context.userAgent ?? '').toLowerCase();
   const suspiciousAgent = !agent || /(bot|crawler|spider|curl|python-requests)/.test(agent);
@@ -283,7 +319,7 @@ export const runModerationPipeline = (
 
 export const createUserReport = (input: {
   targetId: string;
-  targetType: UserReport['targetType'];
+  targetType: ReportTargetType;
   reporterId: string;
   reason: string;
   description?: string;
@@ -329,6 +365,7 @@ export const issueAutomatedWarning = (input: { userId: string; reason: string; c
   const nextStrike = (strikeCountByUser.get(input.userId) ?? 0) + 1;
   strikeCountByUser.set(input.userId, nextStrike);
   lastWarningAtByUser.set(input.userId, now);
+  pruneWarningMap();
 
   const action = actionForStrike(nextStrike);
   const warning: WarningRecord = {
