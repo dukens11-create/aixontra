@@ -158,3 +158,31 @@ Enter admin password (min 8 characters): ********
 - `/marketplace/voices` – AI voice marketplace (upload, licensing/pricing, moderation queue, creator royalties placeholders)
 - `/search`, `/trending`, `/library`, `/notifications`, `/admin`, `/collab`, `/remix/[songId]`
 - `/terms`, `/privacy`, `/dmca`, `/creator-agreement`, `/licensing`
+
+## Moderation & anti-abuse architecture
+
+- Pluggable moderation pipeline in `src/lib/moderation/moderationService.ts` with detectors for:
+  - spam detection
+  - fake play detection
+  - bot-pattern detection
+  - duplicate upload detection (content hash/fingerprint based)
+  - voice impersonation placeholder
+  - explicit content placeholder
+- Rate-limit middleware helper in `src/lib/moderation/rateLimitMiddleware.ts`, applied to high-risk endpoints:
+  - `/api/play`
+  - `/api/media/upload-url`
+  - `/api/moderation/report`
+  - `/api/voice-models/submit`
+- Admin moderation tools:
+  - moderation queue
+  - user reports with auto-categorization
+  - flagged content review
+  - automated warning escalation (warning → temporary ban → permanent ban)
+  - moderation audit trail logging
+
+### Follow-up TODOs for ML integrations
+
+- Replace `VOICE_IMPERSONATION_PLACEHOLDER` detector with speaker-verification and consent-matching models.
+- Replace `EXPLICIT_CONTENT_PLACEHOLDER` detector with lyrics/audio multimodal content classifiers.
+- Improve fake-play and bot detectors with historical baselines, anomaly scoring, and device-fingerprint signals.
+- Evolve duplicate detection from hash matching to audio fingerprint similarity for transformed re-uploads.
