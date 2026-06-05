@@ -225,7 +225,7 @@ export function computeStreak(activeDates: string[]): UserStreak {
 
   const today = new Date().toISOString().slice(0, 10);
   const lastDate = sorted[sorted.length - 1] ?? '';
-  const streakBroken = lastDate < today && lastDate !== '';
+  const streakBroken = lastDate !== '' && new Date(lastDate) < new Date(today);
 
   return {
     userId: '',

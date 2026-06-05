@@ -92,7 +92,7 @@ export function BadgeGrid({ badges, unlockedBadgeIds, animateNew }: BadgeGridPro
       style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}
     >
       {badges.map((badge) => {
-        const unlocked = !unlockedBadgeIds || unlockedBadgeIds.has(badge.id);
+        const unlocked = unlockedBadgeIds?.has(badge.id) ?? false;
         return (
           <BadgeDisplay
             key={badge.id}
