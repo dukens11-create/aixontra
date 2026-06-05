@@ -1,4 +1,5 @@
 import { Queue, Worker } from 'bullmq';
+import { randomUUID } from 'crypto';
 import { createGeneratedDraft, recordGenerationCost } from './platformStore';
 import { executeGpuGenerationWithFailover, getGpuProviderHealth, GpuProviderHealth } from './gpuProvider';
 import { GenerationInput, GenerationStatus } from './generationProvider';
@@ -24,6 +25,10 @@ type QueueJobState = {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  input: GenerationInput;
+  canExportStems: boolean;
+  plan: string;
+  creditBalance: number;
   result?: {
     audioUrl: string;
     wavUrl: string;
@@ -51,7 +56,7 @@ const buildRedisConnection = (url: string) => {
     username: parsed.username || undefined,
     password: parsed.password || undefined,
     tls: parsed.protocol === 'rediss:' ? {} : undefined,
-    maxRetriesPerRequest: null as null,
+    maxRetriesPerRequest: null,
   };
 };
 
@@ -79,8 +84,7 @@ const nowIso = () => new Date().toISOString();
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
   const timeoutPromise = new Promise<T>((_, reject) => {
-    const timer = setTimeout(() => {
-      clearTimeout(timer);
+    setTimeout(() => {
       reject(new Error(`Generation timed out after ${timeoutMs}ms`));
     }, timeoutMs);
   });
@@ -99,7 +103,7 @@ const executeGenerationJob = async (jobData: QueueJobData) => {
     bpm: jobData.input.bpm,
     vocalStyle: jobData.input.vocalStyle,
     instrumentalOnly: jobData.input.instrumentalOnly,
-    originalSongId: (jobData.input as any).originalSongId,
+    originalSongId: jobData.input.originalSongId,
     audioUrl: generation.result.audioUrl,
     wavUrl: generation.result.wavUrl,
     stemsUrls: stemsPayload,
@@ -198,17 +202,17 @@ const processInMemoryQueue = async () => {
     try {
       const payload = await executeGenerationJob({
         userId: state.userId,
-        input: (state as any).input,
-        canExportStems: (state as any).canExportStems,
-        plan: (state as any).plan,
-        creditBalance: (state as any).creditBalance,
+        input: state.input,
+        canExportStems: state.canExportStems,
+        plan: state.plan,
+        creditBalance: state.creditBalance,
       });
       recordGenerationCost({
         userId: state.userId,
         provider: payload.provider,
         jobId: nextJobId,
         amountUsd: payload.costUsd,
-        prompt: ((state as any).input as GenerationInput).prompt,
+        prompt: state.input.prompt,
       });
 
       state.result = payload;
@@ -231,7 +235,7 @@ const processInMemoryQueue = async () => {
 export const enqueueGenerationJob = async (data: QueueJobData & { priority: number }) => {
   attachWorker();
 
-  const jobId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const jobId = `gen-${randomUUID()}`;
   const queuePosition = inMemoryOrder.filter((id) => {
     const job = inMemoryJobs.get(id);
     return job?.status === 'QUEUED';
@@ -247,12 +251,11 @@ export const enqueueGenerationJob = async (data: QueueJobData & { priority: numb
     createdAt: nowIso(),
     updatedAt: nowIso(),
     userId: data.userId,
+    input: data.input,
+    canExportStems: data.canExportStems,
+    plan: data.plan,
+    creditBalance: data.creditBalance,
   };
-
-  (state as any).input = data.input;
-  (state as any).canExportStems = data.canExportStems;
-  (state as any).plan = data.plan;
-  (state as any).creditBalance = data.creditBalance;
 
   inMemoryJobs.set(jobId, state);
   inMemoryOrder.push(jobId);
@@ -284,7 +287,15 @@ export const getGenerationJobStatus = async (jobId: string) => {
       const state = await job.getState();
       tracked.status = state === 'active' ? 'PROCESSING' : tracked.status;
       tracked.updatedAt = nowIso();
-      tracked.queuePosition = Math.max(0, tracked.queuePosition - 1);
+      if (tracked.status === 'QUEUED') {
+        const waitingJobs = await generationQueue.getJobs(['waiting']);
+        const queueIndex = waitingJobs.findIndex((waitingJob) => waitingJob.id === jobId);
+        tracked.queuePosition = queueIndex >= 0 ? queueIndex + 1 : 1;
+        tracked.etaSeconds = estimateQueueEtaSeconds(tracked.queuePosition);
+      } else {
+        tracked.queuePosition = 0;
+        tracked.etaSeconds = 0;
+      }
       if (tracked.status === 'PROCESSING') tracked.progress = Math.max(tracked.progress, 25);
     }
   } else {
@@ -314,7 +325,17 @@ export const cancelGenerationJob = async (jobId: string) => {
 
   if (useBullMq && generationQueue) {
     const job = await generationQueue.getJob(jobId);
-    await job?.remove();
+    if (job) {
+      try {
+        await job.remove();
+      } catch {
+        tracked.status = 'QUEUED';
+        tracked.progress = 5;
+        tracked.error = undefined;
+        tracked.message = 'Cancellation failed. Please retry.';
+        return false;
+      }
+    }
   }
 
   return true;

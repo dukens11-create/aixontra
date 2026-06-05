@@ -28,6 +28,7 @@ export type GpuGenerationExecution = {
 };
 
 const GPU_GENERATION_TIMEOUT_MS = Number(process.env.GPU_GENERATION_TIMEOUT_MS ?? 120_000);
+const MAX_PROMPT_LENGTH_FOR_URL = 42;
 
 const GPU_PROVIDER_SETTINGS: Record<GpuProviderKey, { enabled: boolean; timeoutMs: number; costPerSecondUsd: number }> = {
   runpod: {
@@ -54,7 +55,7 @@ const GPU_PROVIDER_SETTINGS: Record<GpuProviderKey, { enabled: boolean; timeoutM
 
 const createPlaceholderResult = (provider: GpuProviderKey, input: GenerationInput): GenerationResult => {
   const duration = Math.max(30, Math.min(480, input.targetDurationSeconds ?? 120));
-  const quotedPrompt = encodeURIComponent(input.prompt.slice(0, 42));
+  const quotedPrompt = encodeURIComponent(input.prompt.slice(0, MAX_PROMPT_LENGTH_FOR_URL));
   const stemsUrls = {
     vocals: `${DEMO_AUDIO_URL}&provider=${provider}&stem=vocals`,
     drums: `${DEMO_AUDIO_URL}&provider=${provider}&stem=drums`,
@@ -127,8 +128,7 @@ class PlaceholderGpuProvider implements GpuGenerationProvider {
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, provider: GpuProviderKey): Promise<T> => {
   const timeoutPromise = new Promise<T>((_, reject) => {
-    const timer = setTimeout(() => {
-      clearTimeout(timer);
+    setTimeout(() => {
       reject(new Error(`${provider} provider generation timed out after ${timeoutMs}ms`));
     }, timeoutMs);
   });

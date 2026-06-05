@@ -9,6 +9,8 @@ import { PLAN_CAPABILITIES, SubscriptionPlan } from '@/lib/platform/subscription
 
 const moods = ['Cinematic', 'Romantic', 'Dark', 'Energetic', 'Uplifting', 'Melancholic'];
 const vocalStyles = ['Female', 'Male', 'Duo', 'Choir', 'Robotic'];
+const GENERATION_POLL_TIMEOUT_MS = 180_000;
+const GENERATION_POLL_INTERVAL_MS = 1_000;
 
 export default function GeneratePage() {
   const play = usePlayerStore((state) => state.play);
@@ -69,7 +71,8 @@ export default function GeneratePage() {
       setProgress(Math.max(35, Number(data.progress ?? 35)));
 
       const pollStart = Date.now();
-      while (Date.now() - pollStart < 180_000) {
+      let generationCompleted = false;
+      while (Date.now() - pollStart < GENERATION_POLL_TIMEOUT_MS) {
         const pollResponse = await fetch(`/api/generate/song/status/${data.jobId}`, { cache: 'no-store' });
         const pollData = await pollResponse.json();
         if (!pollResponse.ok) throw new Error(pollData.error ?? 'Failed to fetch generation status');
@@ -89,6 +92,7 @@ export default function GeneratePage() {
           setGenerationCostUsd(typeof job.result.costUsd === 'number' ? job.result.costUsd : null);
           setProgress(100);
           toast.success('Generation complete');
+          generationCompleted = true;
           break;
         }
 
@@ -96,10 +100,12 @@ export default function GeneratePage() {
           throw new Error(job.error ?? 'Generation failed');
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, GENERATION_POLL_INTERVAL_MS));
       }
 
-      throw new Error('Generation polling timed out. Please retry.');
+      if (!generationCompleted) {
+        throw new Error('Generation polling timed out. Please retry.');
+      }
     } catch (error: any) {
       setGenerationStatus('FAILED');
       toast.error(error.message ?? 'Something went wrong');

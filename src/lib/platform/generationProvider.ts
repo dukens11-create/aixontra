@@ -13,6 +13,7 @@ export type GenerationInput = {
   instrumentalOnly?: boolean;
   targetDurationSeconds?: number;
   masteringPreset?: 'LOUDNESS_NORMALIZATION' | 'CLEAN_MIX' | 'RADIO_READY';
+  originalSongId?: string;
 };
 
 export type GenerationResult = {
