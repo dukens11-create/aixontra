@@ -34,6 +34,9 @@ export default function Nav() {
           <Link href="/feed" className="badge">Feed</Link>
           <Link href="/marketplace" className="badge">Marketplace</Link>
           <Link href="/trending" className="badge">Trending</Link>
+          <Link href="/challenges" className="badge">Challenges</Link>
+          <Link href="/leaderboard" className="badge">Leaderboard</Link>
+          <Link href="/achievements" className="badge">Achievements</Link>
           <Link href="/search" className="badge">Search</Link>
           <Link href="/library" className="badge">Library</Link>
           <Link href="/notifications" className="badge">Notifications</Link>

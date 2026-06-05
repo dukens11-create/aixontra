@@ -5,9 +5,10 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function TrackPage({ params }: { params: { id: string } }) {
+export default async function TrackPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = supabaseBrowser();
-  const { data: track } = await supabase.from("tracks").select("*").eq("id", params.id).maybeSingle();
+  const { id } = await params;
+  const { data: track } = await supabase.from("tracks").select("*").eq("id", id).maybeSingle();
 
   if (!track) return <div className="card">Track not found.</div>;
 
