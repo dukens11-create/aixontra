@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const links = [
   { href: '/feed', label: 'Feed' },
   { href: '/generate', label: 'Create' },
+  { href: '/lyrics-studio', label: 'Lyrics' },
   { href: '/trending', label: 'Trend' },
   { href: '/marketplace', label: 'Shop' },
   { href: '/dashboard/creator', label: 'Studio' },
@@ -15,7 +16,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   return (
     <nav className="fixed bottom-16 left-0 right-0 z-40 border-t border-white/10 bg-black/80 px-2 py-2 backdrop-blur md:hidden">
-      <ul className="grid grid-cols-5 gap-1 text-center text-xs">
+      <ul className="grid grid-cols-6 gap-1 text-center text-xs">
         {links.map((link) => {
           const active = pathname.startsWith(link.href);
           return (
