@@ -40,6 +40,15 @@ describe('moderationService', () => {
     expect(getWarnings()).toHaveLength(3);
   });
 
+  it('respects warning cooldown to avoid rapid escalation', () => {
+    const first = issueAutomatedWarning({ userId: 'u1', reason: 'burst', cooldownMs: 60_000 });
+    const second = issueAutomatedWarning({ userId: 'u1', reason: 'burst', cooldownMs: 60_000 });
+
+    expect(first?.action).toBe('WARNING');
+    expect(second).toBeNull();
+    expect(getWarnings()).toHaveLength(1);
+  });
+
   it('auto-categorizes user reports and records audit logs', () => {
     const report = createUserReport({
       targetId: 'song-123',

@@ -86,6 +86,7 @@ const reports: UserReport[] = [];
 const warnings: WarningRecord[] = [];
 const auditLog: ModerationActionLog[] = [];
 const strikeCountByUser = new Map<string, number>();
+const lastWarningAtByUser = new Map<string, number>();
 const playEventsByKey = new Map<string, number[]>();
 const requestsByIdentifier = new Map<string, number[]>();
 const knownContentHashes = new Map<string, string>();
@@ -311,9 +312,17 @@ export const createUserReport = (input: {
 const actionForStrike = (strikeCount: number): WarningAction =>
   strikeCount >= 3 ? 'PERMANENT_BAN' : strikeCount >= 2 ? 'TEMP_BAN' : 'WARNING';
 
-export const issueAutomatedWarning = (input: { userId: string; reason: string }) => {
+export const issueAutomatedWarning = (input: { userId: string; reason: string; cooldownMs?: number }) => {
+  const now = Date.now();
+  const cooldownMs = input.cooldownMs ?? 0;
+  const lastWarningAt = lastWarningAtByUser.get(input.userId) ?? 0;
+  if (cooldownMs > 0 && now - lastWarningAt < cooldownMs) {
+    return null;
+  }
+
   const nextStrike = (strikeCountByUser.get(input.userId) ?? 0) + 1;
   strikeCountByUser.set(input.userId, nextStrike);
+  lastWarningAtByUser.set(input.userId, now);
 
   const action = actionForStrike(nextStrike);
   const warning: WarningRecord = {
@@ -365,6 +374,7 @@ export const __resetModerationStateForTests = () => {
   warnings.length = 0;
   auditLog.length = 0;
   strikeCountByUser.clear();
+  lastWarningAtByUser.clear();
   playEventsByKey.clear();
   requestsByIdentifier.clear();
   knownContentHashes.clear();

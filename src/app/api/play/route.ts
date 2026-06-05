@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     issueAutomatedWarning({
       userId: severeFlag.userId,
       reason: `Automated anti-abuse trigger: ${severeFlag.type}`,
+      cooldownMs: 30 * 60 * 1000,
     });
   }
 
