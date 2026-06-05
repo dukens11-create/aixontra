@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createGeneratedDraft, getCreditPacks, getUserGenerationContext, reserveGenerationCredits } from '@/lib/platform/platformStore';
-import { getMusicProvider } from '@/lib/platform/generationProvider';
+import { getCreditPacks, getUserGenerationContext, reserveGenerationCredits } from '@/lib/platform/platformStore';
+import { enqueueGenerationJob, getGenerationQueueHealth } from '@/lib/platform/generationQueue';
 
 export async function POST(request: Request) {
-  const buildStemsPayload = (
-    canExportStems: boolean,
-    stemsUrls: Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>,
-  ) => (canExportStems ? stemsUrls : undefined);
-
   const body = await request.json();
   if (!body.prompt?.trim()) {
     return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -36,40 +31,31 @@ export async function POST(request: Request) {
     );
   }
 
-  const provider = getMusicProvider();
-  const generation = await provider.generate(body);
-  const stemsPayload = buildStemsPayload(userContext.capabilities.stemsExport, generation.stemsUrls);
-  const songDraft = createGeneratedDraft({
-    prompt: body.prompt,
-    lyrics: body.lyrics,
-    genre: body.genre,
-    mood: body.mood,
-    language: body.language,
-    bpm: body.bpm,
-    vocalStyle: body.vocalStyle,
-    instrumentalOnly: body.instrumentalOnly,
-    originalSongId: body.originalSongId,
-    audioUrl: generation.audioUrl,
-    wavUrl: generation.wavUrl,
-    stemsUrls: stemsPayload,
-    coverUrl: generation.coverUrl,
-    videoUrl: generation.videoUrl,
-    masteredAudioUrl: generation.masteredAudioUrl,
-    generationStatus: generation.status,
+  const queuedJob = await enqueueGenerationJob({
+    userId,
+    input: body,
+    canExportStems: userContext.capabilities.stemsExport,
+    plan: userContext.plan,
+    creditBalance: debit.balance,
+    priority: userContext.capabilities.priorityQueue ? 1 : 10,
   });
 
   return NextResponse.json({
     success: true,
-    audioUrl: generation.audioUrl,
-    wavUrl: generation.wavUrl,
-    stemsUrls: stemsPayload ?? null,
-    masteredAudioUrl: generation.masteredAudioUrl,
-    provider: generation.provider,
-    generationStatus: generation.status,
+    jobId: queuedJob.id,
+    generationStatus: queuedJob.status,
+    queuePosition: queuedJob.queuePosition,
+    etaSeconds: queuedJob.etaSeconds,
+    progress: queuedJob.progress,
+    queueBackend: queuedJob.backend,
     plan: userContext.plan,
     creditBalance: debit.balance,
     capabilities: userContext.capabilities,
-    songDraft,
-    message: generation.message,
+    message: queuedJob.message,
   });
+}
+
+export async function GET() {
+  const health = await getGenerationQueueHealth();
+  return NextResponse.json({ success: true, health });
 }

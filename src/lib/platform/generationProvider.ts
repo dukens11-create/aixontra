@@ -24,7 +24,9 @@ export type GenerationResult = {
   masteredAudioUrl?: string;
   provider: string;
   status: GenerationStatus;
-  message: 'Generation complete';
+  message: string;
+  costUsd?: number;
+  providerAttempts?: string[];
 };
 
 export interface AiMusicProvider {

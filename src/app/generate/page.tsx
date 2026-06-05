@@ -24,6 +24,11 @@ export default function GeneratePage() {
   const [instrumentalOnly, setInstrumentalOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [generationStatus, setGenerationStatus] = useState<'IDLE' | 'QUEUED' | 'PROCESSING' | 'COMPLETE' | 'FAILED'>('IDLE');
+  const [generationJobId, setGenerationJobId] = useState<string | null>(null);
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
+  const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
+  const [generationCostUsd, setGenerationCostUsd] = useState<number | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>(DEMO_AUDIO_URL);
   const [wavUrl, setWavUrl] = useState<string | null>(null);
   const [stemsUrls, setStemsUrls] = useState<Partial<Record<'vocals' | 'drums' | 'bass' | 'melody' | 'instrumental' | 'fullMix', string>> | null>(null);
@@ -45,25 +50,58 @@ export default function GeneratePage() {
   const generate = async (mode: 'generate' | 'regenerate' | 'extend') => {
     setLoading(true);
     setProgress(15);
+    setGenerationStatus('QUEUED');
+    setGenerationCostUsd(null);
     try {
       const response = await fetch('/api/generate/song', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formPayload, mode }),
       });
-      setProgress(65);
+      setProgress(35);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Failed to generate');
-      setAudioUrl(data.audioUrl);
-      setWavUrl(data.wavUrl ?? null);
-      setStemsUrls(data.stemsUrls ?? null);
-      setMasteredAudioUrl(data.masteredAudioUrl ?? null);
       setCreditBalance(data.creditBalance ?? creditBalance);
       setPlan(data.plan ?? plan);
-      setDraftId(data.songDraft.id);
-      setProgress(100);
-      toast.success(data.message ?? 'Generation complete');
+      setGenerationJobId(data.jobId);
+      setQueuePosition(typeof data.queuePosition === 'number' ? data.queuePosition : null);
+      setEtaSeconds(typeof data.etaSeconds === 'number' ? data.etaSeconds : null);
+      setProgress(Math.max(35, Number(data.progress ?? 35)));
+
+      const pollStart = Date.now();
+      while (Date.now() - pollStart < 180_000) {
+        const pollResponse = await fetch(`/api/generate/song/status/${data.jobId}`, { cache: 'no-store' });
+        const pollData = await pollResponse.json();
+        if (!pollResponse.ok) throw new Error(pollData.error ?? 'Failed to fetch generation status');
+
+        const job = pollData.job;
+        setGenerationStatus(job.status);
+        setProgress(Number(job.progress ?? 0));
+        setQueuePosition(typeof job.queuePosition === 'number' ? job.queuePosition : null);
+        setEtaSeconds(typeof job.etaSeconds === 'number' ? job.etaSeconds : null);
+
+        if (job.status === 'COMPLETE') {
+          setAudioUrl(job.result.audioUrl);
+          setWavUrl(job.result.wavUrl ?? null);
+          setStemsUrls(job.result.stemsUrls ?? null);
+          setMasteredAudioUrl(job.result.masteredAudioUrl ?? null);
+          setDraftId(job.result.songDraft.id);
+          setGenerationCostUsd(typeof job.result.costUsd === 'number' ? job.result.costUsd : null);
+          setProgress(100);
+          toast.success('Generation complete');
+          break;
+        }
+
+        if (job.status === 'FAILED') {
+          throw new Error(job.error ?? 'Generation failed');
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      throw new Error('Generation polling timed out. Please retry.');
     } catch (error: any) {
+      setGenerationStatus('FAILED');
       toast.error(error.message ?? 'Something went wrong');
     } finally {
       setTimeout(() => {
@@ -71,6 +109,24 @@ export default function GeneratePage() {
         setProgress(0);
       }, 350);
     }
+  };
+
+  const cancelGeneration = async () => {
+    if (!generationJobId) return;
+    const response = await fetch('/api/generate/song/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: generationJobId }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      toast.error(data.error ?? 'Unable to cancel generation');
+      return;
+    }
+    setGenerationStatus('FAILED');
+    setLoading(false);
+    setProgress(0);
+    toast.success('Generation cancelled');
   };
 
   const publishSong = async () => {
@@ -204,13 +260,19 @@ export default function GeneratePage() {
         </select>
 
         {loading && (
-          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm">Generating... {progress}%</div>
+          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm space-y-1">
+            <p>Generating... {progress}%</p>
+            {generationStatus === 'QUEUED' && queuePosition ? <p>Queue position: {queuePosition}</p> : null}
+            {generationStatus === 'QUEUED' && etaSeconds ? <p>ETA: ~{etaSeconds}s</p> : null}
+            <p>Status: {generationStatus}</p>
+          </div>
         )}
 
         <div className="row">
           <button type="submit" className="btn" disabled={loading}>Generate</button>
           <button type="button" className="btn secondary" onClick={() => generate('regenerate')} disabled={loading}>Regenerate</button>
           <button type="button" className="btn secondary" onClick={() => generate('extend')} disabled={loading}>Extend</button>
+          {loading && generationJobId ? <button type="button" className="btn secondary" onClick={cancelGeneration}>Cancel</button> : null}
           <button type="button" className="btn secondary" onClick={() => window.open(audioUrl, '_blank', 'noopener,noreferrer')}>Download MP3</button>
           {wavUrl && <button type="button" className="btn secondary" onClick={() => window.open(wavUrl, '_blank', 'noopener,noreferrer')}>Download WAV</button>}
           <button type="button" className="btn" onClick={publishSong}>Publish</button>
@@ -227,6 +289,7 @@ export default function GeneratePage() {
           </div>
         )}
         <div className="mt-3">
+          {generationCostUsd !== null ? <p className="muted mb-2">Estimated GPU cost: ${generationCostUsd.toFixed(4)}</p> : null}
           <p className="text-sm font-semibold">Stems export</p>
           {stemsUrls ? (
             <div className="row mt-2">
