@@ -87,6 +87,7 @@ const SIMILAR_SONG_WEIGHTS = {
   language: 120,
   sameCreator: 60,
   maxBpmAffinity: 80,
+  trendingLift: 0.01,
 };
 const SIMILAR_CREATOR_WEIGHTS = {
   genreOverlap: 260,
@@ -292,10 +293,10 @@ export const getSimilarSongs = (songId: string, options?: { limit?: number; cata
           reasons.push(`Shared language: ${song.language}`);
         }
 
-        // Linear BPM decay: within an 80 BPM window, closer tempos get proportionally higher affinity.
+        // BPM differences are penalized linearly, with identical tempos receiving the maximum affinity boost.
         score += Math.max(0, SIMILAR_SONG_WEIGHTS.maxBpmAffinity - Math.abs(song.bpm - seedSong.bpm));
         score += song.creatorId === seedSong.creatorId ? SIMILAR_SONG_WEIGHTS.sameCreator : 0;
-        score += calculateTrendingScore(song).score * 0.01;
+        score += calculateTrendingScore(song).score * SIMILAR_SONG_WEIGHTS.trendingLift;
 
         return {
           ...song,

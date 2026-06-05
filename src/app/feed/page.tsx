@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import SongRecommendationMetrics from '@/components/platform/SongRecommendationMetrics';
 import { toTrack } from '@/lib/platform/toTrack';
 import { usePlayerStore } from '@/stores/playerStore';
 import { DEFAULT_RECOMMENDATION_USER_ID, getPersonalizedFeed } from '@/lib/platform/recommendationEngine';
@@ -34,8 +35,10 @@ export default function FeedPage() {
           completed: false,
         }),
       });
-    } catch {
-      // Ignore analytics errors in UI interactions.
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Failed to record listening history', error);
+      }
     }
   }, []);
 
@@ -79,12 +82,15 @@ export default function FeedPage() {
                 <audio src={song.audioUrl} controls className="mt-3 w-full" />
                 <h2 className="mt-3">{song.title}</h2>
                 <p className="muted">{song.creatorName} · {song.genre} · {song.mood}</p>
-                <p className="muted">
-                  {song.likes} likes · {song.plays} plays · {song.comments} comments · {(song.shares ?? 0)} shares · {song.remixes} remixes
-                </p>
-                <p className="muted">
-                  Avg watch time: {Math.round(song.averageWatchTimeSeconds ?? 0)}s · Recommendation score: {Math.round(song.score)}
-                </p>
+                <SongRecommendationMetrics
+                  song={song}
+                  className="muted"
+                  showLikes
+                  showComments
+                  showShares
+                  showRemixes
+                />
+                <p className="muted">Recommendation score: {Math.round(song.score)}</p>
                 <ul className="mt-3 space-y-1 text-sm text-slate-200">
                   {song.reasons.map((reason) => (
                     <li key={reason}>• {reason}</li>

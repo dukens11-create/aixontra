@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_RECOMMENDATION_USER_ID, type RecommendationFeed } from '@/lib/platform/recommendationEngine';
+import SongRecommendationMetrics from '@/components/platform/SongRecommendationMetrics';
 
 const FEED_ENDPOINT = `/api/recommendations/feed?userId=${DEFAULT_RECOMMENDATION_USER_ID}&limit=4`;
 
@@ -94,9 +95,7 @@ export default function PersonalizedHomeFeed() {
                     <span className="badge">Score {Math.round(song.score)}</span>
                   </div>
                   <p className="muted mt-2">{song.creatorName} · {song.genre} · {song.mood}</p>
-                  <p className="muted mt-2">
-                    {song.plays.toLocaleString()} plays · {(song.shares ?? 0).toLocaleString()} shares · {Math.round(song.averageWatchTimeSeconds ?? 0)}s avg watch
-                  </p>
+                  <SongRecommendationMetrics song={song} className="muted mt-2" />
                   <ul className="mt-3 space-y-1 text-sm text-slate-200">
                     {song.reasons.map((reason) => (
                       <li key={reason}>• {reason}</li>

@@ -1,3 +1,4 @@
+import SongRecommendationMetrics from '@/components/platform/SongRecommendationMetrics';
 import { calculateTrendingScore, getTrendingSongs } from '@/lib/platform/recommendationEngine';
 
 export default function TrendingPage() {
@@ -12,9 +13,8 @@ export default function TrendingPage() {
             <div>
               <p className="text-sm text-cyan-300">#{index + 1}</p>
               <p className="font-semibold">{song.title}</p>
-              <p className="muted">
-                {song.creatorName} · {song.plays} plays · {song.likes} likes · {(song.shares ?? 0)} shares · {song.remixes} remixes
-              </p>
+              <p className="muted">{song.creatorName}</p>
+              <SongRecommendationMetrics song={song} className="muted" showLikes showShares showRemixes />
             </div>
             <span className="badge">Score {Math.round(calculateTrendingScore(song).score)}</span>
           </article>

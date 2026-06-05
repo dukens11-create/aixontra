@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PersonalizedHomeFeed from '@/components/platform/PersonalizedHomeFeed';
+import SongRecommendationMetrics from '@/components/platform/SongRecommendationMetrics';
 import { getTrendingSongs } from '@/lib/platform/recommendationEngine';
 
 const sections = [
@@ -53,9 +54,7 @@ export default function HomePage() {
               <img src={song.coverUrl} alt={song.title} className="h-36 w-full rounded-xl object-cover" />
               <p className="mt-3 font-semibold">{song.title}</p>
               <p className="muted">{song.creatorName} · {song.genre}</p>
-              <p className="muted mt-1">
-                {(song.shares ?? 0).toLocaleString()} shares · {Math.round(song.averageWatchTimeSeconds ?? 0)}s watch
-              </p>
+              <SongRecommendationMetrics song={song} className="muted mt-1" showWatchTime showShares />
             </div>
           ))}
         </div>
