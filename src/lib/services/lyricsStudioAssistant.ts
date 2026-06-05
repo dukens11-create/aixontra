@@ -35,11 +35,21 @@ const autocompleteChunks: Record<string, string[]> = {
   for: ['a global summer audience', 'a late-night drive playlist', 'a cinematic trailer vibe'],
 };
 
+const DEFAULT_AUTOCOMPLETE_SUFFIX = 'with multilingual verses and a catchy chorus';
+const RHYME_FAMILY: Record<string, string[]> = {
+  ay: ['day', 'stay', 'way', 'play'],
+  ow: ['glow', 'show', 'slow', 'flow'],
+  ee: ['free', 'see', 'me', 'key'],
+  ight: ['light', 'night', 'fight', 'flight'],
+};
+const RHYME_ENDINGS = Object.keys(RHYME_FAMILY).sort((endingA, endingB) => endingB.length - endingA.length);
+
 function sanitizePrompt(prompt: string) {
   return prompt.trim().replace(/\s+/g, ' ');
 }
 
 function titleCase(text: string) {
+  if (!text.trim()) return '';
   return text
     .split(' ')
     .filter(Boolean)
@@ -101,7 +111,7 @@ export function getSmartAutocomplete(prompt: string) {
 
   const parts = trimmed.split(' ');
   const lastWord = parts[parts.length - 1].toLowerCase();
-  const options = autocompleteChunks[lastWord] ?? ['with multilingual verses and a catchy chorus'];
+  const options = autocompleteChunks[lastWord] ?? [DEFAULT_AUTOCOMPLETE_SUFFIX];
 
   return options.slice(0, 3).map((option) => `${trimmed} ${option}`);
 }
@@ -134,26 +144,15 @@ export function createChorusBlock(prompt: string, mood: string) {
 }
 
 export function getRhymeHelper(word: string) {
-  const clean = word.toLowerCase().replace(/[^a-z]/g, '');
+  const clean = word.toLowerCase().replace(/[^\p{L}]/gu, '');
   if (!clean) return [];
+  const matchedEnding = RHYME_ENDINGS.find((ending) => clean.endsWith(ending));
 
-  const ending = clean.slice(-2);
-  const rhymeFamily: Record<string, string[]> = {
-    ay: ['day', 'stay', 'way', 'play'],
-    ow: ['glow', 'show', 'slow', 'flow'],
-    ee: ['free', 'see', 'me', 'key'],
-    ight: ['light', 'night', 'fight', 'flight'],
-  };
-
-  if (rhymeFamily[clean]) {
-    return rhymeFamily[clean];
+  if (matchedEnding) {
+    return RHYME_FAMILY[matchedEnding];
   }
 
-  if (rhymeFamily[ending]) {
-    return rhymeFamily[ending];
-  }
-
-  return ['fire', 'desire', 'higher', 'wire'];
+  return [];
 }
 
 export function applyStructureTemplate(templateKey: keyof typeof SONG_STRUCTURE_TEMPLATES) {

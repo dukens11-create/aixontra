@@ -26,15 +26,21 @@ describe('lyricsStudioAssistant', () => {
     expect(moods).toContain('Melancholic');
   });
 
-  it('creates autocomplete options and chorus blocks', () => {
+  it('creates autocomplete options', () => {
     const suggestions = getSmartAutocomplete('Write a song about');
     expect(suggestions.length).toBeGreaterThan(0);
+  });
+
+  it('creates chorus blocks', () => {
     const chorus = createChorusBlock('city lights forever', 'Energetic');
     expect(chorus).toContain('[Chorus]');
   });
 
-  it('returns structure template and rhyme helper defaults', () => {
+  it('returns structure template', () => {
     expect(applyStructureTemplate('pop')).toContain('[Verse 1]');
-    expect(getRhymeHelper('night').length).toBeGreaterThan(0);
+  });
+
+  it('returns rhyme helper matches', () => {
+    expect(getRhymeHelper('night')).toEqual(['light', 'night', 'fight', 'flight']);
   });
 });

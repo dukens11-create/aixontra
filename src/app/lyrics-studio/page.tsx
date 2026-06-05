@@ -21,17 +21,32 @@ import {
 } from '@/lib/services/lyricsStudioAssistant';
 
 const AUTO_SAVE_KEY = 'aixontra:lyrics-studio-draft';
+const MAX_TEMPLATE_PREVIEW_LENGTH = 22;
 
 type StructureTemplate = keyof typeof SONG_STRUCTURE_TEMPLATES;
 
 const moods = ['Uplifting', 'Romantic', 'Cinematic', 'Dark', 'Energetic', 'Melancholic'] as const;
+const INITIAL_PROMPT = 'A bilingual anthem about hope after heartbreak.';
+const INITIAL_LYRICS = '[Verse 1]\nI carried storms inside my hands\nTill your voice taught me to stand';
+const INITIAL_GENRE = SUPPORTED_GENRES[0];
+const INITIAL_MOOD = moods[0];
+const INITIAL_LANGUAGE = LANGUAGES[0].name;
+
+function formatSaveTime() {
+  return new Date().toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+}
 
 export default function LyricsStudioPage() {
-  const [prompt, setPrompt] = useState('A bilingual anthem about hope after heartbreak.');
-  const [lyrics, setLyrics] = useState('[Verse 1]\nI carried storms inside my hands\nTill your voice taught me to stand');
-  const [genre, setGenre] = useState<string>(SUPPORTED_GENRES[0]);
-  const [mood, setMood] = useState<string>(moods[0]);
-  const [language, setLanguage] = useState<string>(LANGUAGES[0].name);
+  const [prompt, setPrompt] = useState(INITIAL_PROMPT);
+  const [lyrics, setLyrics] = useState(INITIAL_LYRICS);
+  const [genre, setGenre] = useState<string>(INITIAL_GENRE);
+  const [mood, setMood] = useState<string>(INITIAL_MOOD);
+  const [language, setLanguage] = useState<string>(INITIAL_LANGUAGE);
   const [loading, setLoading] = useState(false);
   const [autoSaveLabel, setAutoSaveLabel] = useState('Not saved yet');
   const [activeLine, setActiveLine] = useState(0);
@@ -60,16 +75,15 @@ export default function LyricsStudioPage() {
         mood: string;
         language: string;
       };
-      setPrompt(draft.prompt ?? prompt);
-      setLyrics(draft.lyrics ?? lyrics);
-      setGenre(draft.genre ?? genre);
-      setMood(draft.mood ?? mood);
-      setLanguage(draft.language ?? language);
+      setPrompt(draft.prompt ?? INITIAL_PROMPT);
+      setLyrics(draft.lyrics ?? INITIAL_LYRICS);
+      setGenre(draft.genre ?? INITIAL_GENRE);
+      setMood(draft.mood ?? INITIAL_MOOD);
+      setLanguage(draft.language ?? INITIAL_LANGUAGE);
       setAutoSaveLabel('Draft restored');
     } catch {
       setAutoSaveLabel('Could not restore draft');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -79,7 +93,7 @@ export default function LyricsStudioPage() {
         AUTO_SAVE_KEY,
         JSON.stringify({ prompt, lyrics, genre, mood, language }),
       );
-      setAutoSaveLabel(`Auto-saved at ${new Date().toLocaleTimeString()}`);
+      setAutoSaveLabel(`Auto-saved at ${formatSaveTime()}`);
     }, 700);
 
     return () => window.clearTimeout(timeout);
@@ -107,12 +121,13 @@ export default function LyricsStudioPage() {
         setLyrics(data.lyrics);
       } else {
         const heading = section === 'verse' ? '[Verse]' : '[Chorus]';
-        const next = [lyrics.trim(), `${heading}\n${data.lyrics}`].filter(Boolean).join('\n\n');
-        setLyrics(next);
+        const updatedLyrics = [lyrics.trim(), `${heading}\n${data.lyrics}`].filter(Boolean).join('\n\n');
+        setLyrics(updatedLyrics);
       }
       toast.success('Lyrics generated');
-    } catch (error: any) {
-      toast.error(error.message ?? 'Generation failed');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Generation failed';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -135,7 +150,7 @@ export default function LyricsStudioPage() {
   const handleSaveDraft = () => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify({ prompt, lyrics, genre, mood, language }));
-    setAutoSaveLabel(`Saved at ${new Date().toLocaleTimeString()}`);
+    setAutoSaveLabel(`Saved at ${formatSaveTime()}`);
     toast.success('Draft saved');
   };
 
@@ -220,7 +235,7 @@ export default function LyricsStudioPage() {
             <div className="max-h-56 space-y-1 overflow-y-auto text-xs">
               {lines.map((line, index) => (
                 <button
-                  key={`${index}-${line}`}
+                  key={index}
                   type="button"
                   onClick={() => setActiveLine(index)}
                   className={`block w-full rounded px-2 py-1 text-left ${activeLine === index ? 'bg-cyan-500/20 text-cyan-200' : 'text-slate-300'}`}
@@ -250,7 +265,7 @@ export default function LyricsStudioPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               {PROMPT_TEMPLATES.map((template) => (
                 <button key={template} type="button" className="badge" onClick={() => setPrompt(template)}>
-                  {template.slice(0, 22)}...
+                  {template.slice(0, MAX_TEMPLATE_PREVIEW_LENGTH)}...
                 </button>
               ))}
             </div>
