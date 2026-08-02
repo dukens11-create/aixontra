@@ -32,6 +32,7 @@ export default function Nav() {
           <Link href="/generate" className="badge">Generate</Link>
           <Link href="/lyrics-studio" className="badge">Lyrics Studio</Link>
           <Link href="/feed" className="badge">Feed</Link>
+          <Link href="/live" className="badge" style={{ color: '#f87171', borderColor: '#f87171' }}>🔴 Live</Link>
           <Link href="/marketplace" className="badge">Marketplace</Link>
           <Link href="/trending" className="badge">Trending</Link>
           <Link href="/challenges" className="badge">Challenges</Link>
